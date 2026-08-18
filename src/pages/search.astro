@@ -1,0 +1,44 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+
+<BaseLayout title="Search">
+  <h1 class="text-3xl sm:text-4xl font-bold mb-8">Search</h1>
+  <div id="search" class="pagefind-brutal"></div>
+  <p
+    id="search-unavailable"
+    class="hidden border-brutal shadow-brutal-sm bg-paper p-5 text-sm text-ink-soft"
+  >
+    Search index isn't available in <code>astro dev</code>. Pagefind only builds its
+    index as part of <code>npm run build</code> — run that (or <code>npm run preview</code>
+    after building) to try search locally.
+  </p>
+</BaseLayout>
+
+<link href="/pagefind/pagefind-ui.css" rel="stylesheet" />
+<script is:inline src="/pagefind/pagefind-ui.js"></script>
+<script is:inline>
+  document.addEventListener("astro:page-load", () => {
+    const el = document.getElementById("search");
+    const fallback = document.getElementById("search-unavailable");
+    if (el && typeof PagefindUI === "function" && !el.dataset.initialized) {
+      el.dataset.initialized = "true";
+      new PagefindUI({ element: "#search", showSubResults: true });
+    } else if (el && typeof PagefindUI !== "function") {
+      el.classList.add("hidden");
+      fallback?.classList.remove("hidden");
+    }
+  });
+</script>
+
+<style>
+  .pagefind-brutal {
+    --pagefind-ui-primary: #1a1a1a;
+    --pagefind-ui-text: #1a1a1a;
+    --pagefind-ui-background: #f8f6f1;
+    --pagefind-ui-border: #ded9cc;
+    --pagefind-ui-border-width: 1.5px;
+    --pagefind-ui-border-radius: 8px;
+    --pagefind-ui-font: "JetBrains Mono", ui-monospace, monospace;
+  }
+</style>

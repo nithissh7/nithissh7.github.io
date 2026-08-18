@@ -1,0 +1,58 @@
+---
+import { SITE_TITLE } from "../consts";
+
+const navLinks = [
+  { href: "/", label: "Home" },
+  { href: "/tags", label: "Tags" },
+  { href: "/cves", label: "CVEs" },
+  { href: "/certifications", label: "Certs" },
+  { href: "/about", label: "About" },
+  { href: "/search", label: "Search" },
+];
+
+const currentPath = new URL(Astro.request.url).pathname;
+---
+
+<header class="border-b border-line/80 bg-paper/90 backdrop-blur-sm sticky top-0 z-50">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between gap-4">
+    <a
+      href="/"
+      class="text-lg sm:text-xl font-bold tracking-tight border-brutal shadow-brutal-sm brutal-press bg-accent text-accent-ink px-3 py-1.5"
+    >
+      {SITE_TITLE}
+    </a>
+
+    <nav class="hidden sm:flex items-center gap-1 flex-wrap justify-end text-sm">
+      {navLinks.map((link) => {
+        const isActive = link.href === "/" ? currentPath === "/" : currentPath.startsWith(link.href);
+        return (
+          <a
+            href={link.href}
+            aria-current={isActive ? "page" : undefined}
+            class={`font-medium px-3 py-2 rounded-lg transition-colors ${
+              isActive ? "text-accent-ink bg-accent" : "text-ink-soft hover:text-ink hover:bg-paper-dim"
+            }`}
+          >
+            {link.label}
+          </a>
+        );
+      })}
+    </nav>
+  </div>
+  <nav class="sm:hidden flex items-center gap-1 px-3 pb-3 flex-wrap text-xs">
+    {navLinks.map((link) => {
+      const isActive = link.href === "/" ? currentPath === "/" : currentPath.startsWith(link.href);
+      return (
+        <a
+          href={link.href}
+          aria-current={isActive ? "page" : undefined}
+          class={`flex-1 text-center font-medium px-2 py-2 rounded-lg ${
+            isActive ? "text-accent-ink bg-accent" : "text-ink-soft"
+          }`}
+        >
+          {link.label}
+        </a>
+      );
+    })}
+  </nav>
+</header>

@@ -1,0 +1,98 @@
+---
+import { getCollection, render } from "astro:content";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+
+export async function getStaticPaths() {
+  const cves = await getCollection("cves", ({ data }) => !data.draft);
+  return cves.map((cve) => ({
+    params: { slug: cve.id },
+    props: { cve },
+  }));
+}
+
+const { cve } = Astro.props;
+const { Content } = await render(cve);
+
+const severityAccent: Record<string, string> = {
+  Critical: "bg-accent-pink text-accent-pink-ink",
+  High: "bg-accent-2 text-accent-2-ink",
+  Medium: "bg-accent text-accent-ink",
+  Low: "bg-paper-dim text-ink-soft",
+  Informational: "bg-paper-dim text-ink-soft",
+};
+---
+
+<BaseLayout
+  title={cve.data.cveId}
+  description={cve.data.description}
+  type="article"
+  pubDate={cve.data.pubDate}
+  image={`/cves/${cve.id}/og.png`}
+>
+  <article>
+    <a
+      href="/cves"
+      class="inline-block mb-6 border-brutal shadow-brutal-sm brutal-press bg-paper px-3 py-1.5 text-xs font-medium"
+    >
+      &larr; All CVEs
+    </a>
+
+    <header class="mb-8 border-brutal shadow-brutal-sm bg-accent p-5 sm:p-6">
+      <div class="flex flex-wrap items-center gap-3 mb-3">
+        <code class="text-lg font-bold border border-line rounded-md px-2 py-0.5 bg-paper text-ink">{cve.data.cveId}</code>
+        <span class={`text-xs font-medium rounded-full px-2.5 py-0.5 ${severityAccent[cve.data.severity]}`}>
+          {cve.data.severity}
+          {cve.data.cvssScore !== undefined && ` (CVSS ${cve.data.cvssScore})`}
+        </span>
+        <span class="text-xs font-medium rounded-full px-2.5 py-0.5 bg-paper text-ink-soft">
+          {cve.data.status}
+        </span>
+      </div>
+      <h1 class="text-xl sm:text-3xl font-bold leading-tight">{cve.data.title}</h1>
+    </header>
+
+    <div class="border-brutal shadow-brutal-sm p-5 mb-8 bg-paper">
+      <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+        <div>
+          <dt class="text-xs font-medium text-ink-soft">Affected Product</dt>
+          <dd class="font-bold">{cve.data.affectedProduct}</dd>
+        </div>
+        {cve.data.vendor && (
+          <div>
+            <dt class="text-xs font-medium text-ink-soft">Vendor</dt>
+            <dd class="font-bold">{cve.data.vendor}</dd>
+          </div>
+        )}
+        <div>
+          <dt class="text-xs font-medium text-ink-soft">Published</dt>
+          <dd class="font-bold">
+            {cve.data.pubDate.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
+          </dd>
+        </div>
+        <div>
+          <dt class="text-xs font-medium text-ink-soft">Status</dt>
+          <dd class="font-bold">{cve.data.status}</dd>
+        </div>
+      </dl>
+    </div>
+
+    {cve.data.references && cve.data.references.length > 0 && (
+      <div class="mb-8">
+        <h2 class="text-lg font-bold mb-2">References</h2>
+        <ul class="space-y-1">
+          {cve.data.references.map((ref) => (
+            <li>
+              <a href={ref} target="_blank" rel="noopener noreferrer" class="underline font-medium text-accent-ink break-all">
+                {ref}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    )}
+
+    <div class="prose-brutal">
+      <Content />
+    </div>
+  </article>
+</BaseLayout>

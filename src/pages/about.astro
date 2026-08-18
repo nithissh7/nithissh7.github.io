@@ -1,0 +1,114 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+const certs = [
+  { abbr: "BCP", name: "Burp Certified Practitioner", issuer: "PortSwigger" },
+  { abbr: "CDP", name: "Certified DevSecOps Professional", issuer: "Practical DevSecOps" },
+  { abbr: "eWPTx", name: "Web App Pentester eXtreme", issuer: "INE Security" },
+  { abbr: "eWPT", name: "Web App Penetration Tester", issuer: "INE Security" },
+  { abbr: "eCPPTv2", name: "Certified Penetration Tester eXtreme", issuer: "INE Security" },
+  { abbr: "CCSK", name: "Cloud Security Knowledge v4", issuer: "CSA" },
+];
+
+const links = [
+  { label: "GitHub", href: "https://github.com/nithissh7" },
+  { label: "Email", href: "mailto:realnits@gmail.com" },
+  { label: "LinkedIn", href: "https://linkedin.com/in/nithisshs" },
+  { label: "RSS", href: "/rss.xml" },
+];
+
+const accents = [
+  { bg: "bg-accent", ink: "text-accent-ink" },
+  { bg: "bg-accent-2", ink: "text-accent-2-ink" },
+  { bg: "bg-accent-pink", ink: "text-accent-pink-ink" },
+];
+---
+
+<BaseLayout title="About" description="Security architect by day, bug bounty hunter by night.">
+  <h1 class="text-3xl sm:text-4xl font-bold mb-8">About</h1>
+
+  <div class="border-brutal shadow-brutal-sm bg-accent p-5 sm:p-6 mb-10">
+    <p class="font-medium text-lg leading-relaxed text-ink">
+      Security architect by day, bug bounty hunter by night — I break things to
+      understand how to defend them better.
+    </p>
+  </div>
+
+  <div class="space-y-4 mb-10">
+    <p class="text-ink-soft">
+      I handle platform and AI security at one of the largest pharma companies.
+      Outside work, I spend my time hunting vulnerabilities, writing security
+      tools, and documenting everything I learn on this blog.
+    </p>
+    <p class="text-ink-soft">
+      The thing that keeps me going is curiosity — there's nothing quite like
+      finding the flaw that nobody else noticed.
+    </p>
+  </div>
+
+  <h2 class="text-xl font-bold mb-4 border-b border-line pb-2">What I Do</h2>
+  <div class="grid gap-4 sm:grid-cols-3 mb-10">
+    <div class="border-brutal shadow-brutal-sm p-4 bg-paper">
+      <h3 class="font-bold text-sm mb-2">Offense</h3>
+      <p class="text-sm text-ink-soft">Bug bounty · web &amp; API pentesting · cloud security (AWS, Azure, GCP) · vulnerability research</p>
+    </div>
+    <div class="border-brutal shadow-brutal-sm p-4 bg-paper">
+      <h3 class="font-bold text-sm mb-2">Defense</h3>
+      <p class="text-sm text-ink-soft">Platform &amp; AI security · SOC operations · SIEM &amp; EDR · DevSecOps · incident response</p>
+    </div>
+    <div class="border-brutal shadow-brutal-sm p-4 bg-paper">
+      <h3 class="font-bold text-sm mb-2">Build</h3>
+      <p class="text-sm text-ink-soft">Security tooling · automation · open source contributions · this blog</p>
+    </div>
+  </div>
+
+  <h2 class="text-xl font-bold mb-4 border-b border-line pb-2">Certifications</h2>
+  <div class="grid gap-3 sm:grid-cols-2 mb-4">
+    {certs.map((cert, i) => {
+      const accent = accents[i % accents.length];
+      return (
+        <div class="border-brutal shadow-brutal-sm p-3 bg-paper flex items-center gap-3">
+          <span class={`text-xs font-bold rounded-full px-2.5 py-1 shrink-0 ${accent.bg} ${accent.ink}`}>
+            {cert.abbr}
+          </span>
+          <div class="text-sm">
+            <p class="font-bold leading-tight">{cert.name}</p>
+            <p class="text-ink-soft text-xs">{cert.issuer}</p>
+          </div>
+        </div>
+      );
+    })}
+  </div>
+  <a href="/certifications" class="inline-block mb-10 border-brutal shadow-brutal-sm brutal-press bg-paper px-3 py-1.5 text-xs font-medium">
+    See all with badges &rarr;
+  </a>
+
+  <h2 class="text-xl font-bold mb-4 border-b border-line pb-2">This Blog</h2>
+  <div class="space-y-4 mb-10">
+    <p class="text-ink-soft">
+      I write to think. Bug bounty writeups, cloud security research, CTF
+      solutions, SOC learning notes — whatever I'm into that week ends up here.
+    </p>
+    <p class="text-ink-soft">
+      Mostly for future-me, so I don't relearn things twice. If it helps you
+      too, that's a bonus.
+    </p>
+  </div>
+
+  <h2 class="text-xl font-bold mb-4 border-b border-line pb-2">Connect</h2>
+  <div class="flex flex-wrap gap-3">
+    {links.map((link, i) => {
+      const accent = accents[i % accents.length];
+      return (
+        <a
+          href={link.href}
+          target={link.href.startsWith("http") ? "_blank" : undefined}
+          rel={link.href.startsWith("http") ? "noopener noreferrer" : undefined}
+          class={`border-brutal shadow-brutal-sm brutal-press px-4 py-2 font-medium text-sm ${accent.bg} ${accent.ink}`}
+        >
+          {link.label}
+        </a>
+      );
+    })}
+  </div>
+</BaseLayout>

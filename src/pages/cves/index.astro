@@ -1,0 +1,96 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+
+const cves = await getCollection("cves", ({ data }) => !data.draft);
+const sortedCves = cves.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+
+const severityAccent: Record<string, string> = {
+  Critical: "bg-accent-pink text-accent-pink-ink",
+  High: "bg-accent-2 text-accent-2-ink",
+  Medium: "bg-accent text-accent-ink",
+  Low: "bg-paper-dim text-ink-soft",
+  Informational: "bg-paper-dim text-ink-soft",
+};
+
+const severityOrder: Record<string, number> = {
+  Critical: 0,
+  High: 1,
+  Medium: 2,
+  Low: 3,
+  Informational: 4,
+};
+
+const cvesByYear = sortedCves.reduce((acc, cve) => {
+  const year = cve.data.pubDate.getFullYear().toString();
+  (acc[year] ??= []).push(cve);
+  return acc;
+}, {} as Record<string, typeof sortedCves>);
+
+const stats = [
+  { label: "Total", count: sortedCves.length, accent: "bg-paper-dim text-ink" },
+  { label: "Critical", count: sortedCves.filter((c) => c.data.severity === "Critical").length, accent: "bg-accent-pink text-accent-pink-ink" },
+  { label: "High", count: sortedCves.filter((c) => c.data.severity === "High").length, accent: "bg-accent-2 text-accent-2-ink" },
+  { label: "Medium/Low", count: sortedCves.filter((c) => c.data.severity === "Medium" || c.data.severity === "Low").length, accent: "bg-accent text-accent-ink" },
+];
+---
+
+<BaseLayout title="CVEs" description="Security vulnerabilities discovered and responsibly disclosed.">
+  <h1 class="text-3xl sm:text-4xl font-bold mb-2">CVEs</h1>
+  <p class="text-ink-soft mb-8">Security vulnerabilities I've discovered and responsibly disclosed.</p>
+
+  {sortedCves.length === 0 ? (
+    <p class="border-brutal shadow-brutal-sm p-6 font-medium text-ink-soft">No CVEs published yet.</p>
+  ) : (
+    <div>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-10">
+        {stats.map((s) => (
+          <div class={`border-brutal shadow-brutal-sm p-4 text-center ${s.accent}`}>
+            <div class="text-3xl font-bold">{s.count}</div>
+            <div class="text-xs font-medium mt-1">{s.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {Object.entries(cvesByYear)
+        .sort(([a], [b]) => Number(b) - Number(a))
+        .map(([year, yearCves]) => (
+          <div class="mb-10">
+            <h2 class="text-xl font-bold mb-4 border-b border-line pb-2">
+              {year} <span class="text-ink-soft font-normal">({yearCves.length})</span>
+            </h2>
+            <div class="grid gap-4">
+              {yearCves
+                .sort((a, b) => severityOrder[a.data.severity] - severityOrder[b.data.severity])
+                .map((cve) => (
+                  <a
+                    href={`/cves/${cve.id}/`}
+                    class="block border-brutal shadow-brutal-sm brutal-press bg-paper p-4"
+                  >
+                    <div class="flex flex-wrap items-center gap-2 mb-2">
+                      <code class="text-sm font-medium border border-line rounded-md px-2 py-0.5 bg-paper-dim text-ink">{cve.data.cveId}</code>
+                      <span class={`text-xs font-medium rounded-full px-2.5 py-0.5 ${severityAccent[cve.data.severity]}`}>
+                        {cve.data.severity}
+                        {cve.data.cvssScore !== undefined && ` (${cve.data.cvssScore})`}
+                      </span>
+                      <span class="text-xs font-medium text-ink-soft border border-line rounded-full px-2.5 py-0.5">
+                        {cve.data.status}
+                      </span>
+                    </div>
+                    <h3 class="text-lg font-bold mb-1">{cve.data.title}</h3>
+                    <p class="text-sm text-ink-soft mb-2">{cve.data.description}</p>
+                    <div class="flex flex-wrap gap-3 text-xs font-medium text-ink-soft">
+                      <span>{cve.data.affectedProduct}</span>
+                      {cve.data.vendor && <span>{cve.data.vendor}</span>}
+                      <span>
+                        {cve.data.pubDate.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
+                      </span>
+                    </div>
+                  </a>
+                ))}
+            </div>
+          </div>
+        ))}
+    </div>
+  )}
+</BaseLayout>

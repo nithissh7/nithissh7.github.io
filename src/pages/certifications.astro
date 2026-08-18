@@ -1,0 +1,55 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+const certifications = await getCollection("certifications");
+const sortedCerts = certifications.sort((a, b) => b.data.dateEarned.valueOf() - a.data.dateEarned.valueOf());
+
+const accents = [
+  { bg: "bg-accent", ink: "text-accent-ink" },
+  { bg: "bg-accent-2", ink: "text-accent-2-ink" },
+  { bg: "bg-accent-pink", ink: "text-accent-pink-ink" },
+];
+---
+
+<BaseLayout title="Certifications" description="Professional certifications and credentials earned.">
+  <h1 class="text-3xl sm:text-4xl font-bold mb-2">Certifications</h1>
+  <p class="text-ink-soft mb-8">Professional certifications and credentials I've earned.</p>
+
+  {sortedCerts.length === 0 ? (
+    <p class="border-brutal shadow-brutal-sm p-6 font-medium text-ink-soft">No certifications listed yet.</p>
+  ) : (
+    <div class="grid gap-6 sm:grid-cols-2">
+      {sortedCerts.map((cert, i) => {
+        const accent = accents[i % accents.length];
+        return (
+          <a
+            href={cert.data.credentialUrl || "#"}
+            target={cert.data.credentialUrl ? "_blank" : undefined}
+            rel={cert.data.credentialUrl ? "noopener noreferrer" : undefined}
+            class="border-brutal shadow-brutal-sm brutal-press bg-paper p-6 flex flex-col items-center text-center"
+          >
+            {cert.data.badgeUrl && (
+              <img src={cert.data.badgeUrl} alt={cert.data.name} width="80" height="80" loading="lazy" class="h-20 w-20 object-contain mb-4 border border-line rounded-lg p-2 bg-paper" />
+            )}
+            <h2 class="text-lg font-bold leading-tight mb-1">{cert.data.name}</h2>
+            <p class={`text-xs font-medium rounded-full px-2.5 py-0.5 mb-3 ${accent.bg} ${accent.ink}`}>
+              {cert.data.issuer}
+            </p>
+            <p class="text-sm text-ink-soft mb-3">{cert.data.description}</p>
+            {cert.data.tags.length > 0 && (
+              <div class="flex flex-wrap justify-center gap-2 mb-3">
+                {cert.data.tags.map((tag) => (
+                  <span class="text-xs font-medium text-ink-soft border border-line rounded-full px-2.5 py-0.5">#{tag}</span>
+                ))}
+              </div>
+            )}
+            {cert.data.credentialUrl && (
+              <span class="text-xs font-medium text-accent-ink underline">Verify credential &rarr;</span>
+            )}
+          </a>
+        );
+      })}
+    </div>
+  )}
+</BaseLayout>

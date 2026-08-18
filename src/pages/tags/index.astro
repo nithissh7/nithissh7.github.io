@@ -1,0 +1,41 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+
+const posts = await getCollection("blog", ({ data }) => !data.draft);
+const tagCounts = new Map<string, number>();
+for (const post of posts) {
+  for (const tag of post.data.tags) {
+    tagCounts.set(tag, (tagCounts.get(tag) ?? 0) + 1);
+  }
+}
+const tags = [...tagCounts.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+
+const accents = [
+  { bg: "bg-accent", ink: "text-accent-ink" },
+  { bg: "bg-accent-2", ink: "text-accent-2-ink" },
+  { bg: "bg-accent-pink", ink: "text-accent-pink-ink" },
+];
+---
+
+<BaseLayout title="Tags">
+  <h1 class="text-3xl sm:text-4xl font-bold mb-8">Tags</h1>
+
+  {tags.length === 0 ? (
+    <p class="font-medium text-ink-soft">No tags yet.</p>
+  ) : (
+    <div class="flex flex-wrap gap-3">
+      {tags.map(([tag, count], i) => {
+        const accent = accents[i % accents.length];
+        return (
+          <a
+            href={`/tags/${tag}/`}
+            class={`border-brutal shadow-brutal-sm brutal-press px-4 py-2 font-medium ${accent.bg} ${accent.ink}`}
+          >
+            #{tag} <span class="opacity-60">({count})</span>
+          </a>
+        );
+      })}
+    </div>
+  )}
+</BaseLayout>
