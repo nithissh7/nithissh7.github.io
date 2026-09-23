@@ -785,3 +785,19 @@
     }
   }
 }
+
+/* Highlighted code lines: ```lang {3,5-7} */
+@layer components {
+  .code-block .line.highlighted {
+    display: inline-block;
+    min-width: calc(100% + 2.5rem);
+    margin: 0 -1.25rem;
+    padding: 0 1.25rem;
+    background: var(--hl-line, rgba(35, 131, 226, 0.12));
+    box-shadow: inset 2px 0 0 var(--hl-edge, #2383e2);
+  }
+  :root[data-theme="dark"] .code-block .line.highlighted {
+    --hl-line: rgba(82, 156, 202, 0.16);
+    --hl-edge: #529cca;
+  }
+}

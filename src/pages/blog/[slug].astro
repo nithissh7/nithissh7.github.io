@@ -10,11 +10,19 @@ export async function getStaticPaths() {
   );
   return posts.map((post, i) => ({
     params: { slug: post.id },
-    props: { post, newer: posts[i - 1], older: posts[i + 1] },
+    props: {
+      post,
+      newer: posts[i - 1],
+      older: posts[i + 1],
+      series: post.data.series
+        ? posts.filter((p) => p.data.series === post.data.series).reverse() // oldest first
+        : [],
+    },
   }));
 }
 
-const { post, newer, older } = Astro.props;
+const { post, newer, older, series } = Astro.props;
+const part = series.findIndex((p) => p.id === post.id) + 1;
 const { Content, headings } = await render(post);
 const readTime = getReadingTime(post.body ?? "");
 const toc = headings.filter((h) => h.depth === 2 || h.depth === 3);
@@ -74,6 +82,24 @@ const jsonLd = {
             </div>
           )}
         </header>
+
+        {series.length > 1 && (
+          <nav aria-label="Series" class="mb-8 text-[14px]" data-pagefind-ignore>
+            <p class="text-dim mb-2">
+              Part {part} of {series.length} in <span class="text-strong">{post.data.series}</span>
+            </p>
+            <ol class="space-y-1">
+              {series.map((p, i) => (
+                <li class="flex gap-3">
+                  <span class="text-dim tabular-nums w-5">{i + 1}.</span>
+                  {p.id === post.id
+                    ? <span class="text-strong font-bold">{p.data.title}</span>
+                    : <a href={`/blog/${p.id}/`} class="link !font-normal">{p.data.title}</a>}
+                </li>
+              ))}
+            </ol>
+          </nav>
+        )}
 
         {toc.length > 2 && (
           <details class="toc-box mb-10" data-pagefind-ignore>

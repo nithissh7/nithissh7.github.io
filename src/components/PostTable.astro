@@ -22,6 +22,9 @@ const cols = "md:grid md:grid-cols-[9rem_minmax(0,1fr)_13rem_4.5rem] md:gap-8";
           <span class="block text-[13px] text-dim tabular-nums md:text-[14px] md:pt-px">
             {formatDate(post.data.pubDate, "medium")}
             <span class="md:hidden"> · {getReadingTime(post.body ?? "").replace(" read", "")}</span>
+            {post.data.updatedDate && (
+              <span class="block text-[12px] text-dim">updated {formatDate(post.data.updatedDate, "medium")}</span>
+            )}
           </span>
           <span class="block min-w-0 mt-1 md:mt-0">
             <span class="row-title block leading-snug">{post.data.title}</span>

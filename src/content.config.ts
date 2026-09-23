@@ -11,6 +11,8 @@ const blog = defineCollection({
     author: z.string().default("Nithissh"),
     tags: z.array(z.string()).default([]),
     featured: z.boolean().default(false),
+    // Posts sharing a series name get "Part n of m" navigation.
+    series: z.string().optional(),
     draft: z.boolean().default(false),
   }),
 });

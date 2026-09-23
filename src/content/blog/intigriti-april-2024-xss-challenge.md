@@ -1,4 +1,5 @@
 ---
+series: "Intigriti XSS challenges"
 author: Nithissh
 pubDate: 2024-05-01T10:00:00.000Z
 title: "Solving Intigriti's April 2024 XSS Challenge — postMessage, Race Conditions, and a Sneaky iframe Sandbox"

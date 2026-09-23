@@ -2,6 +2,13 @@ import satori from "satori";
 import { Resvg } from "@resvg/resvg-js";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
+import { tagColor } from "../consts";
+
+// Notion dark select colours, matching the site's tag pills.
+const TAG_BG: Record<string, string> = {
+  gray: "#373737", brown: "#4a3228", orange: "#5c3b23", yellow: "#564328", green: "#243d30",
+  blue: "#143a4e", purple: "#3c2d49", pink: "#4e2c3c", red: "#522e2a",
+};
 
 const fontDir = join(process.cwd(), "node_modules/@fontsource/jetbrains-mono/files");
 const fontRegularPath = join(fontDir, "jetbrains-mono-latin-400-normal.woff");
@@ -15,10 +22,10 @@ function loadFonts() {
   return fontsPromise;
 }
 
-const PAPER = "#0c0c0e";
-const INK = "#f2eded";
-const INK_SOFT = "#b8b2b2";
-const LINE = "#2a2a2f";
+const PAPER = "#191919"; // Notion dark
+const INK = "#ececec";
+const INK_SOFT = "#9b9b9b";
+const LINE = "#2f2f2f";
 const ACCENT_BG = INK;
 const ACCENT_INK = PAPER;
 
@@ -151,13 +158,13 @@ export async function renderOgImage({
                             props: {
                               style: {
                                 display: "flex",
-                                color: INK_SOFT,
+                                color: INK,
                                 fontSize: "20px",
-                                border: `2px solid ${LINE}`,
-                                borderRadius: "999px",
-                                padding: "6px 16px",
+                                background: TAG_BG[tagColor(tag)] ?? TAG_BG.gray,
+                                borderRadius: "6px",
+                                padding: "4px 12px",
                               },
-                              children: `#${tag}`,
+                              children: tag,
                             },
                           })),
                         },

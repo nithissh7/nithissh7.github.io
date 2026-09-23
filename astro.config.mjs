@@ -26,6 +26,21 @@ const codeChrome = {
   },
 };
 
+/** Highlights lines listed in the fence meta, e.g. ```js {3,5-7}. */
+const highlightLines = {
+  name: "highlight-lines",
+  line(node, line) {
+    const raw = this.options.meta?.__raw ?? "";
+    const spec = raw.match(/\{([\d,\s-]+)\}/)?.[1];
+    if (!spec) return;
+    const hit = spec.split(",").some((part) => {
+      const [a, b] = part.trim().split("-").map(Number);
+      return b ? line >= a && line <= b : line === a;
+    });
+    if (hit) this.addClassToHast(node, "highlighted");
+  },
+};
+
 // https://astro.build/config
 export default defineConfig({
   site: "https://nithissh7.github.io",
@@ -39,7 +54,7 @@ export default defineConfig({
       themes: { light: "github-light", dark: "github-dark" },
       defaultColor: false,
       wrap: false,
-      transformers: [codeChrome],
+      transformers: [highlightLines, codeChrome],
     },
   },
   integrations: [
