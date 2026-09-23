@@ -2,7 +2,7 @@
 import { getCollection, render } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { getReadingTime } from "../../lib/reading-time";
-import { SITE_AUTHOR, formatDate } from "../../consts";
+import { SITE_AUTHOR, formatDate, tagColor } from "../../consts";
 
 export async function getStaticPaths() {
   const posts = (await getCollection("blog", ({ data }) => !data.draft)).sort(
@@ -49,6 +49,7 @@ const jsonLd = {
           <nav aria-label="Breadcrumb" class="text-[13px] text-dim mb-6" data-pagefind-ignore>
             <a href="/blog/" class="nav-link">← All posts</a>
           </nav>
+          <div class="page-icon" aria-hidden="true">📄</div>
           <h1 class="text-[26px] lg:text-[32px] font-bold leading-[1.25] tracking-tight text-strong text-balance mb-4">
             {post.data.title}
           </h1>
@@ -67,8 +68,8 @@ const jsonLd = {
             <span>{author}</span>
           </div>
           {post.data.tags.length > 0 && (
-            <div class="flex flex-wrap gap-x-3 mt-2" data-pagefind-ignore>
-              {post.data.tags.map((tag) => <a href={`/tags/${tag}/`} class="tag">{tag}</a>)}
+            <div class="flex flex-wrap gap-1.5 mt-3" data-pagefind-ignore>
+              {post.data.tags.map((tag) => <a href={`/tags/${tag}/`} class="tag" data-color={tagColor(tag)}>{tag}</a>)}
             </div>
           )}
         </header>

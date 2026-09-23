@@ -1,6 +1,7 @@
 ---
 // One search UI, used on /search/ and inside the ⌘K dialog. Backed by Pagefind's JS API.
 import { getCollection } from "astro:content";
+import { tagColor } from "../consts";
 
 interface Props {
   mode: "page" | "dialog";
@@ -35,10 +36,10 @@ const inputId = mode === "page" ? "search-input" : "search-dialog-input";
     />
   </form>
   <div class={mode === "page" ? "mt-5" : "px-4 pt-4"}>
-    <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px]" data-search-suggestions>
+    <div class="flex flex-wrap items-center gap-2 text-[13px]" data-search-suggestions>
       <span class="text-dim mr-1">Try:</span>
       {suggestions.map((s) => (
-        <button type="button" class="tag cursor-pointer" data-suggest={s}>{s}</button>
+        <button type="button" class="tag cursor-pointer" data-color={tagColor(s)} data-suggest={s}>{s}</button>
       ))}
     </div>
   </div>

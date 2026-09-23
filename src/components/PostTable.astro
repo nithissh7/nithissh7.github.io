@@ -1,6 +1,6 @@
 ---
 import type { CollectionEntry } from "astro:content";
-import { formatDate } from "../consts";
+import { formatDate, tagColor } from "../consts";
 import { getReadingTime } from "../lib/reading-time";
 
 interface Props {
@@ -27,8 +27,8 @@ const cols = "md:grid md:grid-cols-[9rem_minmax(0,1fr)_13rem_4.5rem] md:gap-8";
             <span class="row-title block leading-snug">{post.data.title}</span>
             <span class="block text-[14px] text-dim mt-1.5 leading-relaxed line-clamp-2">{post.data.description}</span>
           </span>
-          <span class="hidden md:flex flex-wrap content-start gap-x-3 pt-0.5">
-            {post.data.tags.slice(0, 3).map((tag) => <span class="tag">{tag}</span>)}
+          <span class="hidden md:flex flex-wrap content-start gap-1.5 pt-0.5">
+            {post.data.tags.slice(0, 3).map((tag) => <span class="tag" data-color={tagColor(tag)}>{tag}</span>)}
           </span>
           <span class="hidden md:block text-[14px] text-dim text-right tabular-nums">
             {getReadingTime(post.body ?? "").replace(" read", "")}

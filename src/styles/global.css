@@ -11,25 +11,53 @@
   Hierarchy comes from two text tones (strong / text) plus weight and size.
 */
 :root {
-  --bg: #fdfcfc;
-  --bg-raised: #f5f3f2;
-  --border: #e6e1e0;
-  --border-strong: #d2ccca;
-  --strong: #1c1a1a;
-  --text: #4d4848;
-  --dim: #635d5c;
+  /* Notion light */
+  --bg: #ffffff;
+  --bg-raised: #f7f6f3;
+  --hover: rgba(55, 53, 47, 0.06);
+  --border: #ededec;
+  --border-strong: #dfdfde;
+  --strong: #37352f;
+  --text: #37352f;
+  --dim: #73726e;
+  --select: rgba(35, 131, 226, 0.28);
+  --find-mark: #fdecc8;
   color-scheme: light;
+
+  --tag-gray: #ebeae8;   --tag-gray-ink: #32302c;
+  --tag-brown: #eee0da;  --tag-brown-ink: #442a1e;
+  --tag-orange: #fadec9; --tag-orange-ink: #49290e;
+  --tag-yellow: #fdecc8; --tag-yellow-ink: #402c1b;
+  --tag-green: #dbeddb;  --tag-green-ink: #1c3829;
+  --tag-blue: #d3e5ef;   --tag-blue-ink: #183347;
+  --tag-purple: #e8deee; --tag-purple-ink: #412454;
+  --tag-pink: #f5e0e9;   --tag-pink-ink: #4c2337;
+  --tag-red: #ffe2dd;    --tag-red-ink: #5d1715;
 }
 
 :root[data-theme="dark"] {
-  --bg: #0c0c0e;
-  --bg-raised: #141417;
-  --border: #242428;
-  --border-strong: #36363c;
-  --strong: #f2eded;
-  --text: #b8b2b2;
-  --dim: #878282;
+  /* Notion dark */
+  --bg: #191919;
+  --bg-raised: #202020;
+  --hover: rgba(255, 255, 255, 0.055);
+  --border: #2f2f2f;
+  --border-strong: #3a3a3a;
+  --strong: #ececec;
+  --text: #cfcfcf;
+  --dim: #9b9b9b;
+  --select: rgba(45, 170, 219, 0.3);
+  --find-mark: #564328;
   color-scheme: dark;
+
+  --tag-gray: #373737;   --tag-gray-ink: #e3e3e3;
+  --tag-brown: #4a3228;  --tag-brown-ink: #e3e3e3;
+  --tag-orange: #5c3b23; --tag-orange-ink: #e3e3e3;
+  --tag-yellow: #564328; --tag-yellow-ink: #e3e3e3;
+  --tag-green: #243d30;  --tag-green-ink: #e3e3e3;
+  --tag-blue: #143a4e;   --tag-blue-ink: #e3e3e3;
+  --tag-purple: #3c2d49; --tag-purple-ink: #e3e3e3;
+  --tag-pink: #4e2c3c;   --tag-pink-ink: #e3e3e3;
+  --tag-red: #522e2a;    --tag-red-ink: #e3e3e3;
 }
 
 @theme {
@@ -72,8 +100,7 @@
     text-decoration: none;
   }
   ::selection {
-    background: var(--strong);
-    color: var(--bg);
+    background: var(--select);
   }
   :focus-visible {
     outline: 2px solid var(--strong);
@@ -605,5 +632,100 @@
   *::after {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+
+/* ============ Notion touches (on top of the mono design) ============ */
+@layer components {
+  /* Page icon above each title. */
+  .page-icon {
+    font-size: 64px;
+    line-height: 1;
+    margin-bottom: 1rem;
+    font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+  }
+  @media (min-width: 1024px) {
+    .page-icon {
+      font-size: 78px;
+    }
+  }
+
+  /* Tags as Notion "select" pills (still JetBrains Mono). */
+  .tag {
+    font-size: 12px;
+    line-height: 20px;
+    padding: 0 6px;
+    border-radius: 3px;
+    background: var(--tag-gray);
+    color: var(--tag-gray-ink);
+  }
+  .tag::before {
+    content: none;
+  }
+  a.tag:hover,
+  button.tag:hover {
+    color: inherit;
+    filter: brightness(0.96);
+  }
+  :root[data-theme="dark"] :is(a.tag, button.tag):hover {
+    filter: brightness(1.15);
+  }
+  .tag[data-color="brown"] { background: var(--tag-brown); color: var(--tag-brown-ink); }
+  .tag[data-color="orange"] { background: var(--tag-orange); color: var(--tag-orange-ink); }
+  .tag[data-color="yellow"] { background: var(--tag-yellow); color: var(--tag-yellow-ink); }
+  .tag[data-color="green"] { background: var(--tag-green); color: var(--tag-green-ink); }
+  .tag[data-color="blue"] { background: var(--tag-blue); color: var(--tag-blue-ink); }
+  .tag[data-color="purple"] { background: var(--tag-purple); color: var(--tag-purple-ink); }
+  .tag[data-color="pink"] { background: var(--tag-pink); color: var(--tag-pink-ink); }
+  .tag[data-color="red"] { background: var(--tag-red); color: var(--tag-red-ink); }
+
+  /* Notion grey hover on menu items and archive rows. */
+  header .nav-link,
+  footer .nav-link {
+    border-radius: 4px;
+    padding: 2px 6px;
+    margin: -2px -6px;
+    transition: background-color 0.1s ease, color 0.1s ease;
+  }
+  header .nav-link:hover,
+  footer .nav-link:hover {
+    background: var(--hover);
+  }
+  .icon-btn {
+    border-radius: 4px;
+  }
+  .icon-btn:hover,
+  [data-search-open]:hover {
+    background: var(--hover);
+    border-radius: 4px;
+  }
+  a.trow {
+    border-radius: 4px;
+    transition: background-color 0.1s ease;
+  }
+  a.trow:hover {
+    background: var(--hover);
+  }
+
+  /* Quick Find style search overlay. */
+  .search-dialog {
+    border-radius: 12px;
+    border-color: transparent;
+    box-shadow: rgba(15, 15, 15, 0.05) 0 0 0 1px, rgba(15, 15, 15, 0.1) 0 5px 10px, rgba(15, 15, 15, 0.2) 0 15px 40px;
+  }
+  :root[data-theme="dark"] .search-dialog {
+    box-shadow: rgba(255, 255, 255, 0.07) 0 0 0 1px, rgba(0, 0, 0, 0.4) 0 15px 40px;
+    background: #252525;
+  }
+  .search-dialog::backdrop {
+    background: rgba(15, 15, 15, 0.6);
+    backdrop-filter: none;
+  }
+  .search-excerpt mark {
+    background: var(--find-mark);
+    color: inherit;
+    border-radius: 2px;
+    padding: 0 1px;
   }
 }

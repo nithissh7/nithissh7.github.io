@@ -29,3 +29,11 @@ export function formatDate(date: Date, style: "short" | "iso" | "long" | "medium
 export function yearOf(date: Date): number {
   return Number(formatDate(date).slice(0, 4));
 }
+
+// Notion "select" colours; each tag always maps to the same one.
+const TAG_COLORS = ["gray", "brown", "orange", "yellow", "green", "blue", "purple", "pink", "red"] as const;
+export function tagColor(tag: string): string {
+  let h = 0;
+  for (const ch of tag) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return TAG_COLORS[h % TAG_COLORS.length];
+}
