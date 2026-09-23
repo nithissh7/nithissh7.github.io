@@ -122,6 +122,23 @@
     max-width: 1200px;
     margin-inline: auto;
   }
+  /* Article pages: one centred column (848px of content) shared by header,
+     title, text, code and images — the proportions of the original post page. */
+  .wrap-reading {
+    max-width: 944px;
+  }
+  .wrap-reading .prose {
+    font-size: 16px;
+    line-height: 1.75;
+  }
+  .wrap-reading .prose h2 {
+    font-size: 22px;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .wrap-reading .prose h3 {
+    font-size: 18px;
+  }
   /* Sections are separated by space, not lines. */
   .band {
     padding: 2.5rem 1.25rem;
