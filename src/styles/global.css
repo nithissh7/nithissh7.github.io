@@ -801,3 +801,21 @@
     --hl-edge: #529cca;
   }
 }
+
+/* Inline code in red (Notion-style), contrast-checked per theme:
+   light #c4352e on #fbeceb = 4.7:1, dark #ff7369 on #2e2120 = 5.8:1. */
+@layer components {
+  :root {
+    --code-ink: #c4352e;
+    --code-bg: #fbeceb;
+  }
+  :root[data-theme="dark"] {
+    --code-ink: #ff7369;
+    --code-bg: #2e2120;
+  }
+  :not(pre) > code {
+    color: var(--code-ink);
+    background: var(--code-bg);
+    border-color: transparent;
+  }
+}
