@@ -15,12 +15,12 @@ function loadFonts() {
   return fontsPromise;
 }
 
-const PAPER = "#f8f6f1";
-const INK = "#1a1a1a";
-const INK_SOFT = "#55534d";
-const LINE = "#ded9cc";
-const ACCENT_BG = "#eef0fb";
-const ACCENT_INK = "#4338ca";
+const PAPER = "#f7f6f2";
+const INK = "#161616";
+const INK_SOFT = "#57534b";
+const LINE = "#dedacf";
+const ACCENT_BG = INK;
+const ACCENT_INK = PAPER;
 
 interface OgImageOptions {
   eyebrow: string;
@@ -62,8 +62,8 @@ export async function renderOgImage({
               style: {
                 display: "flex",
                 flexDirection: "column",
-                border: `3px solid ${INK}`,
-                borderRadius: "16px",
+                border: `1.5px solid ${LINE}`,
+                borderRadius: "6px",
                 padding: "48px",
                 height: "100%",
                 justifyContent: "space-between",
@@ -85,8 +85,7 @@ export async function renderOgImage({
                             display: "flex",
                             backgroundColor: accentBg,
                             color: accentInk,
-                            border: `2.5px solid ${INK}`,
-                            borderRadius: "10px",
+                            borderRadius: "4px",
                             padding: "10px 20px",
                             fontSize: "28px",
                             fontWeight: 700,
@@ -132,7 +131,7 @@ export async function renderOgImage({
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "space-between",
-                      borderTop: `2px solid ${LINE}`,
+                      borderTop: `1.5px solid ${LINE}`,
                       paddingTop: "24px",
                     },
                     children: [

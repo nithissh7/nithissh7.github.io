@@ -1,0 +1,40 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "../layouts/BaseLayout.astro";
+import PostArchive from "../components/PostArchive.astro";
+import { SITE_AUTHOR, SITE_TAGLINE } from "../consts";
+
+const posts = await getCollection("blog", ({ data }) => !data.draft);
+const cves = await getCollection("cves", ({ data }) => !data.draft);
+const certs = await getCollection("certifications");
+
+const stats = [
+  { label: `${posts.length} posts`, href: "#posts" },
+  { label: `${cves.length} cves`, href: "/cves" },
+  { label: `${certs.length} certs`, href: "/certifications" },
+  { label: "rss", href: "/rss.xml" },
+];
+---
+
+<BaseLayout>
+  <section class="mb-14 sm:mb-16">
+    <p class="text-[13px] text-muted mb-3" aria-hidden="true">$ whoami</p>
+    <h1 class="text-[22px] sm:text-[26px] font-bold leading-tight tracking-tight mb-3">
+      {SITE_AUTHOR}
+    </h1>
+    <p class="font-serif text-[17px] sm:text-[18px] leading-relaxed text-ink-2 max-w-xl mb-6">
+      {SITE_TAGLINE} Vulnerability research, CVE teardowns, and challenge write-ups.
+    </p>
+    <ul class="flex flex-wrap gap-x-5 gap-y-1 text-[13px]">
+      {stats.map((s) => (
+        <li>
+          <a href={s.href} class="quiet"><span class="text-muted">[+]</span> {s.label}</a>
+        </li>
+      ))}
+    </ul>
+  </section>
+
+  <div id="posts">
+    {posts.length === 0 ? <p class="text-ink-2">No posts yet.</p> : <PostArchive posts={posts} />}
+  </div>
+</BaseLayout>

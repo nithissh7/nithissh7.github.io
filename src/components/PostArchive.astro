@@ -1,0 +1,49 @@
+---
+import type { CollectionEntry } from "astro:content";
+import { getReadingTime } from "../lib/reading-time";
+import { formatDate, yearOf } from "../consts";
+
+interface Props {
+  posts: CollectionEntry<"blog">[];
+}
+
+const { posts } = Astro.props;
+const sorted = [...posts].sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+
+const byYear = new Map<number, CollectionEntry<"blog">[]>();
+for (const post of sorted) {
+  const year = yearOf(post.data.pubDate);
+  byYear.set(year, [...(byYear.get(year) ?? []), post]);
+}
+---
+
+<div class="space-y-10">
+  {[...byYear].map(([year, yearPosts]) => (
+    <section aria-labelledby={`year-${year}`}>
+      <h2 id={`year-${year}`} class="rule text-[13px] mb-1">
+        {year}
+      </h2>
+      <ul class="rise">
+        {yearPosts.map((post) => (
+          <li>
+            <a href={`/blog/${post.id}/`} class="row group">
+              <time datetime={post.data.pubDate.toISOString()} class="text-[12px] text-muted shrink-0 tabular-nums w-11">
+                {formatDate(post.data.pubDate, "short")}
+              </time>
+              <span class="flex-1 min-w-0">
+                <span class="row-title block text-[14px] leading-snug">{post.data.title}</span>
+                <span class="block text-[12px] text-ink-2 mt-1 leading-relaxed line-clamp-2 sm:line-clamp-1">
+                  {post.data.description}
+                </span>
+              </span>
+              <span class="hidden sm:block text-[12px] text-muted shrink-0 tabular-nums">
+                {getReadingTime(post.body ?? "").replace(" read", "")}
+              </span>
+              <span class="row-arrow hidden sm:block text-ink shrink-0" aria-hidden="true">→</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
+  ))}
+</div>

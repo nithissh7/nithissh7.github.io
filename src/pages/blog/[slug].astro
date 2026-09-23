@@ -2,17 +2,19 @@
 import { getCollection, render } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { getReadingTime } from "../../lib/reading-time";
-import { SITE_AUTHOR } from "../../consts";
+import { SITE_AUTHOR, formatDate } from "../../consts";
 
 export async function getStaticPaths() {
-  const posts = await getCollection("blog", ({ data }) => !data.draft);
-  return posts.map((post) => ({
+  const posts = (await getCollection("blog", ({ data }) => !data.draft)).sort(
+    (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
+  );
+  return posts.map((post, i) => ({
     params: { slug: post.id },
-    props: { post },
+    props: { post, newer: posts[i - 1], older: posts[i + 1] },
   }));
 }
 
-const { post } = Astro.props;
+const { post, newer, older } = Astro.props;
 const { Content } = await render(post);
 const readTime = getReadingTime(post.body ?? "");
 
@@ -38,41 +40,61 @@ const jsonLd = {
   image={`/blog/${post.id}/og.png`}
 >
   <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
-  <article>
-    <a
-      href="/"
-      class="inline-block mb-6 border-brutal shadow-brutal-sm brutal-press bg-paper px-3 py-1.5 text-xs font-medium"
-    >
-      &larr; Back
-    </a>
+  <article data-pagefind-body>
+    <a href="/" data-back data-pagefind-ignore class="quiet text-[13px]">← cd ..</a>
 
-    <header class="mb-8 border-brutal shadow-brutal-sm bg-accent p-5 sm:p-6 text-ink">
-      <h1 class="text-2xl sm:text-4xl font-bold leading-tight mb-4">
+    <header class="mt-8 mb-10 pb-8 border-b border-line">
+      <p class="text-[12px] text-muted mb-4 tabular-nums">
+        <time datetime={post.data.pubDate.toISOString()}>{formatDate(post.data.pubDate)}</time>
+        <span class="mx-1.5">·</span>{readTime}
+        {post.data.updatedDate && (
+          <>
+            <span class="mx-1.5">·</span>updated {formatDate(post.data.updatedDate)}
+          </>
+        )}
+      </p>
+      <h1 class="text-[24px] sm:text-[30px] font-bold leading-[1.2] tracking-tight mb-4 text-balance">
         {post.data.title}
       </h1>
-      <div class="flex items-center gap-3 flex-wrap text-xs font-medium text-ink-soft">
-        <time datetime={post.data.pubDate.toISOString()}>
-          {post.data.pubDate.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
-        </time>
-        <span>&bull;</span>
-        <span>{readTime}</span>
-      </div>
+      <p class="font-serif italic text-[17px] sm:text-[18px] leading-relaxed text-ink-2 max-w-2xl">
+        {post.data.description}
+      </p>
       {post.data.tags.length > 0 && (
-        <div class="flex flex-wrap gap-2 mt-4">
+        <ul class="flex flex-wrap gap-x-4 gap-y-1 mt-5 text-[12px]">
           {post.data.tags.map((tag) => (
-            <a
-              href={`/tags/${tag}/`}
-              class="text-xs font-medium text-ink-soft border border-line rounded-full px-2.5 py-0.5 bg-paper"
-            >
-              #{tag}
-            </a>
+            <li>
+              <a href={`/tags/${tag}/`} class="quiet">#{tag}</a>
+            </li>
           ))}
-        </div>
+        </ul>
       )}
     </header>
 
-    <div class="prose-brutal">
+    <div class="prose" data-article>
       <Content />
     </div>
+
+    <footer data-pagefind-ignore class="mt-16 pt-6 border-t border-line text-[13px]">
+      <p class="text-muted mb-8">
+        — written by {post.data.author ?? SITE_AUTHOR}. Spotted a mistake?
+        <a href="mailto:realnits@gmail.com" class="link text-ink-2">Tell me</a>.
+      </p>
+      {(newer || older) && (
+        <nav aria-label="More posts" class="grid sm:grid-cols-2 gap-6">
+          {older ? (
+            <a href={`/blog/${older.id}/`} class="group block">
+              <span class="block text-[12px] text-muted mb-1">← older</span>
+              <span class="row-title group-hover:underline underline-offset-4 decoration-line-strong">{older.data.title}</span>
+            </a>
+          ) : <span />}
+          {newer && (
+            <a href={`/blog/${newer.id}/`} class="group block sm:text-right">
+              <span class="block text-[12px] text-muted mb-1">newer →</span>
+              <span class="row-title group-hover:underline underline-offset-4 decoration-line-strong">{newer.data.title}</span>
+            </a>
+          )}
+        </nav>
+      )}
+    </footer>
   </article>
 </BaseLayout>

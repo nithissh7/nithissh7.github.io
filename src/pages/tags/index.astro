@@ -9,33 +9,25 @@ for (const post of posts) {
     tagCounts.set(tag, (tagCounts.get(tag) ?? 0) + 1);
   }
 }
-const tags = [...tagCounts.entries()].sort((a, b) => a[0].localeCompare(b[0]));
-
-const accents = [
-  { bg: "bg-accent", ink: "text-accent-ink" },
-  { bg: "bg-accent-2", ink: "text-accent-2-ink" },
-  { bg: "bg-accent-pink", ink: "text-accent-pink-ink" },
-];
+const tags = [...tagCounts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
 ---
 
-<BaseLayout title="Tags">
-  <h1 class="text-3xl sm:text-4xl font-bold mb-8">Tags</h1>
+<BaseLayout title="Tags" description="Every topic written about on realnits.">
+  <p class="text-[13px] text-muted mb-3" aria-hidden="true">$ ls tags/</p>
+  <h1 class="text-[22px] font-bold mb-10">Tags</h1>
 
   {tags.length === 0 ? (
-    <p class="font-medium text-ink-soft">No tags yet.</p>
+    <p class="text-ink-2">No tags yet.</p>
   ) : (
-    <div class="flex flex-wrap gap-3">
-      {tags.map(([tag, count], i) => {
-        const accent = accents[i % accents.length];
-        return (
-          <a
-            href={`/tags/${tag}/`}
-            class={`border-brutal shadow-brutal-sm brutal-press px-4 py-2 font-medium ${accent.bg} ${accent.ink}`}
-          >
-            #{tag} <span class="opacity-60">({count})</span>
+    <ul class="grid sm:grid-cols-2 sm:gap-x-10 rise">
+      {tags.map(([tag, count]) => (
+        <li>
+          <a href={`/tags/${tag}/`} class="row justify-between">
+            <span class="row-title">#{tag}</span>
+            <span class="text-[12px] text-muted tabular-nums">{count}</span>
           </a>
-        );
-      })}
-    </div>
+        </li>
+      ))}
+    </ul>
   )}
 </BaseLayout>

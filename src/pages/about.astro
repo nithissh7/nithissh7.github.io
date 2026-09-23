@@ -1,114 +1,86 @@
 ---
+import { getCollection } from "astro:content";
 import BaseLayout from "../layouts/BaseLayout.astro";
+import { SOCIAL_LINKS } from "../consts";
 
-const certs = [
-  { abbr: "BCP", name: "Burp Certified Practitioner", issuer: "PortSwigger" },
-  { abbr: "CDP", name: "Certified DevSecOps Professional", issuer: "Practical DevSecOps" },
-  { abbr: "eWPTx", name: "Web App Pentester eXtreme", issuer: "INE Security" },
-  { abbr: "eWPT", name: "Web App Penetration Tester", issuer: "INE Security" },
-  { abbr: "eCPPTv2", name: "Certified Penetration Tester eXtreme", issuer: "INE Security" },
-  { abbr: "CCSK", name: "Cloud Security Knowledge v4", issuer: "CSA" },
-];
+const certs = (await getCollection("certifications")).sort(
+  (a, b) => b.data.dateEarned.valueOf() - a.data.dateEarned.valueOf()
+);
 
-const links = [
-  { label: "GitHub", href: "https://github.com/nithissh7" },
-  { label: "Email", href: "mailto:realnits@gmail.com" },
-  { label: "LinkedIn", href: "https://linkedin.com/in/nithisshs" },
-  { label: "RSS", href: "/rss.xml" },
-];
-
-const accents = [
-  { bg: "bg-accent", ink: "text-accent-ink" },
-  { bg: "bg-accent-2", ink: "text-accent-2-ink" },
-  { bg: "bg-accent-pink", ink: "text-accent-pink-ink" },
+const areas = [
+  { k: "offense", v: "Bug bounty · web and API pentesting · cloud security (AWS, Azure, GCP) · vulnerability research" },
+  { k: "defense", v: "Platform and AI security · SOC operations · SIEM and EDR · DevSecOps · incident response" },
+  { k: "build", v: "Security tooling · automation · open source contributions · this blog" },
 ];
 ---
 
 <BaseLayout title="About" description="Security architect by day, bug bounty hunter by night.">
-  <h1 class="text-3xl sm:text-4xl font-bold mb-8">About</h1>
+  <p class="text-[13px] text-muted mb-3" aria-hidden="true">$ cat about.md</p>
+  <h1 class="text-[22px] font-bold mb-8">About</h1>
 
-  <div class="border-brutal shadow-brutal-sm bg-accent p-5 sm:p-6 mb-10">
-    <p class="font-medium text-lg leading-relaxed text-ink">
-      Security architect by day, bug bounty hunter by night — I break things to
-      understand how to defend them better.
+  <div class="prose mb-14">
+    <p>
+      Security architect by day, bug bounty hunter by night — I break things to understand how to defend them
+      better.
     </p>
+    <p>
+      I handle platform and AI security at one of the largest pharma companies. Outside work, I spend my time
+      hunting vulnerabilities, writing security tools, and documenting everything I learn on this blog.
+    </p>
+    <p>The thing that keeps me going is curiosity — there's nothing quite like finding the flaw that nobody else noticed.</p>
   </div>
 
-  <div class="space-y-4 mb-10">
-    <p class="text-ink-soft">
-      I handle platform and AI security at one of the largest pharma companies.
-      Outside work, I spend my time hunting vulnerabilities, writing security
-      tools, and documenting everything I learn on this blog.
-    </p>
-    <p class="text-ink-soft">
-      The thing that keeps me going is curiosity — there's nothing quite like
-      finding the flaw that nobody else noticed.
-    </p>
-  </div>
-
-  <h2 class="text-xl font-bold mb-4 border-b border-line pb-2">What I Do</h2>
-  <div class="grid gap-4 sm:grid-cols-3 mb-10">
-    <div class="border-brutal shadow-brutal-sm p-4 bg-paper">
-      <h3 class="font-bold text-sm mb-2">Offense</h3>
-      <p class="text-sm text-ink-soft">Bug bounty · web &amp; API pentesting · cloud security (AWS, Azure, GCP) · vulnerability research</p>
-    </div>
-    <div class="border-brutal shadow-brutal-sm p-4 bg-paper">
-      <h3 class="font-bold text-sm mb-2">Defense</h3>
-      <p class="text-sm text-ink-soft">Platform &amp; AI security · SOC operations · SIEM &amp; EDR · DevSecOps · incident response</p>
-    </div>
-    <div class="border-brutal shadow-brutal-sm p-4 bg-paper">
-      <h3 class="font-bold text-sm mb-2">Build</h3>
-      <p class="text-sm text-ink-soft">Security tooling · automation · open source contributions · this blog</p>
-    </div>
-  </div>
-
-  <h2 class="text-xl font-bold mb-4 border-b border-line pb-2">Certifications</h2>
-  <div class="grid gap-3 sm:grid-cols-2 mb-4">
-    {certs.map((cert, i) => {
-      const accent = accents[i % accents.length];
-      return (
-        <div class="border-brutal shadow-brutal-sm p-3 bg-paper flex items-center gap-3">
-          <span class={`text-xs font-bold rounded-full px-2.5 py-1 shrink-0 ${accent.bg} ${accent.ink}`}>
-            {cert.abbr}
-          </span>
-          <div class="text-sm">
-            <p class="font-bold leading-tight">{cert.name}</p>
-            <p class="text-ink-soft text-xs">{cert.issuer}</p>
-          </div>
+  <section class="mb-14">
+    <h2 class="rule text-[13px] mb-1">what i do</h2>
+    <dl class="text-[13px]">
+      {areas.map(({ k, v }) => (
+        <div class="flex flex-col sm:flex-row gap-1 sm:gap-6 py-3 border-b border-line">
+          <dt class="sm:w-24 shrink-0 text-ink font-bold">{k}</dt>
+          <dd class="text-ink-2">{v}</dd>
         </div>
-      );
-    })}
-  </div>
-  <a href="/certifications" class="inline-block mb-10 border-brutal shadow-brutal-sm brutal-press bg-paper px-3 py-1.5 text-xs font-medium">
-    See all with badges &rarr;
-  </a>
+      ))}
+    </dl>
+  </section>
 
-  <h2 class="text-xl font-bold mb-4 border-b border-line pb-2">This Blog</h2>
-  <div class="space-y-4 mb-10">
-    <p class="text-ink-soft">
-      I write to think. Bug bounty writeups, cloud security research, CTF
-      solutions, SOC learning notes — whatever I'm into that week ends up here.
-    </p>
-    <p class="text-ink-soft">
-      Mostly for future-me, so I don't relearn things twice. If it helps you
-      too, that's a bonus.
-    </p>
-  </div>
+  <section class="mb-14">
+    <h2 class="rule text-[13px] mb-1">certifications</h2>
+    <ul class="text-[13px]">
+      {certs.map((cert) => (
+        <li class="flex justify-between gap-6 py-2.5 border-b border-line">
+          <span class="text-ink">{cert.data.name}</span>
+          <span class="text-muted shrink-0">{cert.data.issuer}</span>
+        </li>
+      ))}
+    </ul>
+    <a href="/certifications" class="quiet inline-block mt-4 text-[13px]">all certs with badges →</a>
+  </section>
 
-  <h2 class="text-xl font-bold mb-4 border-b border-line pb-2">Connect</h2>
-  <div class="flex flex-wrap gap-3">
-    {links.map((link, i) => {
-      const accent = accents[i % accents.length];
-      return (
-        <a
-          href={link.href}
-          target={link.href.startsWith("http") ? "_blank" : undefined}
-          rel={link.href.startsWith("http") ? "noopener noreferrer" : undefined}
-          class={`border-brutal shadow-brutal-sm brutal-press px-4 py-2 font-medium text-sm ${accent.bg} ${accent.ink}`}
-        >
-          {link.label}
-        </a>
-      );
-    })}
-  </div>
+  <section class="mb-14">
+    <h2 class="rule text-[13px] mb-4">this blog</h2>
+    <div class="prose">
+      <p>
+        I write to think. Bug bounty write-ups, cloud security research, CTF solutions, SOC learning notes —
+        whatever I'm into that week ends up here.
+      </p>
+      <p>Mostly for future-me, so I don't relearn things twice. If it helps you too, that's a bonus.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="rule text-[13px] mb-4">connect</h2>
+    <ul class="flex flex-wrap gap-x-6 gap-y-2 text-[13px]">
+      {SOCIAL_LINKS.map((link) => (
+        <li>
+          <a
+            href={link.href}
+            class="btn-bracket"
+            target={link.href.startsWith("http") ? "_blank" : undefined}
+            rel={link.href.startsWith("http") ? "noopener noreferrer" : undefined}
+          >
+            {link.label}
+          </a>
+        </li>
+      ))}
+    </ul>
+  </section>
 </BaseLayout>
