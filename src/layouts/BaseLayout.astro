@@ -257,7 +257,13 @@ const ogImageURL = new URL(image, Astro.site);
         window.open(URL.createObjectURL(new Blob([doc], { type: "text/html" })), "_blank", "noopener");
       });
 
+      // The header gets its hairline only once the page scrolls under it.
+      const markHeader = () =>
+        document.querySelector(".site-header")?.toggleAttribute("data-scrolled", window.scrollY > 8);
+      window.addEventListener("scroll", markHeader, { passive: true });
+
       document.addEventListener("astro:page-load", () => {
+        markHeader();
         enhancePost();
         watchDiagrams();
       });

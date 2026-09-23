@@ -43,9 +43,9 @@ const areas = [
       <div class="lg:col-span-5 space-y-10">
         <div>
           <p class="text-[13px] text-strong font-bold mb-3">What I do</p>
-          <dl class="cells">
+          <dl class="space-y-5">
             {areas.map((a) => (
-              <div class="p-5">
+              <div>
                 <dt class="text-strong font-medium mb-1">{a.k}</dt>
                 <dd class="text-[14px] text-dim leading-relaxed">{a.v}</dd>
               </div>
@@ -78,9 +78,9 @@ const areas = [
       <h2 class="h-section">Certifications</h2>
       <a href="/certifications/" class="nav-link text-[14px]">Details →</a>
     </div>
-    <ul class="cells md:grid-cols-2 lg:grid-cols-3 text-[14px]">
+    <ul class="grid md:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-5 text-[14px]">
       {certs.map((c) => (
-        <li class="px-5 py-4">
+        <li>
           <span class="block text-strong">{c.data.name}</span>
           <span class="block text-[13px] text-dim">{c.data.issuer}</span>
         </li>

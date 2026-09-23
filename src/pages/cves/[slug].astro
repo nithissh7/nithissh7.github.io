@@ -40,10 +40,10 @@ const strip = [
       <h1 class="h-page max-w-[30ch] mb-4">{vuln}</h1>
       {product && <p class="lede mb-10">{product}{cve.data.vendor && <span class="text-dim"> · {cve.data.vendor}</span>}</p>}
 
-      <dl class={`cells grid-cols-2 ${strip.length === 5 ? "md:grid-cols-5" : "md:grid-cols-4"} text-[14px]`} data-pagefind-ignore>
+      <dl class="flex flex-wrap gap-x-10 gap-y-4 text-[14px]" data-pagefind-ignore>
         {strip.map(({ k, v }) => (
-          <div class="px-5 py-4">
-            <dt class="text-[12px] text-dim mb-1">{k}</dt>
+          <div>
+            <dt class="text-[12px] text-dim mb-0.5">{k}</dt>
             <dd class="text-strong tabular-nums">{v}</dd>
           </div>
         ))}

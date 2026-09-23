@@ -13,22 +13,20 @@ const href = (n: number) => (n === 1 ? `${base}/` : `${base}/${n}/`);
 
 {last > 1 && (
   <nav aria-label="Pagination" class="flex items-center justify-between gap-4 text-[14px]">
-    {prev ? <a href={prev} class="btn btn-ghost">← Newer</a> : <span class="btn btn-ghost opacity-40 pointer-events-none" aria-hidden="true">← Newer</span>}
-    <ol class="flex items-center gap-1">
+    {prev ? <a href={prev} class="nav-link">← Newer</a> : <span class="text-dim opacity-40" aria-hidden="true">← Newer</span>}
+    <ol class="flex items-center gap-4">
       {Array.from({ length: last }, (_, i) => i + 1).map((n) => (
         <li>
           <a
             href={href(n)}
             aria-current={n === current ? "page" : undefined}
-            class={`grid place-items-center size-9 rounded-md tabular-nums transition-colors ${
-              n === current ? "bg-strong text-bg font-bold" : "text-dim hover:text-strong hover:bg-raised"
-            }`}
+            class={`tabular-nums ${n === current ? "text-strong font-bold underline underline-offset-[6px] decoration-1" : "nav-link"}`}
           >
             {n}
           </a>
         </li>
       ))}
     </ol>
-    {next ? <a href={next} class="btn btn-ghost">Older →</a> : <span class="btn btn-ghost opacity-40 pointer-events-none" aria-hidden="true">Older →</span>}
+    {next ? <a href={next} class="nav-link">Older →</a> : <span class="text-dim opacity-40" aria-hidden="true">Older →</span>}
   </nav>
 )}

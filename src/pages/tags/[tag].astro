@@ -27,7 +27,7 @@ const { posts } = Astro.props;
     <h1 class="h-page mb-5">{tag}</h1>
     <p class="lede">{posts.length} {posts.length === 1 ? "post" : "posts"} on this topic.</p>
   </section>
-  <section class="band !pt-6 lg:!pt-8">
+  <section class="band !pt-2">
     <PostTable posts={posts} />
   </section>
 </BaseLayout>

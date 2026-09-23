@@ -28,14 +28,14 @@ const { page, tags, total } = Astro.props;
     <p class="lede mb-8">
       Write-ups on vulnerability research, CVE teardowns, bug bounty findings, and security challenges — newest first.
     </p>
-    <div class="flex flex-wrap gap-2" aria-label="Topics">
+    <div class="flex flex-wrap gap-x-4 gap-y-1" aria-label="Topics">
       {tags.map(([tag, n]) => (
-        <a href={`/tags/${tag}/`} class="tag !text-[13px] !px-2 !py-0.5">{tag} <span class="opacity-60">{n}</span></a>
+        <a href={`/tags/${tag}/`} class="tag">{tag} <span class="opacity-60">{n}</span></a>
       ))}
     </div>
   </section>
 
-  <section class="band !pt-6 lg:!pt-8">
+  <section class="band !pt-2">
     <PostTable posts={page.data} />
     <div class="mt-10">
       <Pagination current={page.currentPage} last={page.lastPage} prev={page.url.prev} next={page.url.next} base="/blog" />

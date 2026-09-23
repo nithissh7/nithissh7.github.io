@@ -67,7 +67,7 @@ const jsonLd = {
             <span>{author}</span>
           </div>
           {post.data.tags.length > 0 && (
-            <div class="flex flex-wrap gap-1.5 mt-3" data-pagefind-ignore>
+            <div class="flex flex-wrap gap-x-3 mt-2" data-pagefind-ignore>
               {post.data.tags.map((tag) => <a href={`/tags/${tag}/`} class="tag">{tag}</a>)}
             </div>
           )}
@@ -75,11 +75,11 @@ const jsonLd = {
 
         {toc.length > 2 && (
           <details class="toc-box mb-10" data-pagefind-ignore>
-            <summary class="flex items-center justify-between gap-4 cursor-pointer select-none px-4 py-2.5 text-[14px] text-strong">
+            <summary class="flex items-center gap-3 cursor-pointer select-none py-1 text-[14px] text-strong">
               <span>Contents <span class="text-dim">· {toc.filter((h) => h.depth === 2).length} sections</span></span>
               <span class="toc-chevron text-dim" aria-hidden="true">+</span>
             </summary>
-            <nav class="toc px-4 pb-4 pt-1" aria-label="Contents">
+            <nav class="toc pt-3" aria-label="Contents">
               {toc.map((h) => <a href={`#${h.slug}`} data-depth={h.depth}>{h.text}</a>)}
             </nav>
           </details>
@@ -98,17 +98,17 @@ const jsonLd = {
         <a href="mailto:realnits@gmail.com" class="link">Email me</a>.
       </p>
       {(newer || older) && (
-        <nav aria-label="More posts" class="cells md:grid-cols-2">
+        <nav aria-label="More posts" class="grid md:grid-cols-2 gap-8 pt-8 border-t border-border">
           {older ? (
-            <a href={`/blog/${older.id}/`} class="block p-6">
+            <a href={`/blog/${older.id}/`} class="group block">
               <span class="block text-[13px] text-dim mb-2">← Previous post</span>
-              <span class="block text-strong font-medium leading-snug">{older.data.title}</span>
+              <span class="row-title block leading-snug group-hover:decoration-border-strong">{older.data.title}</span>
             </a>
           ) : <div class="hidden md:block" />}
           {newer ? (
-            <a href={`/blog/${newer.id}/`} class="block p-6 md:text-right">
+            <a href={`/blog/${newer.id}/`} class="group block md:text-right">
               <span class="block text-[13px] text-dim mb-2">Next post →</span>
-              <span class="block text-strong font-medium leading-snug">{newer.data.title}</span>
+              <span class="row-title block leading-snug group-hover:decoration-border-strong">{newer.data.title}</span>
             </a>
           ) : <div class="hidden md:block" />}
         </nav>

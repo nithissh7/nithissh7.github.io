@@ -17,11 +17,11 @@ const tags = [...counts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
     <p class="lede">Every tag used across {posts.length} posts.</p>
   </section>
   <section class="band">
-    <ul class="cells grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+    <ul class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-10 gap-y-3">
       {tags.map(([tag, n]) => (
         <li class="contents">
-          <a href={`/tags/${tag}/`} class="flex items-baseline justify-between gap-3 px-5 py-4">
-            <span class="text-strong truncate">{tag}</span>
+          <a href={`/tags/${tag}/`} class="group flex items-baseline gap-2">
+            <span class="row-title truncate group-hover:decoration-border-strong">#{tag}</span>
             <span class="text-[13px] text-dim tabular-nums">{n}</span>
           </a>
         </li>

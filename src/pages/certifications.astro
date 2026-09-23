@@ -16,9 +16,9 @@ const monthYear = (d: Date) => d.toLocaleDateString("en-US", { month: "short", y
   </section>
 
   <section class="band">
-    <ul class="cells md:grid-cols-2 lg:grid-cols-3">
+    <ul class="cells md:grid-cols-2 lg:grid-cols-3 !gap-y-12">
       {certs.map((cert) => (
-        <li class="flex flex-col p-6 lg:p-7">
+        <li class="flex flex-col">
           <div class="flex items-start gap-4 mb-4">
             {cert.data.badgeUrl && (
               <img
@@ -27,7 +27,7 @@ const monthYear = (d: Date) => d.toLocaleDateString("en-US", { month: "short", y
                 width="48"
                 height="48"
                 loading="lazy"
-                class="size-12 shrink-0 object-contain rounded-md bg-white p-1 border border-border"
+                class="size-12 shrink-0 object-contain rounded-md bg-white p-1"
               />
             )}
             <div class="min-w-0">
