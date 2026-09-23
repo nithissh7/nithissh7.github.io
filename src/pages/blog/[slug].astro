@@ -44,17 +44,17 @@ const jsonLd = {
   <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
   <article>
     <div class="band">
-      <div class="max-w-[72ch] mx-auto">
-        <header class="mb-10">
+      <div>
+        <header class="mb-12">
           <nav aria-label="Breadcrumb" class="text-[13px] text-dim mb-6" data-pagefind-ignore>
             <a href="/blog/" class="nav-link">← All posts</a>
           </nav>
           <div class="page-icon" aria-hidden="true">📄</div>
-          <h1 class="text-[26px] lg:text-[32px] font-bold leading-[1.25] tracking-tight text-strong text-balance mb-4">
+          <h1 class="text-[30px] lg:text-[44px] font-bold leading-[1.2] tracking-tight text-strong text-balance mb-5">
             {post.data.title}
           </h1>
-          <p class="text-[16px] leading-[1.75] mb-5">{post.data.description}</p>
-          <div class="flex flex-wrap items-center gap-x-3 gap-y-2 text-[13px] text-dim" data-pagefind-ignore>
+          <p class="text-[17px] lg:text-[19px] leading-[1.7] text-dim mb-6">{post.data.description}</p>
+          <div class="flex flex-wrap items-center gap-x-3 gap-y-2 text-[14px] text-dim" data-pagefind-ignore>
             <time datetime={post.data.pubDate.toISOString()}>{formatDate(post.data.pubDate, "medium")}</time>
             <span aria-hidden="true">·</span>
             <span>{readTime}</span>
@@ -93,8 +93,8 @@ const jsonLd = {
     </div>
 
     <footer class="band" data-pagefind-ignore>
-      <div class="max-w-[72ch] mx-auto">
-      <p class="text-[14px] text-dim mb-8">
+      <div>
+      <p class="text-[15px] text-dim mb-8">
         Thanks for reading. Questions, corrections, or a bug you want to talk about?
         <a href="mailto:realnits@gmail.com" class="link">Email me</a>.
       </p>

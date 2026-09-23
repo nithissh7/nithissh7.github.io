@@ -373,12 +373,18 @@
 
   /* ---------- Prose ---------- */
 
+  /* Full-width reading: the article uses the whole content width, with larger
+     type so long lines stay comfortable. */
   .prose {
-    font-size: 15.5px;
-    line-height: 1.85;
+    font-size: 16px;
+    line-height: 1.9;
     color: var(--text);
     overflow-wrap: break-word;
-    max-width: 72ch;
+  }
+  @media (min-width: 1024px) {
+    .prose {
+      font-size: 17px;
+    }
   }
   .prose > :first-child {
     margin-top: 0;

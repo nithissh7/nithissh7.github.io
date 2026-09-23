@@ -38,7 +38,7 @@ const strip = [
         <span>{cve.data.cveId}</span>
       </nav>
       <div class="page-icon" aria-hidden="true">🛡️</div>
-      <h1 class="h-page max-w-[30ch] mb-4">{vuln}</h1>
+      <h1 class="h-page mb-4">{vuln}</h1>
       {product && <p class="lede mb-10">{product}{cve.data.vendor && <span class="text-dim"> · {cve.data.vendor}</span>}</p>}
 
       <dl class="flex flex-wrap gap-x-10 gap-y-4 text-[14px]" data-pagefind-ignore>
