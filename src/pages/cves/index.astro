@@ -48,10 +48,10 @@ const cols = "md:grid md:grid-cols-[10.5rem_minmax(0,1fr)_6rem_4rem_7.5rem] md:g
   <section class="band !pt-2">
     {cves.length > 0 && (
       <div class="flex flex-wrap items-center gap-2 mb-6" role="group" aria-label="Filter by class" data-cve-filter>
-        <button type="button" class="tag cursor-pointer" aria-pressed="true" data-filter="all">All <span class="opacity-60 tabular-nums">{cves.length}</span></button>
+        <button type="button" class="tag cursor-pointer" aria-pressed="true" data-filter="all">All <span class="tabular-nums">{cves.length}</span></button>
         {classes.map(([k, n]) => (
           <button type="button" class="tag cursor-pointer" aria-pressed="false" data-filter={k} data-color={k === "Other" ? undefined : tagColor(k)}>
-            {k} <span class="opacity-60 tabular-nums">{n}</span>
+            {k} <span class="tabular-nums">{n}</span>
           </button>
         ))}
       </div>
@@ -112,9 +112,6 @@ const cols = "md:grid md:grid-cols-[10.5rem_minmax(0,1fr)_6rem_4rem_7.5rem] md:g
 </script>
 
 <style>
-  [data-cve-filter] .tag[aria-pressed="false"] {
-    opacity: 0.55;
-  }
   [data-cve-filter] .tag[aria-pressed="true"] {
     box-shadow: inset 0 0 0 1px currentColor;
   }

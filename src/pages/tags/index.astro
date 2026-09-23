@@ -20,7 +20,7 @@ const tags = [...counts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
         {tags.map(([tag, n]) => (
           <li>
             <a href={`/tags/${tag}/`} class="tag !text-[14px] !leading-[28px] !px-2.5" data-color={tagColor(tag)}>
-              {tag} <span class="opacity-60 tabular-nums ml-1">{n}</span>
+              {tag} <span class="tabular-nums ml-1">{n}</span>
             </a>
           </li>
         ))}
