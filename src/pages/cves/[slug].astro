@@ -64,7 +64,7 @@ const shortTitle = (t: string) => splitCveTitle(t).vuln;
           <dt>CVSS</dt>
           <dd>
             {d.cvssScore !== undefined
-              ? <span class="font-bold tabular-nums">{d.cvssScore.toFixed(1)}</span>
+              ? <span><span class="font-bold tabular-nums">{d.cvssScore.toFixed(1)}</span>{d.cvssSource && <span class="text-dim text-[14px]"> ({d.cvssSource})</span>}</span>
               : d.externalCvss
                 ? <span><span class="font-bold tabular-nums">{d.externalCvss.score.toFixed(1)}</span> <span class="text-dim text-[14px]">({d.externalCvss.source}){d.vendorRating && ` · ${d.vendorRating}`}</span></span>
                 : <span class="text-dim">—</span>}
