@@ -22,6 +22,11 @@ const cves = defineCollection({
     title: z.string(),
     severity: z.enum(["Critical", "High", "Medium", "Low", "Informational"]),
     cvssScore: z.number().min(0).max(10).optional(),
+    cvssVector: z.string().optional(),
+    // Score assigned by a third party (e.g. CISA ADP) when the vendor publishes none.
+    externalCvss: z.object({ score: z.number().min(0).max(10), source: z.string() }).optional(),
+    // The vendor's own severity wording, e.g. Mozilla's "moderate".
+    vendorRating: z.string().optional(),
     affectedProduct: z.string(),
     vendor: z.string().optional(),
     pubDate: z.coerce.date(),

@@ -1,8 +1,8 @@
 ---
 import { getCollection } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import { formatDate, yearOf } from "../../consts";
-import { splitCveTitle, vulnClass } from "../../lib/cve";
+import { formatDate, tagColor, yearOf } from "../../consts";
+import { severityColor, splitCveTitle, vulnClass } from "../../lib/cve";
 
 const cves = (await getCollection("cves", ({ data }) => !data.draft)).sort(
   (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf() || (b.data.cvssScore ?? 0) - (a.data.cvssScore ?? 0)
@@ -15,6 +15,13 @@ const stats = [
   { n: count("Medium"), label: "medium" },
   { n: years.length > 1 ? `${years[0]}–${years.at(-1)}` : years[0] ?? "—", label: "disclosed" },
 ];
+// Class filter: every class present, plus "Other" for unclassified entries.
+const classCounts = new Map<string, number>();
+for (const c of cves) {
+  const k = vulnClass(c.data.title) ?? "Other";
+  classCounts.set(k, (classCounts.get(k) ?? 0) + 1);
+}
+const classes = [...classCounts].sort((a, b) => (a[0] === "Other" ? 1 : b[0] === "Other" ? -1 : b[1] - a[1]));
 const cols = "md:grid md:grid-cols-[10.5rem_minmax(0,1fr)_6rem_4rem_7.5rem] md:gap-6";
 ---
 
@@ -39,6 +46,16 @@ const cols = "md:grid md:grid-cols-[10.5rem_minmax(0,1fr)_6rem_4rem_7.5rem] md:g
   </section>
 
   <section class="band !pt-2">
+    {cves.length > 0 && (
+      <div class="flex flex-wrap items-center gap-2 mb-6" role="group" aria-label="Filter by class" data-cve-filter>
+        <button type="button" class="tag cursor-pointer" aria-pressed="true" data-filter="all">All <span class="opacity-60 tabular-nums">{cves.length}</span></button>
+        {classes.map(([k, n]) => (
+          <button type="button" class="tag cursor-pointer" aria-pressed="false" data-filter={k} data-color={k === "Other" ? undefined : tagColor(k)}>
+            {k} <span class="opacity-60 tabular-nums">{n}</span>
+          </button>
+        ))}
+      </div>
+    )}
     {cves.length === 0 ? (
       <p>No CVEs published yet.</p>
     ) : (
@@ -50,17 +67,16 @@ const cols = "md:grid md:grid-cols-[10.5rem_minmax(0,1fr)_6rem_4rem_7.5rem] md:g
           {cves.map((cve) => {
             const { vuln, product } = splitCveTitle(cve.data.title);
             const klass = vulnClass(cve.data.title);
-            const high = cve.data.severity === "High" || cve.data.severity === "Critical";
             return (
-              <li>
+              <li data-class={klass ?? "Other"}>
                 <a href={`/cves/${cve.id}/`} class={`trow block ${cols} py-4 px-3 -mx-3 rounded-sm`}>
                   <span class="block text-[14px] text-strong tabular-nums md:pt-px">{cve.data.cveId}</span>
                   <span class="block min-w-0 mt-1 md:mt-0">
                     <span class="row-title block leading-snug">{vuln}</span>
-                    <span class="flex flex-wrap items-center gap-2 text-[14px] text-dim mt-1.5">{klass && <span class="text-strong/80">{klass}</span>}{klass && <span aria-hidden="true">·</span>}{product}</span>
+                    <span class="flex flex-wrap items-center gap-2 text-[14px] text-dim mt-1.5">{klass && <span class="tag" data-color={tagColor(klass)}>{klass}</span>}{product}</span>
                   </span>
                   <span class="inline md:block text-[14px] md:pt-px">
-                    <span class={high ? "text-strong font-bold" : "text-dim"}>{cve.data.severity}</span>
+                    <span class="tag" data-color={severityColor(cve.data.severity)}>{cve.data.severity}</span>
                   </span>
                   <span class="inline md:block text-[14px] text-dim tabular-nums md:text-right md:pt-px">
                     <span class="md:hidden"> · CVSS </span>{cve.data.cvssScore?.toFixed(1) ?? "—"}
@@ -77,3 +93,29 @@ const cols = "md:grid md:grid-cols-[10.5rem_minmax(0,1fr)_6rem_4rem_7.5rem] md:g
     )}
   </section>
 </BaseLayout>
+
+<script>
+  document.addEventListener("astro:page-load", () => {
+    const group = document.querySelector<HTMLElement>("[data-cve-filter]");
+    if (!group || group.dataset.ready) return;
+    group.dataset.ready = "true";
+    group.addEventListener("click", (e) => {
+      const btn = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-filter]");
+      if (!btn) return;
+      const f = btn.dataset.filter!;
+      group.querySelectorAll("[data-filter]").forEach((b) => b.setAttribute("aria-pressed", String(b === btn)));
+      document.querySelectorAll<HTMLElement>("li[data-class]").forEach((li) => {
+        li.hidden = f !== "all" && li.dataset.class !== f;
+      });
+    });
+  });
+</script>
+
+<style>
+  [data-cve-filter] .tag[aria-pressed="false"] {
+    opacity: 0.55;
+  }
+  [data-cve-filter] .tag[aria-pressed="true"] {
+    box-shadow: inset 0 0 0 1px currentColor;
+  }
+</style>

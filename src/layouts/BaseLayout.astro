@@ -105,6 +105,18 @@ const ogImageURL = new URL(image, Astro.site);
       document.addEventListener("click", async (event) => {
         const target = event.target as HTMLElement;
 
+        const copyText = target.closest<HTMLButtonElement>("[data-copy-text]");
+        if (copyText) {
+          try {
+            await navigator.clipboard.writeText(copyText.dataset.copyText ?? "");
+            copyText.textContent = "copied";
+          } catch {
+            copyText.textContent = "failed";
+          }
+          setTimeout(() => (copyText.textContent = "copy"), 1500);
+          return;
+        }
+
         const copyBtn = target.closest<HTMLButtonElement>("[data-copy]");
         if (copyBtn) {
           const code = copyBtn.closest(".code-block")?.querySelector("pre")?.innerText ?? "";

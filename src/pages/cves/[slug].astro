@@ -1,81 +1,143 @@
 ---
 import { getCollection, render } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import { formatDate } from "../../consts";
-import { splitCveTitle, vulnClass } from "../../lib/cve";
+import { formatDate, tagColor } from "../../consts";
+import { explainVector, severityColor, splitCveTitle, vulnClass } from "../../lib/cve";
 
 export async function getStaticPaths() {
-  const cves = await getCollection("cves", ({ data }) => !data.draft);
-  return cves.map((cve) => ({ params: { slug: cve.id }, props: { cve } }));
+  const cves = (await getCollection("cves", ({ data }) => !data.draft)).sort(
+    (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf() || a.data.cveId.localeCompare(b.data.cveId)
+  );
+  return cves.map((cve, i) => ({ params: { slug: cve.id }, props: { cve, newer: cves[i - 1], older: cves[i + 1] } }));
 }
 
-const { cve } = Astro.props;
+const { cve, newer, older } = Astro.props;
 const { Content } = await render(cve);
-const { vuln, product } = splitCveTitle(cve.data.title);
-
-const klass = vulnClass(cve.data.title);
-const strip = [
-  { k: "CVE ID", v: cve.data.cveId },
-  ...(klass ? [{ k: "Class", v: klass }] : []),
-  { k: "Severity", v: cve.data.severity },
-  { k: "CVSS", v: cve.data.cvssScore?.toFixed(1) ?? "—" },
-  { k: "Published", v: formatDate(cve.data.pubDate, "medium") },
-];
+const d = cve.data;
+const { vuln, product } = splitCveTitle(d.title);
+const klass = vulnClass(d.title);
+const breakdown = explainVector(d.cvssVector);
+const host = (u: string) => u.replace(/^https?:\/\/(www\.)?/, "").split("/")[0];
+const refLabel = (u: string) =>
+  u.includes("mozilla.org/en-US/security/advisories") ? "Mozilla advisory"
+  : u.includes("bugzilla.mozilla.org") ? "Bugzilla"
+  : u.includes("nvd.nist.gov") ? "NVD"
+  : u.includes("cve.org") ? "CVE.org"
+  : host(u);
+const shortTitle = (t: string) => splitCveTitle(t).vuln;
 ---
 
 <BaseLayout
-  title={`${cve.data.cveId}: ${vuln}`}
-  description={`${cve.data.cveId} — ${cve.data.title}`}
+  title={`${d.cveId}: ${vuln}`}
+  description={`${d.cveId} — ${d.title}`}
   type="article"
-  pubDate={cve.data.pubDate}
+  pubDate={d.pubDate}
   reading
   image={`/cves/${cve.id}/og.png`}
 >
   <article>
-    <header class="band">
-      <nav aria-label="Breadcrumb" class="text-[13px] text-dim mb-8" data-pagefind-ignore>
+    <header class="band !pb-6">
+      <nav aria-label="Breadcrumb" class="text-[13px] text-dim mb-6" data-pagefind-ignore>
         <a href="/cves/" class="nav-link">CVEs</a>
         <span class="mx-2" aria-hidden="true">/</span>
-        <span>{cve.data.cveId}</span>
+        <span>{d.cveId}</span>
       </nav>
       <div class="page-icon" aria-hidden="true">🛡️</div>
-      <h1 class="h-page mb-4">{vuln}</h1>
-      {product && <p class="lede mb-10">{product}{cve.data.vendor && <span class="text-dim"> · {cve.data.vendor}</span>}</p>}
-
-      <dl class="flex flex-wrap gap-x-10 gap-y-4 text-[14px]" data-pagefind-ignore>
-        {strip.map(({ k, v }) => (
-          <div>
-            <dt class="text-[12px] text-dim mb-0.5">{k}</dt>
-            <dd class="text-strong tabular-nums">{v}</dd>
-          </div>
-        ))}
-      </dl>
+      <h1 class="text-[28px] lg:text-[36px] font-bold leading-[1.25] tracking-tight text-strong text-balance mb-3">{vuln}</h1>
+      <p class="text-[16px] lg:text-[17px] text-dim mb-5">{product}{d.vendor && <> · {d.vendor}</>}</p>
+      <div class="flex flex-wrap gap-2" data-pagefind-ignore>
+        <span class="tag" data-color={severityColor(d.severity)}>{d.severity}</span>
+        {klass && <span class="tag" data-color={tagColor(klass)}>{klass}</span>}
+        {d.status !== "Published" && <span class="tag">{d.status}</span>}
+      </div>
     </header>
 
-    <div class="band">
-      <div class="lg:grid lg:grid-cols-[minmax(0,1fr)_17rem] lg:gap-16">
-        <div class="prose" data-pagefind-body data-pagefind-meta={`title:${cve.data.cveId} · ${vuln}${product ? ` — ${product}` : ""}`}>
-          {klass && <span class="sr-only">{klass} vulnerability in {product}.</span>}
-          <Content />
+    <section class="band !pt-4 !pb-8" aria-label="Properties" data-pagefind-ignore>
+      <dl class="props">
+        <div>
+          <dt><span aria-hidden="true">#</span>CVE ID</dt>
+          <dd class="flex items-center gap-3">
+            <code class="!text-[14px]">{d.cveId}</code>
+            <button type="button" class="nav-link text-[12px] cursor-pointer" data-copy-text={d.cveId}>copy</button>
+          </dd>
         </div>
-        {cve.data.references && cve.data.references.length > 0 && (
-          <aside class="mt-12 lg:mt-0" data-pagefind-ignore>
-            <div class="lg:sticky lg:top-24">
-              <p class="text-[13px] text-strong font-bold mb-3">References</p>
-              <ul class="space-y-2.5 text-[13px]">
-                {cve.data.references.map((ref) => (
-                  <li>
-                    <a href={ref} target="_blank" rel="noopener noreferrer" class="link break-all">
-                      {ref.replace(/^https?:\/\/(www\.)?/, "")}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-              <p class="text-[13px] text-dim mt-8">Status: <span class="text-strong">{cve.data.status}</span></p>
-            </div>
-          </aside>
+        <div>
+          <dt><span aria-hidden="true">▲</span>Severity</dt>
+          <dd class="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <span class="tag" data-color={severityColor(d.severity)}>{d.severity}</span>
+            {d.vendorRating && <span class="text-dim text-[14px]">{d.vendorRating}</span>}
+          </dd>
+        </div>
+        <div>
+          <dt><span aria-hidden="true">◎</span>CVSS 3.1</dt>
+          <dd>
+            {d.cvssScore !== undefined ? (
+              <span class="text-strong font-bold tabular-nums">{d.cvssScore.toFixed(1)}</span>
+            ) : d.externalCvss ? (
+              <span><span class="text-strong font-bold tabular-nums">{d.externalCvss.score.toFixed(1)}</span> <span class="text-dim text-[14px]">assigned by {d.externalCvss.source}, not the vendor</span></span>
+            ) : (
+              <span class="text-dim">not scored</span>
+            )}
+            {d.cvssVector && <div class="mt-1.5"><code class="!text-[12.5px] break-all">{d.cvssVector}</code></div>}
+          </dd>
+        </div>
+        {breakdown.length > 0 && (
+          <div>
+            <dt><span aria-hidden="true">≡</span>Breakdown</dt>
+            <dd class="grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-2 text-[14px]">
+              {breakdown.map((m) => (
+                <span><span class="block text-[12px] text-dim">{m.label}</span><span class="text-strong">{m.value}</span></span>
+              ))}
+            </dd>
+          </div>
         )}
+        <div>
+          <dt><span aria-hidden="true">◇</span>Product</dt>
+          <dd>{product}{d.vendor && <span class="text-dim"> · {d.vendor}</span>}</dd>
+        </div>
+        <div>
+          <dt><span aria-hidden="true">◷</span>Published</dt>
+          <dd>{formatDate(d.pubDate, "long")}</dd>
+        </div>
+        {d.references && d.references.length > 0 && (
+          <div>
+            <dt><span aria-hidden="true">↗</span>References</dt>
+            <dd class="flex flex-wrap gap-x-5 gap-y-1">
+              {d.references.map((ref) => (
+                <a href={ref} target="_blank" rel="noopener noreferrer" class="link">{refLabel(ref)} ↗</a>
+              ))}
+            </dd>
+          </div>
+        )}
+      </dl>
+    </section>
+
+    <section class="band !pt-6" aria-labelledby="summary">
+      <h2 id="summary" class="h-section mb-4">Summary</h2>
+      <div class="prose" data-pagefind-body data-pagefind-meta={`title:${d.cveId} · ${vuln}${product ? ` — ${product}` : ""}`}>
+        {klass && <span class="sr-only">{klass} vulnerability in {product}.</span>}
+        <p>{d.description.endsWith(".") ? d.description : `${d.description} in ${product}.`}</p>
+        <Content />
       </div>
-    </div>
+    </section>
+
+    {(newer || older) && (
+      <nav aria-label="More disclosures" class="band !pt-0" data-pagefind-ignore>
+        <div class="grid md:grid-cols-2 gap-8 pt-8 border-t border-border">
+          {older ? (
+            <a href={`/cves/${older.id}/`} class="group block">
+              <span class="block text-[13px] text-dim mb-2">← Older · {older.data.cveId}</span>
+              <span class="row-title block leading-snug group-hover:decoration-border-strong">{shortTitle(older.data.title)}</span>
+            </a>
+          ) : <div class="hidden md:block" />}
+          {newer ? (
+            <a href={`/cves/${newer.id}/`} class="group block md:text-right">
+              <span class="block text-[13px] text-dim mb-2">Newer · {newer.data.cveId} →</span>
+              <span class="row-title block leading-snug group-hover:decoration-border-strong">{shortTitle(newer.data.title)}</span>
+            </a>
+          ) : <div class="hidden md:block" />}
+        </div>
+      </nav>
+    )}
   </article>
 </BaseLayout>
