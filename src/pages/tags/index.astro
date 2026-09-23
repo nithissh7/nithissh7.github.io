@@ -1,55 +1,30 @@
 ---
 import { getCollection } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import { formatDate, tagColor } from "../../consts";
+import { tagColor } from "../../consts";
 
-const posts = (await getCollection("blog", ({ data }) => !data.draft)).sort(
-  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
-);
-const byTag = new Map<string, typeof posts>();
-for (const post of posts) for (const tag of post.data.tags) byTag.set(tag, [...(byTag.get(tag) ?? []), post]);
-const tags = [...byTag].sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]));
+const posts = await getCollection("blog", ({ data }) => !data.draft);
+const counts = new Map<string, number>();
+for (const post of posts) for (const tag of post.data.tags) counts.set(tag, (counts.get(tag) ?? 0) + 1);
+const tags = [...counts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
 ---
 
-<BaseLayout title="Tags" description="Every topic written about on realnits, with the posts under each.">
-  <section class="band !pt-14 lg:!pt-20">
+<BaseLayout title="Tags" description="Every topic written about on realnits.">
+  <section class="band !pt-14 lg:!pt-20 !pb-24 min-h-[60vh]">
     <div class="max-w-3xl">
       <div class="page-icon" aria-hidden="true">🏷️</div>
       <span class="eyebrow">Tags</span>
       <h1 class="h-page mb-5">Topics</h1>
-      <p class="lede mb-8">{tags.length} topics across {posts.length} posts. Pick one to jump to its posts.</p>
-      <nav aria-label="Topics" class="flex flex-wrap gap-2">
-        {tags.map(([tag, list]) => (
-          <a href={`#${tag}`} class="tag" data-color={tagColor(tag)}>
-            {tag} <span class="opacity-60 tabular-nums">{list.length}</span>
-          </a>
+      <p class="lede mb-10">{tags.length} topics across {posts.length} posts. Pick one to see its posts.</p>
+      <ul class="flex flex-wrap gap-2.5" aria-label="Topics">
+        {tags.map(([tag, n]) => (
+          <li>
+            <a href={`/tags/${tag}/`} class="tag !text-[14px] !leading-[28px] !px-2.5" data-color={tagColor(tag)}>
+              {tag} <span class="opacity-60 tabular-nums ml-1">{n}</span>
+            </a>
+          </li>
         ))}
-      </nav>
-    </div>
-  </section>
-
-  <section class="band !pb-20">
-    <div class="grid md:grid-cols-2 gap-x-16 gap-y-14 max-w-5xl">
-      {tags.map(([tag, list]) => (
-        <section id={tag} class="scroll-mt-24" aria-labelledby={`h-${tag}`}>
-          <div class="flex items-baseline justify-between gap-4 mb-3">
-            <h2 id={`h-${tag}`} class="h-section">
-              <a href={`/tags/${tag}/`} class="tag !text-[15px]" data-color={tagColor(tag)}>{tag}</a>
-            </h2>
-            <span class="text-[13px] text-dim tabular-nums">{list.length} {list.length === 1 ? "post" : "posts"}</span>
-          </div>
-          <ul class="space-y-2.5">
-            {list.map((post) => (
-              <li class="grid grid-cols-[6.5rem_minmax(0,1fr)] gap-4 text-[14px]">
-                <time class="text-dim tabular-nums" datetime={post.data.pubDate.toISOString()}>
-                  {formatDate(post.data.pubDate, "medium")}
-                </time>
-                <a href={`/blog/${post.id}/`} class="row-title !font-normal leading-snug hover:decoration-border-strong">{post.data.title}</a>
-              </li>
-            ))}
-          </ul>
-        </section>
-      ))}
+      </ul>
     </div>
   </section>
 </BaseLayout>
