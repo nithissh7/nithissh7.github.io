@@ -29,10 +29,10 @@ const isActive = (href: string) =>
     </nav>
 
     <div class="ml-auto flex items-center gap-2">
-      <a
-        href="/search/"
+      <button
+        type="button"
         data-search-open
-        class="hidden sm:flex items-center gap-3 h-9 w-56 pl-3 pr-2 rounded-md border border-border text-dim text-[13px] hover:border-border-strong hover:text-strong transition-colors"
+        class="hidden sm:flex items-center gap-3 h-9 w-56 pl-3 pr-2 rounded-md cursor-pointer text-left border border-border text-dim text-[13px] hover:border-border-strong hover:text-strong transition-colors"
         aria-label="Search"
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
@@ -40,12 +40,12 @@ const isActive = (href: string) =>
         </svg>
         <span class="flex-1">Search…</span>
         <span class="kbd">⌘K</span>
-      </a>
-      <a href="/search/" data-search-open class="icon-btn sm:hidden" aria-label="Search">
+      </button>
+      <button type="button" data-search-open class="icon-btn sm:hidden" aria-label="Search">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
           <circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path>
         </svg>
-      </a>
+      </button>
       <button type="button" class="icon-btn" data-theme-toggle aria-label="Toggle light and dark theme">
         <svg class="theme-icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
           <circle cx="12" cy="12" r="4"></circle>

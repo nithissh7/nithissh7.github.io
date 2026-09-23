@@ -553,7 +553,7 @@
   /* Monochrome diagrams in both themes, driven by the site tokens. */
   .mermaid svg :is(rect, polygon, circle, ellipse):not([fill="none"]) {
     fill: var(--bg-raised) !important;
-    stroke: var(--border-strong) !important;
+    stroke: var(--dim) !important;
   }
   .mermaid svg :is(.note, rect.note) {
     fill: var(--bg) !important;

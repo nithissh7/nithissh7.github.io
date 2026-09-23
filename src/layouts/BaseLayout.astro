@@ -118,9 +118,8 @@ const ogImageURL = new URL(image, Astro.site);
           return;
         }
 
-        const searchLink = target.closest("[data-search-open]");
-        if (searchLink && openSearch()) {
-          event.preventDefault();
+        if (target.closest("[data-search-open]")) {
+          if (!openSearch()) navigate("/search/");
           return;
         }
 
@@ -234,7 +233,8 @@ const ogImageURL = new URL(image, Astro.site);
           pre.replaceWith(wrap);
           wrap.append(bar, pre);
         }
-        wrap.querySelector(".diagram-bar span")!.textContent = width > available + 1 ? "diagram · scroll →" : "diagram";
+        const overflows = pre.scrollWidth > pre.clientWidth + 1;
+        wrap.querySelector(".diagram-bar span")!.textContent = overflows ? "diagram · scroll →" : "diagram";
       }
       function watchDiagrams() {
         document.querySelectorAll<HTMLElement>(".prose .mermaid").forEach((pre) => {
@@ -249,11 +249,11 @@ const ogImageURL = new URL(image, Astro.site);
         const svg = btn?.closest(".diagram")?.querySelector("svg");
         if (!svg) return;
         const clone = svg.cloneNode(true) as SVGSVGElement;
-        clone.removeAttribute("style");
-        clone.setAttribute("width", String(svg.viewBox.baseVal.width));
+        // Open fitted to the screen (pinch/zoom to read details), never larger than natural size.
+        clone.setAttribute("style", `width:100%;height:auto;max-width:${svg.viewBox.baseVal.width}px;display:block;margin:0 auto`);
         const styles = getComputedStyle(document.documentElement);
         const bg = styles.getPropertyValue("--bg").trim();
-        const doc = `<!doctype html><meta charset="utf-8"><title>Diagram</title><body style="margin:0;padding:24px;background:${bg}">${clone.outerHTML}</body>`;
+        const doc = `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Diagram</title><body style="margin:0;padding:16px;background:${bg}">${clone.outerHTML}</body>`;
         window.open(URL.createObjectURL(new Blob([doc], { type: "text/html" })), "_blank", "noopener");
       });
 
