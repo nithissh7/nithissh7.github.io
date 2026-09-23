@@ -17,7 +17,7 @@
   --border-strong: #d2ccca;
   --strong: #1c1a1a;
   --text: #4d4848;
-  --dim: #716b6a;
+  --dim: #635d5c;
   color-scheme: light;
 }
 
@@ -502,19 +502,91 @@
     font-weight: 700;
     border-bottom-color: var(--border-strong);
   }
-  .prose .mermaid {
+  /* Diagrams: never shrink below ~72% of natural size; scroll sideways instead. */
+  .diagram {
     margin: 2rem 0;
-    padding: 1.25rem;
     border: 1px solid var(--border);
     border-radius: 8px;
+    overflow: hidden;
+  }
+  .diagram-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    height: 2.25rem;
+    padding: 0 0.5rem 0 1rem;
+    font-size: 12px;
+    color: var(--dim);
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-raised);
+  }
+  .diagram-bar button {
+    color: var(--dim);
+    cursor: pointer;
+    padding: 0.1rem 0.5rem;
+    border-radius: 4px;
+  }
+  .diagram-bar button:hover {
+    color: var(--strong);
+    background: var(--bg);
+  }
+  .prose .mermaid {
+    display: block !important; /* astro-mermaid makes this a centered flex box, which shrinks the SVG */
+    margin: 0;
+    padding: 1.25rem;
     background: transparent;
-    text-align: center;
     overflow-x: auto;
+    text-align: left;
+    font-family: var(--font-mono);
+  }
+  .prose > .mermaid {
+    margin: 2rem 0;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+  .prose .mermaid svg {
+    display: block;
+    flex-shrink: 0;
+    margin-inline: auto;
+  }
+  /* Monochrome diagrams in both themes, driven by the site tokens. */
+  .mermaid svg :is(rect, polygon, circle, ellipse):not([fill="none"]) {
+    fill: var(--bg-raised) !important;
+    stroke: var(--border-strong) !important;
+  }
+  .mermaid svg :is(.note, rect.note) {
+    fill: var(--bg) !important;
+  }
+  .mermaid svg text,
+  .mermaid svg tspan {
+    fill: var(--strong) !important;
+    font-family: var(--font-mono) !important;
+  }
+  .mermaid svg :is(.nodeLabel, .edgeLabel, .label, span, p) {
+    color: var(--strong) !important;
+    font-family: var(--font-mono) !important;
+  }
+  .mermaid svg :is(.edgeLabel, .labelBkg) {
+    background-color: var(--bg) !important;
+  }
+  .mermaid svg :is(line, path, .messageLine0, .messageLine1, .flowchart-link, .loopLine) {
+    stroke: var(--dim) !important;
+  }
+  .mermaid svg marker path,
+  .mermaid svg :is(.arrowheadPath, .arrowMarkerPath) {
+    fill: var(--dim) !important;
+    stroke: var(--dim) !important;
   }
   .prose mark {
     color: var(--strong);
     background: var(--bg-raised);
     box-shadow: inset 0 -0.4em 0 var(--border-strong);
+  }
+
+  .search-dialog::backdrop {
+    background: rgb(0 0 0 / 0.55);
+    backdrop-filter: blur(2px);
   }
 
   /* ---------- Contents (collapsible, top of post) ---------- */

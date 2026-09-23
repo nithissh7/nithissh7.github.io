@@ -2,6 +2,7 @@
 import { getCollection } from "astro:content";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { SOCIAL_LINKS } from "../consts";
+const cveCount = (await getCollection("cves", ({ data }) => !data.draft)).length;
 
 const certs = (await getCollection("certifications")).sort(
   (a, b) => b.data.dateEarned.valueOf() - a.data.dateEarned.valueOf()
@@ -26,7 +27,8 @@ const areas = [
       <div class="lg:col-span-7 prose">
         <p>
           I'm Nithissh. I handle platform and AI security at one of the largest pharma companies. Outside work I
-          hunt vulnerabilities, write security tools, and document what I learn here.
+          hunt vulnerabilities — <a href="/cves/">{cveCount} of them are now CVEs</a> — write security tools, and
+          document what I learn here.
         </p>
         <p>
           The thing that keeps me going is curiosity — there's nothing quite like finding the flaw that nobody else

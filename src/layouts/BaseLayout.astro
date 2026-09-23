@@ -2,6 +2,7 @@
 import "../styles/global.css";
 import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
+import Search from "../components/Search.astro";
 import { ClientRouter } from "astro:transitions";
 import { SITE_DESCRIPTION, SITE_TITLE } from "../consts";
 
@@ -80,6 +81,21 @@ const ogImageURL = new URL(image, Astro.site);
       <Footer />
     </div>
 
+    {!Astro.url.pathname.startsWith("/search") && (
+      <dialog
+        id="search-dialog"
+        aria-label="Search"
+        class="search-dialog m-0 p-0 w-[min(40rem,calc(100vw-2rem))] mx-auto mt-[10vh] bg-bg text-text border border-border-strong rounded-xl overflow-hidden"
+      >
+        <Search mode="dialog" />
+        <div class="flex items-center justify-between gap-4 px-4 py-2.5 border-t border-border text-[12px] text-dim">
+          <span><span class="kbd">esc</span> to close</span>
+          <a href="/search/" class="nav-link">Open search page →</a>
+        </div>
+      </dialog>
+    )}
+    <p id="announcer" class="sr-only" aria-live="polite"></p>
+
     <script>
       import { navigate } from "astro:transitions/client";
 
@@ -93,10 +109,24 @@ const ogImageURL = new URL(image, Astro.site);
           try {
             await navigator.clipboard.writeText(code.replace(/\n$/, ""));
             copyBtn.textContent = "copied";
+            const announcer = document.getElementById("announcer");
+            if (announcer) announcer.textContent = "Code copied to clipboard";
           } catch {
             copyBtn.textContent = "failed";
           }
           setTimeout(() => (copyBtn.textContent = "copy"), 1500);
+          return;
+        }
+
+        const searchLink = target.closest("[data-search-open]");
+        if (searchLink && openSearch()) {
+          event.preventDefault();
+          return;
+        }
+
+        const dialog = target.closest("dialog");
+        if (dialog && target === dialog) {
+          (dialog as HTMLDialogElement).close(); // click on the backdrop
           return;
         }
 
@@ -109,16 +139,30 @@ const ogImageURL = new URL(image, Astro.site);
         }
       });
 
-      // ⌘K / Ctrl+K / "/" jump to search from anywhere.
+      function openSearch(): boolean {
+        const pageInput = document.getElementById("search-input") as HTMLInputElement | null;
+        if (pageInput) {
+          pageInput.focus();
+          return true;
+        }
+        const dialog = document.getElementById("search-dialog") as HTMLDialogElement | null;
+        if (!dialog) return false;
+        if (!dialog.open) dialog.showModal();
+        dialog.querySelector<HTMLInputElement>("[data-search-input]")?.focus();
+        return true;
+      }
+      document.addEventListener("astro:before-swap", () => {
+        (document.getElementById("search-dialog") as HTMLDialogElement | null)?.close();
+      });
+
+      // ⌘K / Ctrl+K / "/" open search from anywhere.
       document.addEventListener("keydown", (event) => {
-        const el = event.target as HTMLElement;
-        const typing = el.closest("input, textarea, [contenteditable]");
+        const el = event.target instanceof Element ? event.target : null;
+        const typing = el?.closest("input, textarea, [contenteditable]");
         const combo = (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k";
         if (combo || (event.key === "/" && !typing)) {
           event.preventDefault();
-          const input = document.getElementById("search-input") as HTMLInputElement | null;
-          if (input) input.focus();
-          else navigate("/search/");
+          if (!openSearch()) navigate("/search/");
         }
       });
 
@@ -165,7 +209,58 @@ const ogImageURL = new URL(image, Astro.site);
         { passive: true }
       );
 
-      document.addEventListener("astro:page-load", enhancePost);
+      // Mermaid renders client-side (and re-renders on theme change), so size every
+      // SVG it inserts: never below MIN_SCALE of natural size; scroll sideways instead.
+      const MIN_SCALE = 0.72;
+      function sizeDiagram(pre: HTMLElement) {
+        const svg = pre.querySelector("svg");
+        if (!svg || svg.dataset.sized) return;
+        svg.dataset.sized = "true";
+        const natural = svg.viewBox.baseVal?.width || svg.getBoundingClientRect().width;
+        const available = pre.clientWidth - 40;
+        const width = Math.min(natural, Math.max(available, natural * MIN_SCALE));
+        // astro-mermaid forces width:100% !important; an inline !important wins.
+        svg.style.setProperty("max-width", "none", "important");
+        svg.style.setProperty("width", `${Math.round(width)}px`, "important");
+        svg.style.setProperty("height", "auto", "important");
+
+        let wrap = pre.closest<HTMLElement>(".diagram");
+        if (!wrap) {
+          wrap = document.createElement("figure");
+          wrap.className = "diagram";
+          const bar = document.createElement("div");
+          bar.className = "diagram-bar";
+          bar.innerHTML = `<span></span><button type="button" data-diagram-open>open full size ↗</button>`;
+          pre.replaceWith(wrap);
+          wrap.append(bar, pre);
+        }
+        wrap.querySelector(".diagram-bar span")!.textContent = width > available + 1 ? "diagram · scroll →" : "diagram";
+      }
+      function watchDiagrams() {
+        document.querySelectorAll<HTMLElement>(".prose .mermaid").forEach((pre) => {
+          if (pre.dataset.watched) return;
+          pre.dataset.watched = "true";
+          sizeDiagram(pre);
+          new MutationObserver(() => sizeDiagram(pre)).observe(pre, { childList: true, subtree: true });
+        });
+      }
+      document.addEventListener("click", (event) => {
+        const btn = (event.target as HTMLElement).closest("[data-diagram-open]");
+        const svg = btn?.closest(".diagram")?.querySelector("svg");
+        if (!svg) return;
+        const clone = svg.cloneNode(true) as SVGSVGElement;
+        clone.removeAttribute("style");
+        clone.setAttribute("width", String(svg.viewBox.baseVal.width));
+        const styles = getComputedStyle(document.documentElement);
+        const bg = styles.getPropertyValue("--bg").trim();
+        const doc = `<!doctype html><meta charset="utf-8"><title>Diagram</title><body style="margin:0;padding:24px;background:${bg}">${clone.outerHTML}</body>`;
+        window.open(URL.createObjectURL(new Blob([doc], { type: "text/html" })), "_blank", "noopener");
+      });
+
+      document.addEventListener("astro:page-load", () => {
+        enhancePost();
+        watchDiagrams();
+      });
     </script>
   </body>
 </html>

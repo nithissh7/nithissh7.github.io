@@ -1,0 +1,164 @@
+---
+// One search UI, used on /search/ and inside the ⌘K dialog. Backed by Pagefind's JS API.
+import { getCollection } from "astro:content";
+
+interface Props {
+  mode: "page" | "dialog";
+}
+
+const { mode } = Astro.props;
+const posts = await getCollection("blog", ({ data }) => !data.draft);
+const counts = new Map<string, number>();
+for (const post of posts) for (const tag of post.data.tags) counts.set(tag, (counts.get(tag) ?? 0) + 1);
+const suggestions = [...counts].sort((a, b) => b[1] - a[1]).slice(0, mode === "page" ? 8 : 6).map(([t]) => t);
+const inputId = mode === "page" ? "search-input" : "search-dialog-input";
+---
+
+<div data-search-root data-mode={mode}>
+  <form role="search" class="relative" onsubmit="return false">
+    <label for={inputId} class="sr-only">Search posts and CVEs</label>
+    <svg class="absolute left-4 top-1/2 -translate-y-1/2 text-dim pointer-events-none" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+      <circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path>
+    </svg>
+    <input
+      id={inputId}
+      data-search-input
+      type="search"
+      autocomplete="off"
+      spellcheck="false"
+      placeholder="Search posts and CVEs — xss, gemini, sql injection…"
+      class={`w-full pl-12 pr-4 bg-bg text-strong placeholder:text-dim outline-none transition-colors ${
+        mode === "page"
+          ? "h-14 rounded-lg border border-border-strong focus:border-strong text-[16px]"
+          : "h-14 border-b border-border text-[16px]"
+      }`}
+    />
+  </form>
+  <div class={mode === "page" ? "mt-5" : "px-4 pt-4"}>
+    <div class="flex flex-wrap items-center gap-2 text-[13px]" data-search-suggestions>
+      <span class="text-dim mr-1">Try:</span>
+      {suggestions.map((s) => (
+        <button type="button" class="tag !text-[13px] cursor-pointer hover:text-strong hover:border-border-strong" data-suggest={s}>{s}</button>
+      ))}
+    </div>
+  </div>
+  <div class={mode === "page" ? "mt-10" : "px-4 pb-2 pt-4 max-h-[60vh] overflow-y-auto"}>
+    <p data-search-status class="text-[13px] text-dim mb-2" aria-live="polite">
+      Search {posts.length} posts and every CVE.
+    </p>
+    <ul data-search-results class="tlist hidden"></ul>
+  </div>
+</div>
+
+<script>
+  type PagefindData = { url: string; excerpt: string; meta: { title?: string } };
+  type Pagefind = {
+    init: () => Promise<void>;
+    debouncedSearch: (q: string, o?: object, ms?: number) => Promise<{ results: { data: () => Promise<PagefindData> }[] } | null>;
+  };
+
+  let pagefind: Promise<Pagefind | null> | null = null;
+  function load() {
+    pagefind ??= (async () => {
+      try {
+        const url = "/pagefind/pagefind.js";
+        const pf = (await import(/* @vite-ignore */ url)) as Pagefind;
+        await pf.init();
+        return pf;
+      } catch {
+        return null;
+      }
+    })();
+    return pagefind;
+  }
+
+  const escape = (s: string) =>
+    s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
+
+  function setup(root: HTMLElement) {
+    if (root.dataset.ready) return;
+    root.dataset.ready = "true";
+    const isPage = root.dataset.mode === "page";
+    const input = root.querySelector<HTMLInputElement>("[data-search-input]")!;
+    const list = root.querySelector<HTMLElement>("[data-search-results]")!;
+    const status = root.querySelector<HTMLElement>("[data-search-status]")!;
+    const idle = status.textContent ?? "";
+
+    async function run(q: string) {
+      if (isPage) {
+        const url = new URL(location.href);
+        q ? url.searchParams.set("q", q) : url.searchParams.delete("q");
+        history.replaceState(history.state, "", url);
+      }
+      if (!q.trim()) {
+        list.classList.add("hidden");
+        list.innerHTML = "";
+        status.textContent = idle;
+        return;
+      }
+      const pf = await load();
+      if (!pf) {
+        status.textContent = "The search index is generated at build time and isn't available here.";
+        return;
+      }
+      const search = await pf.debouncedSearch(q, {}, 120);
+      if (!search) return; // superseded by a newer keystroke
+      // Keep only results whose highlighted text contains a word the reader typed
+      // (drops stem/prefix matches inside random tokens and hashes).
+      const norm = (x: string) => x.toLowerCase().replace(/[^a-z0-9]/g, "");
+      const words = q.split(/\s+/).map(norm).filter((w) => w.length > 1);
+      const data = (await Promise.all(search.results.slice(0, 30).map((r) => r.data()))).filter((d) => {
+        const marks = [...d.excerpt.matchAll(/<mark>(.*?)<\/mark>/g)].map((m) => norm(m[1]));
+        const text = norm(d.excerpt.replace(/<[^>]+>/g, " "));
+        return marks.some((m) => words.some((w) => m.includes(w) || w.includes(m))) || words.every((w) => text.includes(w));
+      });
+      status.textContent = data.length
+        ? `${data.length} result${data.length === 1 ? "" : "s"} for “${q}”`
+        : `No results for “${q}”. Check the spelling or try a broader term.`;
+      list.classList.toggle("hidden", data.length === 0);
+      list.innerHTML = data
+        .slice(0, 20)
+        .map((d) => {
+          const kind = d.url.startsWith("/cves/") ? "CVE" : "Post";
+          return `<li><a href="${escape(d.url)}" class="trow block md:grid md:grid-cols-[3.5rem_minmax(0,1fr)] md:gap-5 py-4 px-3 -mx-3 rounded-sm">
+            <span class="block text-[12px] text-dim md:pt-0.5">${kind}</span>
+            <span class="block min-w-0">
+              <span class="row-title block leading-snug">${escape(d.meta.title ?? d.url)}</span>
+              <span class="search-excerpt text-[14px] text-dim mt-1 leading-relaxed line-clamp-2">${d.excerpt}</span>
+            </span>
+          </a></li>`;
+        })
+        .join("");
+    }
+
+    input.addEventListener("input", () => run(input.value));
+    root.querySelector("[data-search-suggestions]")?.addEventListener("click", (e) => {
+      const b = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-suggest]");
+      if (!b) return;
+      input.value = b.dataset.suggest!;
+      input.focus();
+      run(input.value);
+    });
+
+    if (isPage) {
+      const initial = new URL(location.href).searchParams.get("q");
+      if (initial) {
+        input.value = initial;
+        run(initial);
+      }
+      input.focus();
+    }
+  }
+
+  document.addEventListener("astro:page-load", () => {
+    document.querySelectorAll<HTMLElement>("[data-search-root]").forEach(setup);
+  });
+</script>
+
+<style is:global>
+  .search-excerpt mark {
+    background: transparent;
+    color: var(--strong);
+    font-weight: 500;
+  }
+</style>

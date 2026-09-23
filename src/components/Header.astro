@@ -31,6 +31,7 @@ const isActive = (href: string) =>
     <div class="ml-auto flex items-center gap-2">
       <a
         href="/search/"
+        data-search-open
         class="hidden sm:flex items-center gap-3 h-9 w-56 pl-3 pr-2 rounded-md border border-border text-dim text-[13px] hover:border-border-strong hover:text-strong transition-colors"
         aria-label="Search"
       >
@@ -40,7 +41,7 @@ const isActive = (href: string) =>
         <span class="flex-1">Search…</span>
         <span class="kbd">⌘K</span>
       </a>
-      <a href="/search/" class="icon-btn sm:hidden" aria-label="Search">
+      <a href="/search/" data-search-open class="icon-btn sm:hidden" aria-label="Search">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
           <circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path>
         </svg>

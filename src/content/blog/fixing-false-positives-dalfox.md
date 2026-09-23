@@ -6,6 +6,7 @@ featured: false
 draft: false
 tags:
   - bugbounty
+  - xss
   - learning
 description: "A deep dive into contributing to Dalfox — fixing false positive XSS alerts on JSON API endpoints, the mistakes I made, and the proper fix."
 ---
