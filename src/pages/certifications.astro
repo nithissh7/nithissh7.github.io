@@ -1,49 +1,40 @@
 ---
 import { getCollection } from "astro:content";
 import BaseLayout from "../layouts/BaseLayout.astro";
-import { formatDate } from "../consts";
 
-const certifications = (await getCollection("certifications")).sort(
+const certs = (await getCollection("certifications")).sort(
   (a, b) => b.data.dateEarned.valueOf() - a.data.dateEarned.valueOf()
 );
+const year = (d: Date) => d.toLocaleDateString("en-US", { month: "short", year: "numeric", timeZone: "Asia/Kolkata" });
 ---
 
 <BaseLayout title="Certifications" description="Professional certifications and credentials earned by Nithissh.">
-  <p class="text-[13px] text-muted mb-3" aria-hidden="true">$ ls ~/certs</p>
-  <h1 class="text-[22px] font-bold mb-3">Certifications</h1>
-  <p class="font-serif text-[17px] text-ink-2 mb-12 max-w-xl">Credentials I've earned, newest first.</p>
+  <h1 class="text-[22px] font-bold leading-snug mb-4">Certifications</h1>
+  <p class="mb-14">Credentials I've earned along the way, newest first.</p>
 
-  {certifications.length === 0 ? (
-    <p class="text-ink-2">No certifications listed yet.</p>
+  {certs.length === 0 ? (
+    <p>No certifications listed yet.</p>
   ) : (
-    <ul class="border-t border-line rise">
-      {certifications.map((cert) => (
-        <li class="flex gap-5 py-5 border-b border-line">
+    <ul class="space-y-10">
+      {certs.map((cert) => (
+        <li class="flex gap-5">
           {cert.data.badgeUrl && (
             <img
               src={cert.data.badgeUrl}
               alt=""
-              width="48"
-              height="48"
+              width="52"
+              height="52"
               loading="lazy"
-              class="size-12 shrink-0 object-contain rounded-[4px] bg-white p-1 border border-line"
+              class="size-[52px] shrink-0 object-contain rounded-md bg-white p-1.5 border border-border"
             />
           )}
-          <div class="min-w-0 flex-1">
-            <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-              <h2 class="text-[14px] font-bold text-ink">{cert.data.name}</h2>
-              <span class="text-[12px] text-muted tabular-nums">{formatDate(cert.data.dateEarned).slice(0, 7)}</span>
-            </div>
-            <p class="text-[12px] text-ink-2 mb-2">{cert.data.issuer}</p>
-            <p class="font-serif text-[15px] text-ink-2 leading-relaxed">{cert.data.description}</p>
+          <div class="min-w-0">
+            <h2 class="font-bold leading-snug">{cert.data.name}</h2>
+            <p class="text-[14px] text-dim mb-2">{cert.data.issuer} · {year(cert.data.dateEarned)}</p>
+            <p class="text-[14px] leading-relaxed">{cert.data.description}</p>
             {cert.data.credentialUrl && (
-              <a
-                href={cert.data.credentialUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                class="btn-bracket inline-block mt-2 text-[12px]"
-              >
-                verify ↗
+              <a href={cert.data.credentialUrl} target="_blank" rel="noopener noreferrer" class="link inline-block mt-2 text-[14px]">
+                Verify credential ↗
               </a>
             )}
           </div>

@@ -1,7 +1,7 @@
 ---
 import { getCollection } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import PostArchive from "../../components/PostArchive.astro";
+import PostList from "../../components/PostList.astro";
 
 export async function getStaticPaths() {
   const posts = await getCollection("blog", ({ data }) => !data.draft);
@@ -17,8 +17,8 @@ const { posts } = Astro.props;
 ---
 
 <BaseLayout title={`#${tag}`} description={`Posts tagged #${tag}.`}>
-  <a href="/tags" class="quiet text-[13px]">← all tags</a>
-  <h1 class="text-[22px] font-bold mt-6 mb-2">#{tag}</h1>
-  <p class="text-[13px] text-ink-2 mb-10">{posts.length} {posts.length === 1 ? "post" : "posts"}</p>
-  <PostArchive posts={posts} />
+  <a href="/tags" class="nav-link text-[14px]">← All tags</a>
+  <h1 class="text-[22px] font-bold leading-snug mt-8 mb-2">#{tag}</h1>
+  <p class="text-dim mb-12">{posts.length} {posts.length === 1 ? "post" : "posts"}</p>
+  <PostList posts={posts} />
 </BaseLayout>

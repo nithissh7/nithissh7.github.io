@@ -1,0 +1,24 @@
+---
+import type { CollectionEntry } from "astro:content";
+import { formatDate } from "../consts";
+
+interface Props {
+  posts: CollectionEntry<"blog">[];
+}
+
+const posts = [...Astro.props.posts].sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+---
+
+<ul class="-my-3">
+  {posts.map((post) => (
+    <li>
+      <a href={`/blog/${post.id}/`} class="entry">
+        <div class="min-w-0">
+          <p class="entry-title">{post.data.title}</p>
+          <p class="entry-desc">{post.data.description}</p>
+        </div>
+        <time class="entry-date" datetime={post.data.pubDate.toISOString()}>{formatDate(post.data.pubDate, "medium")}</time>
+      </a>
+    </li>
+  ))}
+</ul>

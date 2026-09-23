@@ -15,8 +15,9 @@ export async function getStaticPaths() {
 }
 
 const { post, newer, older } = Astro.props;
-const { Content } = await render(post);
+const { Content, headings } = await render(post);
 const readTime = getReadingTime(post.body ?? "");
+const toc = headings.filter((h) => h.depth === 2 || h.depth === 3);
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -40,57 +41,66 @@ const jsonLd = {
   image={`/blog/${post.id}/og.png`}
 >
   <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
-  <article data-pagefind-body>
-    <a href="/" data-back data-pagefind-ignore class="quiet text-[13px]">← cd ..</a>
-
-    <header class="mt-8 mb-10 pb-8 border-b border-line">
-      <p class="text-[12px] text-muted mb-4 tabular-nums">
-        <time datetime={post.data.pubDate.toISOString()}>{formatDate(post.data.pubDate)}</time>
-        <span class="mx-1.5">·</span>{readTime}
+  <article class="relative" data-pagefind-body>
+    <header class="mb-12">
+      <p class="text-[14px] text-dim mb-5">
+        <time datetime={post.data.pubDate.toISOString()}>{formatDate(post.data.pubDate, "medium")}</time>
+        <span class="mx-2" aria-hidden="true">·</span>{readTime}
         {post.data.updatedDate && (
           <>
-            <span class="mx-1.5">·</span>updated {formatDate(post.data.updatedDate)}
+            <span class="mx-2" aria-hidden="true">·</span>updated {formatDate(post.data.updatedDate, "medium")}
           </>
         )}
       </p>
-      <h1 class="text-[24px] sm:text-[30px] font-bold leading-[1.2] tracking-tight mb-4 text-balance">
+      <h1 class="text-[24px] sm:text-[28px] font-bold leading-[1.3] tracking-tight mb-5 text-balance">
         {post.data.title}
       </h1>
-      <p class="font-serif italic text-[17px] sm:text-[18px] leading-relaxed text-ink-2 max-w-2xl">
-        {post.data.description}
-      </p>
+      <p class="text-[16px] leading-[1.75]">{post.data.description}</p>
       {post.data.tags.length > 0 && (
-        <ul class="flex flex-wrap gap-x-4 gap-y-1 mt-5 text-[12px]">
+        <ul class="flex flex-wrap gap-x-4 gap-y-1 mt-5 text-[14px]" data-pagefind-ignore>
           {post.data.tags.map((tag) => (
             <li>
-              <a href={`/tags/${tag}/`} class="quiet">#{tag}</a>
+              <a href={`/tags/${tag}/`} class="nav-link">#{tag}</a>
             </li>
           ))}
         </ul>
       )}
     </header>
 
-    <div class="prose" data-article>
+    <div class="border-t border-border mb-12"></div>
+
+    <div class="prose">
       <Content />
     </div>
 
-    <footer data-pagefind-ignore class="mt-16 pt-6 border-t border-line text-[13px]">
-      <p class="text-muted mb-8">
-        — written by {post.data.author ?? SITE_AUTHOR}. Spotted a mistake?
-        <a href="mailto:realnits@gmail.com" class="link text-ink-2">Tell me</a>.
+    {toc.length > 2 && (
+      <aside class="hidden xl:block absolute top-0 bottom-0 left-full ml-12 w-52" data-pagefind-ignore>
+        <nav class="toc sticky top-10" aria-label="On this page">
+          <p class="text-[13px] font-bold text-strong mb-3">On this page</p>
+          {toc.map((h) => (
+            <a href={`#${h.slug}`} data-depth={h.depth} aria-current="false">{h.text}</a>
+          ))}
+        </nav>
+      </aside>
+    )}
+
+    <footer class="mt-20" data-pagefind-ignore>
+      <p class="text-[14px] text-dim mb-8">
+        Thanks for reading. Questions or corrections?
+        <a href="mailto:realnits@gmail.com" class="link">Email me</a>.
       </p>
       {(newer || older) && (
-        <nav aria-label="More posts" class="grid sm:grid-cols-2 gap-6">
+        <nav aria-label="More posts" class="grid sm:grid-cols-2 gap-3">
           {older ? (
-            <a href={`/blog/${older.id}/`} class="group block">
-              <span class="block text-[12px] text-muted mb-1">← older</span>
-              <span class="row-title group-hover:underline underline-offset-4 decoration-line-strong">{older.data.title}</span>
+            <a href={`/blog/${older.id}/`} class="box block p-4">
+              <span class="block text-[13px] text-dim mb-1">← Previous</span>
+              <span class="block text-strong font-medium leading-snug">{older.data.title}</span>
             </a>
-          ) : <span />}
+          ) : <span class="hidden sm:block" />}
           {newer && (
-            <a href={`/blog/${newer.id}/`} class="group block sm:text-right">
-              <span class="block text-[12px] text-muted mb-1">newer →</span>
-              <span class="row-title group-hover:underline underline-offset-4 decoration-line-strong">{newer.data.title}</span>
+            <a href={`/blog/${newer.id}/`} class="box block p-4 sm:text-right">
+              <span class="block text-[13px] text-dim mb-1">Next →</span>
+              <span class="block text-strong font-medium leading-snug">{newer.data.title}</span>
             </a>
           )}
         </nav>

@@ -8,72 +8,65 @@ const certs = (await getCollection("certifications")).sort(
 );
 
 const areas = [
-  { k: "offense", v: "Bug bounty · web and API pentesting · cloud security (AWS, Azure, GCP) · vulnerability research" },
-  { k: "defense", v: "Platform and AI security · SOC operations · SIEM and EDR · DevSecOps · incident response" },
-  { k: "build", v: "Security tooling · automation · open source contributions · this blog" },
+  ["Offense", "Bug bounty, web and API pentesting, cloud security (AWS, Azure, GCP), vulnerability research."],
+  ["Defense", "Platform and AI security, SOC operations, SIEM and EDR, DevSecOps, incident response."],
+  ["Build", "Security tooling, automation, open source contributions, and this blog."],
 ];
 ---
 
 <BaseLayout title="About" description="Security architect by day, bug bounty hunter by night.">
-  <p class="text-[13px] text-muted mb-3" aria-hidden="true">$ cat about.md</p>
-  <h1 class="text-[22px] font-bold mb-8">About</h1>
+  <h1 class="text-[22px] font-bold leading-snug mb-8">About</h1>
 
-  <div class="prose mb-14">
+  <div class="prose mb-16">
     <p>
-      Security architect by day, bug bounty hunter by night — I break things to understand how to defend them
-      better.
+      I'm Nithissh — a security architect by day and a bug bounty hunter by night. I break things to understand
+      how to defend them better.
     </p>
     <p>
-      I handle platform and AI security at one of the largest pharma companies. Outside work, I spend my time
-      hunting vulnerabilities, writing security tools, and documenting everything I learn on this blog.
+      I handle platform and AI security at one of the largest pharma companies. Outside work I hunt
+      vulnerabilities, write security tools, and document what I learn here.
     </p>
-    <p>The thing that keeps me going is curiosity — there's nothing quite like finding the flaw that nobody else noticed.</p>
+    <p>
+      I write to think. Mostly for future me, so I don't relearn things twice. If it helps you too, that's a
+      bonus.
+    </p>
   </div>
 
-  <section class="mb-14">
-    <h2 class="rule text-[13px] mb-1">what i do</h2>
-    <dl class="text-[13px]">
-      {areas.map(({ k, v }) => (
-        <div class="flex flex-col sm:flex-row gap-1 sm:gap-6 py-3 border-b border-line">
-          <dt class="sm:w-24 shrink-0 text-ink font-bold">{k}</dt>
-          <dd class="text-ink-2">{v}</dd>
+  <section class="mb-16">
+    <h2 class="section-title">What I do</h2>
+    <dl class="space-y-4">
+      {areas.map(([k, v]) => (
+        <div class="grid sm:grid-cols-[7rem_minmax(0,1fr)] gap-x-4">
+          <dt class="text-strong font-medium">{k}</dt>
+          <dd>{v}</dd>
         </div>
       ))}
     </dl>
   </section>
 
-  <section class="mb-14">
-    <h2 class="rule text-[13px] mb-1">certifications</h2>
-    <ul class="text-[13px]">
+  <section class="mb-16">
+    <div class="flex items-baseline justify-between gap-4 mb-5">
+      <h2 class="section-title !mb-0">Certifications</h2>
+      <a href="/certifications" class="nav-link text-[14px]">details →</a>
+    </div>
+    <ul class="space-y-2">
       {certs.map((cert) => (
-        <li class="flex justify-between gap-6 py-2.5 border-b border-line">
-          <span class="text-ink">{cert.data.name}</span>
-          <span class="text-muted shrink-0">{cert.data.issuer}</span>
+        <li class="flex justify-between gap-6">
+          <span class="text-strong">{cert.data.name}</span>
+          <span class="text-dim text-[14px] shrink-0">{cert.data.issuer}</span>
         </li>
       ))}
     </ul>
-    <a href="/certifications" class="quiet inline-block mt-4 text-[13px]">all certs with badges →</a>
-  </section>
-
-  <section class="mb-14">
-    <h2 class="rule text-[13px] mb-4">this blog</h2>
-    <div class="prose">
-      <p>
-        I write to think. Bug bounty write-ups, cloud security research, CTF solutions, SOC learning notes —
-        whatever I'm into that week ends up here.
-      </p>
-      <p>Mostly for future-me, so I don't relearn things twice. If it helps you too, that's a bonus.</p>
-    </div>
   </section>
 
   <section>
-    <h2 class="rule text-[13px] mb-4">connect</h2>
-    <ul class="flex flex-wrap gap-x-6 gap-y-2 text-[13px]">
+    <h2 class="section-title">Elsewhere</h2>
+    <ul class="flex flex-wrap gap-x-5 gap-y-1">
       {SOCIAL_LINKS.map((link) => (
         <li>
           <a
             href={link.href}
-            class="btn-bracket"
+            class="link"
             target={link.href.startsWith("http") ? "_blank" : undefined}
             rel={link.href.startsWith("http") ? "noopener noreferrer" : undefined}
           >

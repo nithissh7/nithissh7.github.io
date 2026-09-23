@@ -15,10 +15,10 @@ function loadFonts() {
   return fontsPromise;
 }
 
-const PAPER = "#f7f6f2";
-const INK = "#161616";
-const INK_SOFT = "#57534b";
-const LINE = "#dedacf";
+const PAPER = "#0c0c0e";
+const INK = "#f2eded";
+const INK_SOFT = "#b8b2b2";
+const LINE = "#2a2a2f";
 const ACCENT_BG = INK;
 const ACCENT_INK = PAPER;
 

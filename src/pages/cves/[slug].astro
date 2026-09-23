@@ -5,23 +5,19 @@ import { formatDate } from "../../consts";
 
 export async function getStaticPaths() {
   const cves = await getCollection("cves", ({ data }) => !data.draft);
-  return cves.map((cve) => ({
-    params: { slug: cve.id },
-    props: { cve },
-  }));
+  return cves.map((cve) => ({ params: { slug: cve.id }, props: { cve } }));
 }
 
 const { cve } = Astro.props;
 const { Content } = await render(cve);
 
 const facts = [
-  { k: "product", v: cve.data.affectedProduct },
-  cve.data.vendor && { k: "vendor", v: cve.data.vendor },
-  { k: "severity", v: cve.data.severity.toLowerCase() },
-  cve.data.cvssScore !== undefined && { k: "cvss", v: cve.data.cvssScore.toFixed(1) },
-  { k: "status", v: cve.data.status.toLowerCase() },
-  { k: "published", v: formatDate(cve.data.pubDate) },
-].filter(Boolean) as { k: string; v: string }[];
+  ["Product", cve.data.affectedProduct],
+  cve.data.vendor && ["Vendor", cve.data.vendor],
+  ["Severity", cve.data.severity + (cve.data.cvssScore !== undefined ? ` · CVSS ${cve.data.cvssScore.toFixed(1)}` : "")],
+  ["Status", cve.data.status],
+  ["Published", formatDate(cve.data.pubDate, "medium")],
+].filter(Boolean) as [string, string][];
 ---
 
 <BaseLayout
@@ -32,43 +28,37 @@ const facts = [
   image={`/cves/${cve.id}/og.png`}
 >
   <article data-pagefind-body>
-    <a href="/cves" data-back data-pagefind-ignore class="quiet text-[13px]">← cd ../cves</a>
+    <a href="/cves" data-back data-pagefind-ignore class="nav-link text-[14px]">← All CVEs</a>
 
     <header class="mt-8 mb-10">
-      <p class="text-[13px] text-muted mb-3 tabular-nums">{cve.data.cveId}</p>
-      <h1 class="text-[22px] sm:text-[26px] font-bold leading-[1.25] tracking-tight mb-4 text-balance">
-        {cve.data.title}
-      </h1>
-      {!cve.data.title.toLowerCase().includes(cve.data.description.toLowerCase()) && (
-        <p class="font-serif italic text-[17px] leading-relaxed text-ink-2 max-w-2xl">{cve.data.description}</p>
-      )}
+      <p class="text-[14px] text-dim mb-4">{cve.data.cveId}</p>
+      <h1 class="text-[22px] sm:text-[26px] font-bold leading-[1.35] tracking-tight text-balance">{cve.data.title}</h1>
     </header>
 
-    <dl class="mb-10 border-t border-line text-[13px]">
-      {facts.map(({ k, v }) => (
-        <div class="flex gap-6 py-2 border-b border-line">
-          <dt class="w-24 shrink-0 text-muted">{k}</dt>
-          <dd class="text-ink min-w-0">{v}</dd>
+    <dl class="box divide-y divide-border mb-10 text-[14px]">
+      {facts.map(([k, v]) => (
+        <div class="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-4 px-4 py-2.5">
+          <dt class="text-dim">{k}</dt>
+          <dd class="text-strong">{v}</dd>
         </div>
       ))}
     </dl>
 
+    <div class="prose">
+      <Content />
+    </div>
+
     {cve.data.references && cve.data.references.length > 0 && (
-      <section class="mb-12">
-        <h2 class="text-[13px] font-bold mb-3"><span class="text-muted font-normal">## </span>references</h2>
-        <ul class="space-y-1.5 text-[13px]">
+      <section class="mt-12" data-pagefind-ignore>
+        <h2 class="section-title">References</h2>
+        <ul class="space-y-2 text-[14px]">
           {cve.data.references.map((ref) => (
-            <li class="flex gap-3">
-              <span class="text-muted" aria-hidden="true">→</span>
-              <a href={ref} target="_blank" rel="noopener noreferrer" class="link text-ink-2 break-all">{ref}</a>
+            <li>
+              <a href={ref} target="_blank" rel="noopener noreferrer" class="link break-all">{ref}</a>
             </li>
           ))}
         </ul>
       </section>
     )}
-
-    <div class="prose" data-article>
-      <Content />
-    </div>
   </article>
 </BaseLayout>

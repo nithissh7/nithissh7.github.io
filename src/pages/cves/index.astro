@@ -1,79 +1,44 @@
 ---
 import { getCollection } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import { yearOf } from "../../consts";
+import { formatDate } from "../../consts";
 
-const cves = await getCollection("cves", ({ data }) => !data.draft);
-
+const cves = (await getCollection("cves", ({ data }) => !data.draft)).sort(
+  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf() || (b.data.cvssScore ?? 0) - (a.data.cvssScore ?? 0)
+);
 const severities = ["Critical", "High", "Medium", "Low", "Informational"] as const;
-const counts = severities
+const breakdown = severities
   .map((sev) => ({ sev, n: cves.filter((c) => c.data.severity === sev).length }))
-  .filter((s) => s.n > 0);
-
-const byYear = new Map<number, typeof cves>();
-for (const cve of cves) {
-  const year = yearOf(cve.data.pubDate);
-  byYear.set(year, [...(byYear.get(year) ?? []), cve]);
-}
-const years = [...byYear].sort(([a], [b]) => b - a);
-for (const [, list] of years) {
-  list.sort((a, b) => (b.data.cvssScore ?? 0) - (a.data.cvssScore ?? 0) || a.data.cveId.localeCompare(b.data.cveId));
-}
+  .filter((s) => s.n > 0)
+  .map((s) => `${s.n} ${s.sev.toLowerCase()}`)
+  .join(", ");
 ---
 
 <BaseLayout title="CVEs" description="Security vulnerabilities discovered and responsibly disclosed by Nithissh.">
-  <p class="text-[13px] text-muted mb-3" aria-hidden="true">$ grep -c CVE disclosures.log</p>
-  <h1 class="text-[22px] font-bold mb-3">CVEs</h1>
-  <p class="font-serif text-[17px] text-ink-2 mb-6 max-w-xl">
+  <h1 class="text-[22px] font-bold leading-snug mb-4">CVEs</h1>
+  <p class="mb-14">
     Vulnerabilities I've found and responsibly disclosed.
+    {cves.length > 0 && <>{cves.length} so far: {breakdown}.</>}
   </p>
 
   {cves.length === 0 ? (
-    <p class="text-ink-2">No CVEs published yet.</p>
+    <p>No CVEs published yet.</p>
   ) : (
-    <>
-      <p class="text-[13px] text-ink-2 mb-12 tabular-nums">
-        <span class="text-ink font-bold">{cves.length}</span> published
-        {counts.map(({ sev, n }) => (
-          <>
-            <span class="text-muted mx-2">·</span>{n} {sev.toLowerCase()}
-          </>
-        ))}
-      </p>
-
-      <div class="space-y-12">
-        {years.map(([year, list]) => (
-          <section aria-labelledby={`cve-year-${year}`}>
-            <h2 id={`cve-year-${year}`} class="rule text-[13px] mb-1">{year}</h2>
-            <div class="hidden sm:flex gap-5 py-2 text-[11px] uppercase tracking-wider text-muted border-b border-line">
-              <span class="w-36 shrink-0">id</span>
-              <span class="flex-1">title</span>
-              <span class="w-14 shrink-0">sev</span>
-              <span class="w-8 shrink-0 text-right">cvss</span>
+    <ul class="-my-3">
+      {cves.map((cve) => (
+        <li>
+          <a href={`/cves/${cve.id}/`} class="entry">
+            <div class="min-w-0">
+              <p class="entry-title">{cve.data.title}</p>
+              <p class="entry-desc">
+                {cve.data.cveId} · {cve.data.severity.toLowerCase()}
+                {cve.data.cvssScore !== undefined && ` ${cve.data.cvssScore.toFixed(1)}`}
+              </p>
             </div>
-            <ul class="rise">
-              {list.map((cve) => (
-                <li>
-                  <a
-                    href={`/cves/${cve.id}/`}
-                    class="row flex-col gap-1 sm:flex-row sm:gap-5"
-                    title={cve.data.title}
-                  >
-                    <span class="w-36 shrink-0 text-[13px] text-ink tabular-nums">{cve.data.cveId}</span>
-                    <span class="row-title flex-1 min-w-0 text-[13px] sm:truncate">{cve.data.title}</span>
-                    <span class="flex gap-3 sm:contents text-[12px] text-ink-2 tabular-nums">
-                      <span class={`sm:w-14 shrink-0 ${cve.data.severity === "Critical" || cve.data.severity === "High" ? "text-ink font-bold" : ""}`}>
-                        {cve.data.severity.toLowerCase()}
-                      </span>
-                      <span class="sm:w-8 shrink-0 sm:text-right">{cve.data.cvssScore?.toFixed(1) ?? "—"}</span>
-                    </span>
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </section>
-        ))}
-      </div>
-    </>
+            <time class="entry-date" datetime={cve.data.pubDate.toISOString()}>{formatDate(cve.data.pubDate, "medium")}</time>
+          </a>
+        </li>
+      ))}
+    </ul>
   )}
 </BaseLayout>

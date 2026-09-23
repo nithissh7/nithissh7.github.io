@@ -3,17 +3,15 @@ import { SITE_AUTHOR, SOCIAL_LINKS } from "../consts";
 const year = new Date().getFullYear();
 ---
 
-<footer class="border-t border-line">
-  <div class="max-w-3xl mx-auto px-4 sm:px-6 py-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-[12px] text-ink-2">
-    <p>
-      &copy; {year} {SITE_AUTHOR.toLowerCase()} <span class="text-muted">·</span> set in jetbrains mono &amp; ibm plex serif
-    </p>
-    <ul class="flex items-center gap-4">
+<footer class="w-full max-w-[680px] mx-auto px-5 sm:px-6">
+  <div class="border-t border-border py-8 flex flex-col-reverse sm:flex-row sm:items-center justify-between gap-4 text-[13px] text-dim">
+    <p>© {year} {SITE_AUTHOR}</p>
+    <ul class="flex flex-wrap gap-x-5 gap-y-1">
       {SOCIAL_LINKS.map((link) => (
         <li>
           <a
             href={link.href}
-            class="quiet"
+            class="nav-link"
             target={link.href.startsWith("http") ? "_blank" : undefined}
             rel={link.href.startsWith("http") ? "noopener noreferrer" : undefined}
           >

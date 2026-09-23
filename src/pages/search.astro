@@ -3,12 +3,11 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 ---
 
 <BaseLayout title="Search">
-  <p class="text-[13px] text-muted mb-3" aria-hidden="true">$ grep -ri</p>
-  <h1 class="text-[22px] font-bold mb-8">Search</h1>
+  <h1 class="text-[22px] font-bold leading-snug mb-8">Search</h1>
   <div id="search" class="pagefind-brutal"></div>
   <p
     id="search-unavailable"
-    class="hidden border border-line rounded-[4px] p-5 text-[13px] text-ink-2"
+    class="hidden box p-5 text-[14px]"
   >
     Search index isn't available in <code>astro dev</code>. Pagefind only builds its
     index as part of <code>npm run build</code> — run that (or <code>npm run preview</code>
@@ -24,7 +23,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     const fallback = document.getElementById("search-unavailable");
     if (el && typeof PagefindUI === "function" && !el.dataset.initialized) {
       el.dataset.initialized = "true";
-      new PagefindUI({ element: "#search", showSubResults: true, showImages: false, autofocus: true });
+      new PagefindUI({ element: "#search", showSubResults: false, showImages: false, autofocus: true });
     } else if (el && typeof PagefindUI !== "function") {
       el.classList.add("hidden");
       fallback?.classList.remove("hidden");
@@ -34,23 +33,26 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 
 <style is:global>
   .pagefind-brutal {
-    --pagefind-ui-scale: 0.85;
-    --pagefind-ui-primary: var(--ink);
-    --pagefind-ui-text: var(--ink);
-    --pagefind-ui-background: var(--paper);
-    --pagefind-ui-border: var(--line-strong);
-    --pagefind-ui-tag: var(--surface);
+    --pagefind-ui-scale: 0.9;
+    --pagefind-ui-primary: var(--strong);
+    --pagefind-ui-text: var(--text);
+    --pagefind-ui-background: var(--bg);
+    --pagefind-ui-border: var(--border-strong);
+    --pagefind-ui-tag: var(--bg-raised);
     --pagefind-ui-border-width: 1px;
-    --pagefind-ui-border-radius: 4px;
-    --pagefind-ui-image-border-radius: 4px;
+    --pagefind-ui-border-radius: 6px;
     --pagefind-ui-font: "JetBrains Mono", ui-monospace, monospace;
   }
+  .pagefind-brutal .pagefind-ui__result-link {
+    color: var(--strong);
+  }
   .pagefind-brutal .pagefind-ui__result-excerpt {
-    color: var(--ink-2);
+    color: var(--dim);
   }
   .pagefind-brutal .pagefind-ui mark {
-    background: var(--surface);
-    color: var(--ink);
-    box-shadow: inset 0 -0.4em 0 var(--line-strong);
+    background: transparent;
+    color: var(--strong);
+    text-decoration: underline;
+    text-underline-offset: 3px;
   }
 </style>

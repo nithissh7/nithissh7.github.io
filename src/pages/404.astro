@@ -3,22 +3,11 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 ---
 
 <BaseLayout title="Page not found">
-  <div class="py-10 sm:py-16 text-[14px]">
-    <p class="text-muted">$ cd <span id="missing-path">this-page</span></p>
-    <p class="text-ink mt-1 mb-8">cd: no such file or directory</p>
-    <h1 class="text-[22px] font-bold mb-3">404 — nothing here</h1>
-    <p class="font-serif text-[17px] text-ink-2 mb-8 max-w-md">
-      The page you're looking for doesn't exist or has moved.
-    </p>
-    <div class="flex flex-wrap gap-x-6 gap-y-2 text-[13px]">
-      <a href="/" class="btn-bracket">home</a>
-      <a href="/search" class="btn-bracket">search</a>
-    </div>
+  <p class="text-dim text-[14px] mb-4">404</p>
+  <h1 class="text-[22px] font-bold leading-snug mb-4">This page doesn't exist.</h1>
+  <p class="mb-8">It may have moved, or the link might be wrong.</p>
+  <div class="flex gap-6">
+    <a href="/" class="link">Go home</a>
+    <a href="/search" class="link">Search the site</a>
   </div>
-  <script is:inline>
-    document.addEventListener("astro:page-load", () => {
-      const el = document.getElementById("missing-path");
-      if (el) el.textContent = location.pathname;
-    });
-  </script>
 </BaseLayout>

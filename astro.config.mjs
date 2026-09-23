@@ -18,7 +18,7 @@ const codeChrome = {
       el("div", { className: ["code-block"] }, [
         el("div", { className: ["code-block-bar"] }, [
           el("span", {}, [text(label)]),
-          el("button", { type: "button", className: ["btn-bracket"], "data-copy": "", "aria-label": "Copy code" }, [text("copy")]),
+          el("button", { type: "button", "data-copy": "", "aria-label": "Copy code" }, [text("copy")]),
         ]),
         ...root.children,
       ]),
