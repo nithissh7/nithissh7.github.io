@@ -8,70 +8,79 @@ const certs = (await getCollection("certifications")).sort(
 );
 
 const areas = [
-  ["Offense", "Bug bounty, web and API pentesting, cloud security (AWS, Azure, GCP), vulnerability research."],
-  ["Defense", "Platform and AI security, SOC operations, SIEM and EDR, DevSecOps, incident response."],
-  ["Build", "Security tooling, automation, open source contributions, and this blog."],
+  { k: "Offense", v: "Bug bounty, web and API pentesting, cloud security (AWS, Azure, GCP), vulnerability research." },
+  { k: "Defense", v: "Platform and AI security, SOC operations, SIEM and EDR, DevSecOps, incident response." },
+  { k: "Build", v: "Security tooling, automation, open source contributions, and this blog." },
 ];
 ---
 
 <BaseLayout title="About" description="Security architect by day, bug bounty hunter by night.">
-  <h1 class="text-[22px] font-bold leading-snug mb-8">About</h1>
+  <section class="band">
+    <span class="eyebrow">About</span>
+    <h1 class="h-page mb-5">I break things to understand how to defend them.</h1>
+    <p class="lede">Security architect by day, bug bounty hunter by night.</p>
+  </section>
 
-  <div class="prose mb-16">
-    <p>
-      I'm Nithissh — a security architect by day and a bug bounty hunter by night. I break things to understand
-      how to defend them better.
-    </p>
-    <p>
-      I handle platform and AI security at one of the largest pharma companies. Outside work I hunt
-      vulnerabilities, write security tools, and document what I learn here.
-    </p>
-    <p>
-      I write to think. Mostly for future me, so I don't relearn things twice. If it helps you too, that's a
-      bonus.
-    </p>
-  </div>
-
-  <section class="mb-16">
-    <h2 class="section-title">What I do</h2>
-    <dl class="space-y-4">
-      {areas.map(([k, v]) => (
-        <div class="grid sm:grid-cols-[7rem_minmax(0,1fr)] gap-x-4">
-          <dt class="text-strong font-medium">{k}</dt>
-          <dd>{v}</dd>
+  <section class="band">
+    <div class="grid lg:grid-cols-12 gap-12 lg:gap-16">
+      <div class="lg:col-span-7 prose">
+        <p>
+          I'm Nithissh. I handle platform and AI security at one of the largest pharma companies. Outside work I
+          hunt vulnerabilities, write security tools, and document what I learn here.
+        </p>
+        <p>
+          The thing that keeps me going is curiosity — there's nothing quite like finding the flaw that nobody else
+          noticed.
+        </p>
+        <p>
+          I write to think. Bug bounty write-ups, cloud security research, CTF solutions, SOC notes — whatever I'm into
+          that week ends up here. Mostly for future me, so I don't relearn things twice. If it helps you too, that's a
+          bonus.
+        </p>
+      </div>
+      <div class="lg:col-span-5 space-y-10">
+        <div>
+          <p class="text-[13px] text-strong font-bold mb-3">What I do</p>
+          <dl class="cells">
+            {areas.map((a) => (
+              <div class="p-5">
+                <dt class="text-strong font-medium mb-1">{a.k}</dt>
+                <dd class="text-[14px] text-dim leading-relaxed">{a.v}</dd>
+              </div>
+            ))}
+          </dl>
         </div>
-      ))}
-    </dl>
-  </section>
-
-  <section class="mb-16">
-    <div class="flex items-baseline justify-between gap-4 mb-5">
-      <h2 class="section-title !mb-0">Certifications</h2>
-      <a href="/certifications" class="nav-link text-[14px]">details →</a>
+        <div>
+          <p class="text-[13px] text-strong font-bold mb-3">Elsewhere</p>
+          <ul class="flex flex-wrap gap-x-5 gap-y-1 text-[14px]">
+            {SOCIAL_LINKS.map((link) => (
+              <li>
+                <a
+                  href={link.href}
+                  class="link"
+                  target={link.href.startsWith("http") ? "_blank" : undefined}
+                  rel={link.href.startsWith("http") ? "noopener noreferrer" : undefined}
+                >
+                  {link.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
     </div>
-    <ul class="space-y-2">
-      {certs.map((cert) => (
-        <li class="flex justify-between gap-6">
-          <span class="text-strong">{cert.data.name}</span>
-          <span class="text-dim text-[14px] shrink-0">{cert.data.issuer}</span>
-        </li>
-      ))}
-    </ul>
   </section>
 
-  <section>
-    <h2 class="section-title">Elsewhere</h2>
-    <ul class="flex flex-wrap gap-x-5 gap-y-1">
-      {SOCIAL_LINKS.map((link) => (
-        <li>
-          <a
-            href={link.href}
-            class="link"
-            target={link.href.startsWith("http") ? "_blank" : undefined}
-            rel={link.href.startsWith("http") ? "noopener noreferrer" : undefined}
-          >
-            {link.label}
-          </a>
+  <section class="band">
+    <div class="band-head">
+      <h2 class="h-section">Certifications</h2>
+      <a href="/certifications/" class="nav-link text-[14px]">Details →</a>
+    </div>
+    <ul class="cells md:grid-cols-2 lg:grid-cols-3 text-[14px]">
+      {certs.map((c) => (
+        <li class="px-5 py-4">
+          <span class="block text-strong">{c.data.name}</span>
+          <span class="block text-[13px] text-dim">{c.data.issuer}</span>
         </li>
       ))}
     </ul>

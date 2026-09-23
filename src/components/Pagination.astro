@@ -1,0 +1,34 @@
+---
+interface Props {
+  current: number;
+  last: number;
+  prev?: string;
+  next?: string;
+  base: string; // e.g. "/blog"
+}
+
+const { current, last, prev, next, base } = Astro.props;
+const href = (n: number) => (n === 1 ? `${base}/` : `${base}/${n}/`);
+---
+
+{last > 1 && (
+  <nav aria-label="Pagination" class="flex items-center justify-between gap-4 text-[14px]">
+    {prev ? <a href={prev} class="btn btn-ghost">← Newer</a> : <span class="btn btn-ghost opacity-40 pointer-events-none" aria-hidden="true">← Newer</span>}
+    <ol class="flex items-center gap-1">
+      {Array.from({ length: last }, (_, i) => i + 1).map((n) => (
+        <li>
+          <a
+            href={href(n)}
+            aria-current={n === current ? "page" : undefined}
+            class={`grid place-items-center size-9 rounded-md tabular-nums transition-colors ${
+              n === current ? "bg-strong text-bg font-bold" : "text-dim hover:text-strong hover:bg-raised"
+            }`}
+          >
+            {n}
+          </a>
+        </li>
+      ))}
+    </ol>
+    {next ? <a href={next} class="btn btn-ghost">Older →</a> : <span class="btn btn-ghost opacity-40 pointer-events-none" aria-hidden="true">Older →</span>}
+  </nav>
+)}

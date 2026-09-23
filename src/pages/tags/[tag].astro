@@ -1,10 +1,12 @@
 ---
 import { getCollection } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import PostList from "../../components/PostList.astro";
+import PostTable from "../../components/PostTable.astro";
 
 export async function getStaticPaths() {
-  const posts = await getCollection("blog", ({ data }) => !data.draft);
+  const posts = (await getCollection("blog", ({ data }) => !data.draft)).sort(
+    (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
+  );
   const tags = new Set(posts.flatMap((post) => post.data.tags));
   return [...tags].map((tag) => ({
     params: { tag },
@@ -16,9 +18,16 @@ const { tag } = Astro.params;
 const { posts } = Astro.props;
 ---
 
-<BaseLayout title={`#${tag}`} description={`Posts tagged #${tag}.`}>
-  <a href="/tags" class="nav-link text-[14px]">← All tags</a>
-  <h1 class="text-[22px] font-bold leading-snug mt-8 mb-2">#{tag}</h1>
-  <p class="text-dim mb-12">{posts.length} {posts.length === 1 ? "post" : "posts"}</p>
-  <PostList posts={posts} />
+<BaseLayout title={`Posts tagged ${tag}`} description={`Posts tagged ${tag}.`}>
+  <section class="band">
+    <nav aria-label="Breadcrumb" class="text-[13px] text-dim mb-8">
+      <a href="/blog/" class="nav-link">Blog</a><span class="mx-2" aria-hidden="true">/</span>
+      <a href="/tags/" class="nav-link">Tags</a><span class="mx-2" aria-hidden="true">/</span><span>{tag}</span>
+    </nav>
+    <h1 class="h-page mb-5">{tag}</h1>
+    <p class="lede">{posts.length} {posts.length === 1 ? "post" : "posts"} on this topic.</p>
+  </section>
+  <section class="band !pt-6 lg:!pt-8">
+    <PostTable posts={posts} />
+  </section>
 </BaseLayout>

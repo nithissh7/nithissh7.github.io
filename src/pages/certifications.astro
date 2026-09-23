@@ -5,41 +5,44 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 const certs = (await getCollection("certifications")).sort(
   (a, b) => b.data.dateEarned.valueOf() - a.data.dateEarned.valueOf()
 );
-const year = (d: Date) => d.toLocaleDateString("en-US", { month: "short", year: "numeric", timeZone: "Asia/Kolkata" });
+const monthYear = (d: Date) => d.toLocaleDateString("en-US", { month: "short", year: "numeric", timeZone: "Asia/Kolkata" });
 ---
 
 <BaseLayout title="Certifications" description="Professional certifications and credentials earned by Nithissh.">
-  <h1 class="text-[22px] font-bold leading-snug mb-4">Certifications</h1>
-  <p class="mb-14">Credentials I've earned along the way, newest first.</p>
+  <section class="band">
+    <span class="eyebrow">Credentials · {certs.length}</span>
+    <h1 class="h-page mb-5">Certifications</h1>
+    <p class="lede">Hands-on certifications across web application security, cloud, and DevSecOps — newest first, each with a link to verify it.</p>
+  </section>
 
-  {certs.length === 0 ? (
-    <p>No certifications listed yet.</p>
-  ) : (
-    <ul class="space-y-10">
+  <section class="band">
+    <ul class="cells md:grid-cols-2 lg:grid-cols-3">
       {certs.map((cert) => (
-        <li class="flex gap-5">
-          {cert.data.badgeUrl && (
-            <img
-              src={cert.data.badgeUrl}
-              alt=""
-              width="52"
-              height="52"
-              loading="lazy"
-              class="size-[52px] shrink-0 object-contain rounded-md bg-white p-1.5 border border-border"
-            />
-          )}
-          <div class="min-w-0">
-            <h2 class="font-bold leading-snug">{cert.data.name}</h2>
-            <p class="text-[14px] text-dim mb-2">{cert.data.issuer} · {year(cert.data.dateEarned)}</p>
-            <p class="text-[14px] leading-relaxed">{cert.data.description}</p>
-            {cert.data.credentialUrl && (
-              <a href={cert.data.credentialUrl} target="_blank" rel="noopener noreferrer" class="link inline-block mt-2 text-[14px]">
-                Verify credential ↗
-              </a>
+        <li class="flex flex-col p-6 lg:p-7">
+          <div class="flex items-start gap-4 mb-4">
+            {cert.data.badgeUrl && (
+              <img
+                src={cert.data.badgeUrl}
+                alt=""
+                width="48"
+                height="48"
+                loading="lazy"
+                class="size-12 shrink-0 object-contain rounded-md bg-white p-1 border border-border"
+              />
             )}
+            <div class="min-w-0">
+              <h2 class="text-strong font-bold leading-snug">{cert.data.name}</h2>
+              <p class="text-[13px] text-dim mt-1">{cert.data.issuer} · {monthYear(cert.data.dateEarned)}</p>
+            </div>
           </div>
+          <p class="text-[14px] leading-relaxed mb-5">{cert.data.description}</p>
+          {cert.data.credentialUrl && (
+            <a href={cert.data.credentialUrl} target="_blank" rel="noopener noreferrer" class="link text-[14px] mt-auto">
+              Verify credential ↗
+            </a>
+          )}
         </li>
       ))}
     </ul>
-  )}
+  </section>
 </BaseLayout>

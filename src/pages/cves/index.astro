@@ -1,44 +1,78 @@
 ---
 import { getCollection } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import { formatDate } from "../../consts";
+import { formatDate, yearOf } from "../../consts";
+import { splitCveTitle, vulnClass } from "../../lib/cve";
 
 const cves = (await getCollection("cves", ({ data }) => !data.draft)).sort(
   (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf() || (b.data.cvssScore ?? 0) - (a.data.cvssScore ?? 0)
 );
-const severities = ["Critical", "High", "Medium", "Low", "Informational"] as const;
-const breakdown = severities
-  .map((sev) => ({ sev, n: cves.filter((c) => c.data.severity === sev).length }))
-  .filter((s) => s.n > 0)
-  .map((s) => `${s.n} ${s.sev.toLowerCase()}`)
-  .join(", ");
+const count = (sev: string) => cves.filter((c) => c.data.severity === sev).length;
+const years = [...new Set(cves.map((c) => yearOf(c.data.pubDate)))].sort();
+const stats = [
+  { n: cves.length, label: "published" },
+  { n: count("Critical") + count("High"), label: "high or critical" },
+  { n: count("Medium"), label: "medium" },
+  { n: years.length > 1 ? `${years[0]}–${years.at(-1)}` : years[0] ?? "—", label: "disclosed" },
+];
+const cols = "md:grid md:grid-cols-[10.5rem_minmax(0,1fr)_6rem_4rem_7.5rem] md:gap-6";
 ---
 
 <BaseLayout title="CVEs" description="Security vulnerabilities discovered and responsibly disclosed by Nithissh.">
-  <h1 class="text-[22px] font-bold leading-snug mb-4">CVEs</h1>
-  <p class="mb-14">
-    Vulnerabilities I've found and responsibly disclosed.
-    {cves.length > 0 && <>{cves.length} so far: {breakdown}.</>}
-  </p>
+  <section class="band">
+    <div class="grid lg:grid-cols-12 gap-10 lg:gap-16 items-end">
+      <div class="lg:col-span-7">
+        <span class="eyebrow">Disclosures</span>
+        <h1 class="h-page mb-5">CVEs</h1>
+        <p class="lede">Vulnerabilities I've found and responsibly disclosed. Each entry links to its advisory and write-up.</p>
+      </div>
+      <div class="lg:col-span-5 cells grid-cols-2">
+        {stats.map((s) => (
+          <div class="p-5">
+            <span class="stat-num">{s.n}</span>
+            <span class="stat-label">{s.label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
 
-  {cves.length === 0 ? (
-    <p>No CVEs published yet.</p>
-  ) : (
-    <ul class="-my-3">
-      {cves.map((cve) => (
-        <li>
-          <a href={`/cves/${cve.id}/`} class="entry">
-            <div class="min-w-0">
-              <p class="entry-title">{cve.data.title}</p>
-              <p class="entry-desc">
-                {cve.data.cveId} · {cve.data.severity.toLowerCase()}
-                {cve.data.cvssScore !== undefined && ` ${cve.data.cvssScore.toFixed(1)}`}
-              </p>
-            </div>
-            <time class="entry-date" datetime={cve.data.pubDate.toISOString()}>{formatDate(cve.data.pubDate, "medium")}</time>
-          </a>
-        </li>
-      ))}
-    </ul>
-  )}
+  <section class="band !pt-6 lg:!pt-8">
+    {cves.length === 0 ? (
+      <p>No CVEs published yet.</p>
+    ) : (
+      <div class="tlist">
+        <div class={`table-head hidden ${cols} py-2.5 px-3 -mx-3`} aria-hidden="true">
+          <span>ID</span><span>Vulnerability</span><span>Severity</span><span class="text-right">CVSS</span><span class="text-right">Published</span>
+        </div>
+        <ul>
+          {cves.map((cve) => {
+            const { vuln, product } = splitCveTitle(cve.data.title);
+            const klass = vulnClass(cve.data.title);
+            const high = cve.data.severity === "High" || cve.data.severity === "Critical";
+            return (
+              <li>
+                <a href={`/cves/${cve.id}/`} class={`trow block ${cols} py-4 px-3 -mx-3 rounded-sm`}>
+                  <span class="block text-[14px] text-strong tabular-nums md:pt-px">{cve.data.cveId}</span>
+                  <span class="block min-w-0 mt-1 md:mt-0">
+                    <span class="row-title block leading-snug">{vuln}</span>
+                    <span class="flex flex-wrap items-center gap-2 text-[14px] text-dim mt-1.5">{klass && <span class="tag">{klass}</span>}{product}</span>
+                  </span>
+                  <span class="inline md:block text-[14px] md:pt-px">
+                    <span class={high ? "text-strong font-bold" : "text-dim"}>{cve.data.severity}</span>
+                  </span>
+                  <span class="inline md:block text-[14px] text-dim tabular-nums md:text-right md:pt-px">
+                    <span class="md:hidden"> · CVSS </span>{cve.data.cvssScore?.toFixed(1) ?? "—"}
+                  </span>
+                  <span class="block md:text-right text-[13px] md:text-[14px] text-dim tabular-nums mt-1 md:mt-0 md:pt-px">
+                    {formatDate(cve.data.pubDate, "medium")}
+                  </span>
+                </a>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    )}
+  </section>
 </BaseLayout>

@@ -7,7 +7,7 @@
   },
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build && pagefind --site dist --output-path dist/pagefind --exclude-selectors \".mermaid\" --exclude-selectors \".code-block-bar\" --exclude-selectors \".heading-anchor\"",
+    "build": "astro build && pagefind --site dist --output-path dist/pagefind --exclude-selectors \".mermaid\" --exclude-selectors \".code-block-bar\" --exclude-selectors \".anchor\"",
     "preview": "astro preview",
     "astro": "astro"
   },

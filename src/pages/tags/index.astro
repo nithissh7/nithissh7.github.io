@@ -9,12 +9,23 @@ const tags = [...counts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
 ---
 
 <BaseLayout title="Tags" description="Topics written about on realnits.">
-  <h1 class="text-[22px] font-bold leading-snug mb-10">Tags</h1>
-  <ul class="flex flex-wrap gap-x-6 gap-y-3">
-    {tags.map(([tag, n]) => (
-      <li>
-        <a href={`/tags/${tag}/`} class="nav-link">#{tag} <span class="text-[13px]">({n})</span></a>
-      </li>
-    ))}
-  </ul>
+  <section class="band">
+    <nav aria-label="Breadcrumb" class="text-[13px] text-dim mb-8">
+      <a href="/blog/" class="nav-link">Blog</a><span class="mx-2" aria-hidden="true">/</span><span>Tags</span>
+    </nav>
+    <h1 class="h-page mb-5">Topics</h1>
+    <p class="lede">Every tag used across {posts.length} posts.</p>
+  </section>
+  <section class="band">
+    <ul class="cells grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+      {tags.map(([tag, n]) => (
+        <li class="contents">
+          <a href={`/tags/${tag}/`} class="flex items-baseline justify-between gap-3 px-5 py-4">
+            <span class="text-strong truncate">{tag}</span>
+            <span class="text-[13px] text-dim tabular-nums">{n}</span>
+          </a>
+        </li>
+      ))}
+    </ul>
+  </section>
 </BaseLayout>

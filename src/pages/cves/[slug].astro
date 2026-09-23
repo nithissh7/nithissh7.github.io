@@ -2,6 +2,7 @@
 import { getCollection, render } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { formatDate } from "../../consts";
+import { splitCveTitle, vulnClass } from "../../lib/cve";
 
 export async function getStaticPaths() {
   const cves = await getCollection("cves", ({ data }) => !data.draft);
@@ -10,55 +11,69 @@ export async function getStaticPaths() {
 
 const { cve } = Astro.props;
 const { Content } = await render(cve);
+const { vuln, product } = splitCveTitle(cve.data.title);
 
-const facts = [
-  ["Product", cve.data.affectedProduct],
-  cve.data.vendor && ["Vendor", cve.data.vendor],
-  ["Severity", cve.data.severity + (cve.data.cvssScore !== undefined ? ` · CVSS ${cve.data.cvssScore.toFixed(1)}` : "")],
-  ["Status", cve.data.status],
-  ["Published", formatDate(cve.data.pubDate, "medium")],
-].filter(Boolean) as [string, string][];
+const klass = vulnClass(cve.data.title);
+const strip = [
+  { k: "CVE ID", v: cve.data.cveId },
+  ...(klass ? [{ k: "Class", v: klass }] : []),
+  { k: "Severity", v: cve.data.severity },
+  { k: "CVSS", v: cve.data.cvssScore?.toFixed(1) ?? "—" },
+  { k: "Published", v: formatDate(cve.data.pubDate, "medium") },
+];
 ---
 
 <BaseLayout
-  title={cve.data.cveId}
-  description={cve.data.description}
+  title={`${cve.data.cveId}: ${vuln}`}
+  description={`${cve.data.cveId} — ${cve.data.title}`}
   type="article"
   pubDate={cve.data.pubDate}
   image={`/cves/${cve.id}/og.png`}
 >
-  <article data-pagefind-body>
-    <a href="/cves" data-back data-pagefind-ignore class="nav-link text-[14px]">← All CVEs</a>
+  <article>
+    <header class="band">
+      <nav aria-label="Breadcrumb" class="text-[13px] text-dim mb-8" data-pagefind-ignore>
+        <a href="/cves/" class="nav-link">CVEs</a>
+        <span class="mx-2" aria-hidden="true">/</span>
+        <span>{cve.data.cveId}</span>
+      </nav>
+      <h1 class="h-page max-w-[30ch] mb-4">{vuln}</h1>
+      {product && <p class="lede mb-10">{product}{cve.data.vendor && <span class="text-dim"> · {cve.data.vendor}</span>}</p>}
 
-    <header class="mt-8 mb-10">
-      <p class="text-[14px] text-dim mb-4">{cve.data.cveId}</p>
-      <h1 class="text-[22px] sm:text-[26px] font-bold leading-[1.35] tracking-tight text-balance">{cve.data.title}</h1>
+      <dl class={`cells grid-cols-2 ${strip.length === 5 ? "md:grid-cols-5" : "md:grid-cols-4"} text-[14px]`} data-pagefind-ignore>
+        {strip.map(({ k, v }) => (
+          <div class="px-5 py-4">
+            <dt class="text-[12px] text-dim mb-1">{k}</dt>
+            <dd class="text-strong tabular-nums">{v}</dd>
+          </div>
+        ))}
+      </dl>
     </header>
 
-    <dl class="box divide-y divide-border mb-10 text-[14px]">
-      {facts.map(([k, v]) => (
-        <div class="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-4 px-4 py-2.5">
-          <dt class="text-dim">{k}</dt>
-          <dd class="text-strong">{v}</dd>
+    <div class="band">
+      <div class="lg:grid lg:grid-cols-[minmax(0,1fr)_17rem] lg:gap-16">
+        <div class="prose" data-pagefind-body data-pagefind-meta={`title:${cve.data.cveId} · ${vuln}${product ? ` — ${product}` : ""}`}>
+          {klass && <span class="sr-only">{klass} vulnerability in {product}.</span>}
+          <Content />
         </div>
-      ))}
-    </dl>
-
-    <div class="prose">
-      <Content />
+        {cve.data.references && cve.data.references.length > 0 && (
+          <aside class="mt-12 lg:mt-0" data-pagefind-ignore>
+            <div class="lg:sticky lg:top-24">
+              <p class="text-[13px] text-strong font-bold mb-3">References</p>
+              <ul class="space-y-2.5 text-[13px]">
+                {cve.data.references.map((ref) => (
+                  <li>
+                    <a href={ref} target="_blank" rel="noopener noreferrer" class="link break-all">
+                      {ref.replace(/^https?:\/\/(www\.)?/, "")}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+              <p class="text-[13px] text-dim mt-8">Status: <span class="text-strong">{cve.data.status}</span></p>
+            </div>
+          </aside>
+        )}
+      </div>
     </div>
-
-    {cve.data.references && cve.data.references.length > 0 && (
-      <section class="mt-12" data-pagefind-ignore>
-        <h2 class="section-title">References</h2>
-        <ul class="space-y-2 text-[14px]">
-          {cve.data.references.map((ref) => (
-            <li>
-              <a href={ref} target="_blank" rel="noopener noreferrer" class="link break-all">{ref}</a>
-            </li>
-          ))}
-        </ul>
-      </section>
-    )}
   </article>
 </BaseLayout>

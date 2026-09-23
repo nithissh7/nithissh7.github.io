@@ -5,31 +5,30 @@
 @import "@fontsource/jetbrains-mono/700.css";
 
 /*
-  realnits — a quiet, monospaced reading site.
-  Hierarchy comes from two text tones (strong / body) and weight, never from
-  decoration. Dark is the signature; light is its warm-paper twin.
+  realnits — a full-width, framed, monospaced site.
+  Structure: a 1200px frame with hairline side borders, split into horizontal
+  "bands". Inside bands, content sits on a grid; lists are aligned tables.
+  Hierarchy comes from two text tones (strong / text) plus weight and size.
 */
 :root {
   --bg: #fdfcfc;
-  --bg-raised: #f6f4f3;
-  --border: #e8e4e3;
-  --border-strong: #d6d1cf;
+  --bg-raised: #f5f3f2;
+  --border: #e6e1e0;
+  --border-strong: #d2ccca;
   --strong: #1c1a1a;
   --text: #4d4848;
-  --dim: #736d6c;
-  --selection: #1c1a1a;
+  --dim: #716b6a;
   color-scheme: light;
 }
 
 :root[data-theme="dark"] {
   --bg: #0c0c0e;
-  --bg-raised: #151518;
-  --border: #232327;
-  --border-strong: #34343a;
+  --bg-raised: #141417;
+  --border: #242428;
+  --border-strong: #36363c;
   --strong: #f2eded;
   --text: #b8b2b2;
-  --dim: #858080;
-  --selection: #f2eded;
+  --dim: #878282;
   color-scheme: dark;
 }
 
@@ -48,20 +47,18 @@
   html {
     background: var(--bg);
     -webkit-text-size-adjust: 100%;
-    scroll-padding-top: 2rem;
+    scroll-padding-top: 5rem;
   }
-
   body {
     font-family: var(--font-mono);
     font-size: 15px;
-    line-height: 1.8;
+    line-height: 1.75;
     color: var(--text);
     background: var(--bg);
     font-variant-ligatures: none;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
   }
-
   h1,
   h2,
   h3,
@@ -70,23 +67,19 @@
   b {
     color: var(--strong);
   }
-
   a {
     color: inherit;
     text-decoration: none;
   }
-
   ::selection {
-    background: var(--selection);
+    background: var(--strong);
     color: var(--bg);
   }
-
   :focus-visible {
     outline: 2px solid var(--strong);
-    outline-offset: 3px;
+    outline-offset: 2px;
     border-radius: 2px;
   }
-
   @media (prefers-reduced-motion: no-preference) {
     html {
       scroll-behavior: smooth;
@@ -95,7 +88,81 @@
 }
 
 @layer components {
-  /* Inline text link: strong color with a soft underline that firms up on hover. */
+  /* ---------- Frame + bands ---------- */
+
+  .wrap {
+    width: 100%;
+    max-width: 1200px;
+    margin-inline: auto;
+  }
+  @media (min-width: 1024px) {
+    .frame {
+      border-inline: 1px solid var(--border);
+    }
+  }
+  .band {
+    border-bottom: 1px solid var(--border);
+    padding: 3rem 1.25rem;
+  }
+  @media (min-width: 640px) {
+    .band {
+      padding: 3.5rem 2rem;
+    }
+  }
+  @media (min-width: 1024px) {
+    .band {
+      padding: 4.5rem 3rem;
+    }
+  }
+  .band-tight {
+    padding-top: 1.75rem;
+    padding-bottom: 1.75rem;
+  }
+
+  /* Small label above a heading or at the head of a band. */
+  .eyebrow {
+    display: block;
+    font-size: 13px;
+    color: var(--dim);
+    margin-bottom: 0.75rem;
+  }
+
+  .h-page {
+    font-size: 30px;
+    line-height: 1.25;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--strong);
+    text-wrap: balance;
+  }
+  @media (min-width: 1024px) {
+    .h-page {
+      font-size: 38px;
+    }
+  }
+  .h-section {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--strong);
+  }
+  .lede {
+    font-size: 16px;
+    line-height: 1.8;
+    color: var(--text);
+    max-width: 62ch;
+  }
+
+  /* Band header: title on the left, action on the right. */
+  .band-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  /* ---------- Links + buttons ---------- */
+
   .link {
     color: var(--strong);
     text-decoration: underline;
@@ -107,8 +174,6 @@
   .link:hover {
     text-decoration-color: var(--strong);
   }
-
-  /* Secondary navigation-style link. */
   .nav-link {
     color: var(--dim);
     transition: color 0.15s ease;
@@ -117,76 +182,36 @@
   .nav-link[aria-current="page"] {
     color: var(--strong);
   }
-
-  .section-title {
-    font-size: 15px;
-    font-weight: 700;
-    color: var(--strong);
-    margin-bottom: 1.25rem;
-  }
-
-  /* Post list item: title + one-line description, date on the right. */
-  .entry {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    column-gap: 2rem;
-    padding: 0.85rem 0;
-  }
-  .entry-title {
-    color: var(--strong);
-    font-weight: 500;
-    line-height: 1.55;
-    text-decoration: underline;
-    text-decoration-color: transparent;
-    text-decoration-thickness: 1px;
-    text-underline-offset: 4px;
-    transition: text-decoration-color 0.15s ease;
-  }
-  .entry:hover .entry-title {
-    text-decoration-color: var(--border-strong);
-  }
-  .entry-desc {
-    color: var(--dim);
-    font-size: 14px;
-    line-height: 1.6;
-    margin-top: 0.2rem;
-  }
-  .entry-date {
-    color: var(--dim);
-    font-size: 14px;
-    white-space: nowrap;
-    font-variant-numeric: tabular-nums;
-    line-height: 1.55;
-  }
-  @media (max-width: 639px) {
-    .entry {
-      grid-template-columns: minmax(0, 1fr);
-    }
-    .entry-date {
-      grid-row: 1;
-      font-size: 13px;
-      margin-bottom: 0.15rem;
-    }
-  }
-
-  /* Bordered box, opencode-style: flat, 1px, small radius. */
-  .box {
-    border: 1px solid var(--border);
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    height: 2.5rem;
+    padding: 0 1.1rem;
     border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    background: var(--strong);
+    color: var(--bg);
+    transition: opacity 0.15s ease;
   }
-  a.box {
-    transition: border-color 0.15s ease, background-color 0.15s ease;
+  .btn:hover {
+    opacity: 0.85;
   }
-  a.box:hover {
-    border-color: var(--border-strong);
+  .btn-ghost {
+    background: transparent;
+    color: var(--strong);
+    border: 1px solid var(--border-strong);
+  }
+  .btn-ghost:hover {
+    opacity: 1;
     background: var(--bg-raised);
   }
-
   .icon-btn {
     display: inline-grid;
     place-items: center;
-    width: 2rem;
-    height: 2rem;
+    width: 2.25rem;
+    height: 2.25rem;
     border-radius: 6px;
     color: var(--dim);
     transition: color 0.15s ease, background-color 0.15s ease;
@@ -194,6 +219,99 @@
   .icon-btn:hover {
     color: var(--strong);
     background: var(--bg-raised);
+  }
+  .kbd {
+    font-size: 11px;
+    line-height: 1;
+    padding: 0.25rem 0.4rem;
+    border: 1px solid var(--border-strong);
+    border-radius: 4px;
+    color: var(--dim);
+  }
+
+  /* ---------- Cell grids (shared hairlines, like a spreadsheet) ---------- */
+
+  .cells {
+    display: grid;
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .cells > * {
+    background: var(--bg);
+  }
+  a.cell,
+  .cells > a {
+    transition: background-color 0.15s ease;
+  }
+  .cells > a:hover {
+    background: var(--bg-raised);
+  }
+
+  .stat-num {
+    display: block;
+    font-size: 28px;
+    line-height: 1.1;
+    font-weight: 700;
+    color: var(--strong);
+    font-variant-numeric: tabular-nums;
+  }
+  .stat-label {
+    display: block;
+    font-size: 13px;
+    color: var(--dim);
+    margin-top: 0.4rem;
+  }
+
+  .tag {
+    display: inline-block;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--dim);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.05rem 0.45rem;
+    white-space: nowrap;
+  }
+  a.tag {
+    transition: color 0.15s ease, border-color 0.15s ease;
+  }
+  a.tag:hover {
+    color: var(--strong);
+    border-color: var(--border-strong);
+  }
+
+  /* ---------- Tables (post index, CVEs) ---------- */
+
+  .tlist {
+    width: 100%;
+    border-top: 1px solid var(--border-strong);
+  }
+  .table-head {
+    font-size: 12px;
+    color: var(--dim);
+    border-bottom: 1px solid var(--border);
+  }
+  .trow {
+    border-bottom: 1px solid var(--border);
+    transition: background-color 0.15s ease;
+  }
+  a.trow:hover {
+    background: var(--bg-raised);
+  }
+  a.trow:hover .row-title {
+    text-decoration-color: var(--border-strong);
+  }
+  .row-title {
+    color: var(--strong);
+    font-weight: 500;
+    text-decoration: underline;
+    text-decoration-color: transparent;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 4px;
+    transition: text-decoration-color 0.15s ease;
   }
 
   /* ---------- Code ---------- */
@@ -207,7 +325,6 @@
     font-size: 0.88em;
     word-break: break-word;
   }
-
   .astro-code,
   .astro-code span {
     color: var(--shiki-light);
@@ -216,54 +333,37 @@
   :root[data-theme="dark"] .astro-code span {
     color: var(--shiki-dark);
   }
-
   .code-block {
-    position: relative;
     margin: 1.75rem 0;
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: 8px;
     background: var(--bg-raised);
+    overflow: hidden;
   }
   .code-block-bar {
-    position: absolute;
-    top: 0.5rem;
-    right: 0.5rem;
     display: flex;
     align-items: center;
-    gap: 0.6rem;
-    padding: 0.15rem 0.2rem 0.15rem 0.6rem;
+    justify-content: space-between;
+    height: 2.25rem;
+    padding: 0 0.5rem 0 1rem;
     font-size: 12px;
     color: var(--dim);
-    background: var(--bg-raised);
-    border-radius: 4px;
-    opacity: 0;
-    transition: opacity 0.15s ease;
-    z-index: 1;
-  }
-  .code-block:hover .code-block-bar,
-  .code-block-bar:focus-within {
-    opacity: 1;
-  }
-  @media (hover: none) {
-    .code-block-bar {
-      opacity: 1;
-    }
+    border-bottom: 1px solid var(--border);
   }
   .code-block-bar button {
     color: var(--dim);
     cursor: pointer;
-    padding: 0.05rem 0.45rem;
+    padding: 0.1rem 0.5rem;
     border-radius: 4px;
-    border: 1px solid var(--border-strong);
-    transition: color 0.15s ease, border-color 0.15s ease;
+    transition: color 0.15s ease, background-color 0.15s ease;
   }
   .code-block-bar button:hover {
     color: var(--strong);
-    border-color: var(--dim);
+    background: var(--bg);
   }
   .code-block pre {
     margin: 0;
-    padding: 1.1rem 1.25rem;
+    padding: 1rem 1.25rem;
     overflow-x: auto;
     font-size: 13.5px;
     line-height: 1.7;
@@ -280,6 +380,7 @@
     line-height: 1.85;
     color: var(--text);
     overflow-wrap: break-word;
+    max-width: 72ch;
   }
   .prose > :first-child {
     margin-top: 0;
@@ -291,14 +392,21 @@
     color: var(--strong);
     font-weight: 700;
     line-height: 1.45;
-    scroll-margin-top: 1.5rem;
+    scroll-margin-top: 5rem;
   }
   .prose h2 {
-    font-size: 17px;
-    margin: 3rem 0 1rem;
+    font-size: 19px;
+    margin: 3.25rem 0 1rem;
+    padding-top: 1.75rem;
+    border-top: 1px solid var(--border);
+  }
+  .prose > h2:first-child {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: 0;
   }
   .prose h3 {
-    font-size: 15.5px;
+    font-size: 16px;
     margin: 2.25rem 0 0.75rem;
   }
   .prose h4 {
@@ -316,12 +424,6 @@
   .prose :is(h2, h3):hover a.anchor,
   .prose a.anchor:focus-visible {
     opacity: 1;
-  }
-  .prose strong {
-    font-weight: 700;
-  }
-  .prose em {
-    font-style: italic;
   }
   .prose a:not(.anchor) {
     color: var(--strong);
@@ -374,14 +476,12 @@
     display: block;
     max-width: 100%;
     height: auto;
-    margin: 2rem auto;
+    margin: 2rem 0;
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: 8px;
   }
   .prose hr {
-    border: 0;
-    border-top: 1px solid var(--border);
-    margin: 2.75rem 0;
+    display: none; /* h2 already carries a rule */
   }
   .prose table {
     display: block;
@@ -406,7 +506,7 @@
     margin: 2rem 0;
     padding: 1.25rem;
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: 8px;
     background: transparent;
     text-align: center;
     overflow-x: auto;
@@ -417,18 +517,19 @@
     box-shadow: inset 0 -0.4em 0 var(--border-strong);
   }
 
-  /* On-this-page navigation (wide screens only). */
+  /* ---------- On this page ---------- */
+
   .toc a {
     display: block;
     color: var(--dim);
     font-size: 13px;
     line-height: 1.5;
-    padding: 0.3rem 0 0.3rem 0.85rem;
+    padding: 0.35rem 0 0.35rem 0.9rem;
     border-left: 1px solid var(--border);
     transition: color 0.15s ease, border-color 0.15s ease;
   }
   .toc a[data-depth="3"] {
-    padding-left: 1.7rem;
+    padding-left: 1.8rem;
   }
   .toc a:hover {
     color: var(--strong);

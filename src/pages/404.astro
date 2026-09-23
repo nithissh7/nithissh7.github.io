@@ -3,11 +3,13 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 ---
 
 <BaseLayout title="Page not found">
-  <p class="text-dim text-[14px] mb-4">404</p>
-  <h1 class="text-[22px] font-bold leading-snug mb-4">This page doesn't exist.</h1>
-  <p class="mb-8">It may have moved, or the link might be wrong.</p>
-  <div class="flex gap-6">
-    <a href="/" class="link">Go home</a>
-    <a href="/search" class="link">Search the site</a>
-  </div>
+  <section class="band min-h-[55vh] flex flex-col justify-center">
+    <span class="eyebrow">404</span>
+    <h1 class="h-page mb-5">This page doesn't exist.</h1>
+    <p class="lede mb-8">It may have moved, or the link might be wrong.</p>
+    <div class="flex flex-wrap gap-3">
+      <a href="/" class="btn">Go home</a>
+      <a href="/search/" class="btn btn-ghost">Search the site</a>
+    </div>
+  </section>
 </BaseLayout>

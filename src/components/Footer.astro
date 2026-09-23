@@ -1,24 +1,54 @@
 ---
-import { SITE_AUTHOR, SOCIAL_LINKS } from "../consts";
+import { SITE_AUTHOR, SITE_TITLE, SOCIAL_LINKS } from "../consts";
 const year = new Date().getFullYear();
+
+const sections = [
+  { href: "/blog/", label: "Blog" },
+  { href: "/cves/", label: "CVEs" },
+  { href: "/certifications/", label: "Certifications" },
+  { href: "/about/", label: "About" },
+  { href: "/tags/", label: "Tags" },
+];
 ---
 
-<footer class="w-full max-w-[680px] mx-auto px-5 sm:px-6">
-  <div class="border-t border-border py-8 flex flex-col-reverse sm:flex-row sm:items-center justify-between gap-4 text-[13px] text-dim">
-    <p>© {year} {SITE_AUTHOR}</p>
-    <ul class="flex flex-wrap gap-x-5 gap-y-1">
-      {SOCIAL_LINKS.map((link) => (
-        <li>
-          <a
-            href={link.href}
-            class="nav-link"
-            target={link.href.startsWith("http") ? "_blank" : undefined}
-            rel={link.href.startsWith("http") ? "noopener noreferrer" : undefined}
-          >
-            {link.label}
-          </a>
-        </li>
-      ))}
-    </ul>
+<footer class="border-t border-border">
+  <div class="grid gap-10 sm:grid-cols-2 lg:grid-cols-4 px-5 sm:px-8 lg:px-12 py-12">
+    <div>
+      <p class="flex items-center gap-2.5 text-strong font-bold mb-3">
+        <span class="inline-block size-[0.8rem] rounded-[2px] bg-strong" aria-hidden="true"></span>{SITE_TITLE}
+      </p>
+      <p class="text-[14px] text-dim max-w-[32ch]">Security research, written down. Web, cloud, and whatever breaks next.</p>
+    </div>
+    <div>
+      <p class="text-[13px] text-dim mb-3">Sections</p>
+      <ul class="space-y-1.5 text-[14px]">
+        {sections.map((s) => <li><a href={s.href} class="nav-link">{s.label}</a></li>)}
+      </ul>
+    </div>
+    <div>
+      <p class="text-[13px] text-dim mb-3">Elsewhere</p>
+      <ul class="space-y-1.5 text-[14px]">
+        {SOCIAL_LINKS.map((link) => (
+          <li>
+            <a
+              href={link.href}
+              class="nav-link"
+              target={link.href.startsWith("http") ? "_blank" : undefined}
+              rel={link.href.startsWith("http") ? "noopener noreferrer" : undefined}
+            >
+              {link.label}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+    <div>
+      <p class="text-[13px] text-dim mb-3">Colophon</p>
+      <p class="text-[14px] text-dim max-w-[30ch]">Built with Astro. Set in JetBrains Mono. No trackers.</p>
+    </div>
+  </div>
+  <div class="border-t border-border px-5 sm:px-8 lg:px-12 py-5 text-[13px] text-dim flex justify-between gap-4">
+    <span>© {year} {SITE_AUTHOR}</span>
+    <a href="#main-content" class="nav-link">Back to top ↑</a>
   </div>
 </footer>

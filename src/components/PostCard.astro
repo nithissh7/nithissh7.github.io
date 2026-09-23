@@ -1,0 +1,22 @@
+---
+import type { CollectionEntry } from "astro:content";
+import { formatDate } from "../consts";
+import { getReadingTime } from "../lib/reading-time";
+
+interface Props {
+  post: CollectionEntry<"blog">;
+}
+
+const { post } = Astro.props;
+---
+
+<a href={`/blog/${post.id}/`} class="group flex flex-col p-6 lg:p-7 min-h-[15rem]">
+  <span class="text-[13px] text-dim tabular-nums">
+    {formatDate(post.data.pubDate, "medium")} · {getReadingTime(post.body ?? "").replace(" read", "")}
+  </span>
+  <span class="row-title block text-[16px] leading-snug mt-3 group-hover:decoration-border-strong">{post.data.title}</span>
+  <span class="block text-[14px] text-dim leading-relaxed mt-3 line-clamp-3">{post.data.description}</span>
+  <span class="flex flex-wrap gap-1.5 mt-auto pt-5">
+    {post.data.tags.slice(0, 3).map((tag) => <span class="tag">{tag}</span>)}
+  </span>
+</a>
