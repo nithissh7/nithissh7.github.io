@@ -517,6 +517,26 @@
     box-shadow: inset 0 -0.4em 0 var(--border-strong);
   }
 
+  /* ---------- Contents (collapsible, top of post) ---------- */
+
+  .toc-box {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+  .toc-box summary {
+    list-style: none;
+  }
+  .toc-box summary::-webkit-details-marker {
+    display: none;
+  }
+  .toc-box[open] .toc-chevron {
+    transform: rotate(45deg);
+  }
+  .toc-chevron {
+    display: inline-block;
+    transition: transform 0.15s ease;
+  }
+
   /* ---------- On this page ---------- */
 
   .toc a {

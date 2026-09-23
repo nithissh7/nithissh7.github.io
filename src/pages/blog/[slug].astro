@@ -20,13 +20,6 @@ const readTime = getReadingTime(post.body ?? "");
 const toc = headings.filter((h) => h.depth === 2 || h.depth === 3);
 const author = post.data.author ?? SITE_AUTHOR;
 
-const meta = [
-  { k: "Published", v: formatDate(post.data.pubDate, "medium") },
-  post.data.updatedDate && { k: "Updated", v: formatDate(post.data.updatedDate, "medium") },
-  { k: "Reading time", v: readTime },
-  { k: "Author", v: author },
-].filter(Boolean) as { k: string; v: string }[];
-
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "BlogPosting",
@@ -50,47 +43,48 @@ const jsonLd = {
 >
   <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
   <article>
-    <header class="band">
-      <nav aria-label="Breadcrumb" class="text-[13px] text-dim mb-8" data-pagefind-ignore>
-        <a href="/blog/" class="nav-link">Blog</a>
-        <span class="mx-2" aria-hidden="true">/</span>
-        <span>Post</span>
-      </nav>
-      <h1 class="h-page max-w-[36ch] mb-6">{post.data.title}</h1>
-      <p class="lede !max-w-[70ch] mb-10">{post.data.description}</p>
-
-      <dl class="cells grid-cols-2 md:grid-cols-4 text-[14px]" data-pagefind-ignore>
-        {meta.slice(0, 3).map(({ k, v }) => (
-          <div class="px-5 py-4">
-            <dt class="text-[12px] text-dim mb-1">{k}</dt>
-            <dd class="text-strong">{v}</dd>
-          </div>
-        ))}
-        <div class="px-5 py-4 col-span-2 md:col-span-1">
-          <dt class="text-[12px] text-dim mb-1.5">Topics</dt>
-          <dd class="flex flex-wrap gap-1.5">
-            {post.data.tags.map((tag) => <a href={`/tags/${tag}/`} class="tag">{tag}</a>)}
-          </dd>
-        </div>
-      </dl>
-    </header>
-
     <div class="band">
-      <div class={toc.length > 2 ? "lg:grid lg:grid-cols-[14rem_minmax(0,1fr)] lg:gap-16" : ""}>
+      <div class="max-w-[72ch] mx-auto">
+        <header class="mb-10">
+          <nav aria-label="Breadcrumb" class="text-[13px] text-dim mb-6" data-pagefind-ignore>
+            <a href="/blog/" class="nav-link">← All posts</a>
+          </nav>
+          <h1 class="text-[26px] lg:text-[32px] font-bold leading-[1.25] tracking-tight text-strong text-balance mb-4">
+            {post.data.title}
+          </h1>
+          <p class="text-[16px] leading-[1.75] mb-5">{post.data.description}</p>
+          <div class="flex flex-wrap items-center gap-x-3 gap-y-2 text-[13px] text-dim" data-pagefind-ignore>
+            <time datetime={post.data.pubDate.toISOString()}>{formatDate(post.data.pubDate, "medium")}</time>
+            <span aria-hidden="true">·</span>
+            <span>{readTime}</span>
+            {post.data.updatedDate && (
+              <>
+                <span aria-hidden="true">·</span>
+                <span>updated {formatDate(post.data.updatedDate, "medium")}</span>
+              </>
+            )}
+            <span aria-hidden="true">·</span>
+            <span>{author}</span>
+          </div>
+          {post.data.tags.length > 0 && (
+            <div class="flex flex-wrap gap-1.5 mt-3" data-pagefind-ignore>
+              {post.data.tags.map((tag) => <a href={`/tags/${tag}/`} class="tag">{tag}</a>)}
+            </div>
+          )}
+        </header>
+
         {toc.length > 2 && (
-          <aside data-pagefind-ignore>
-            <details class="lg:hidden mb-10 border border-border rounded-lg">
-              <summary class="cursor-pointer px-4 py-3 text-[14px] text-strong">Contents</summary>
-              <nav class="toc px-4 pb-4" aria-label="Contents">
-                {toc.map((h) => <a href={`#${h.slug}`} data-depth={h.depth}>{h.text}</a>)}
-              </nav>
-            </details>
-            <nav class="toc hidden lg:block sticky top-24" aria-label="On this page">
-              <p class="text-[13px] text-strong font-bold mb-3">On this page</p>
-              {toc.map((h) => <a href={`#${h.slug}`} data-depth={h.depth} aria-current="false">{h.text}</a>)}
+          <details class="toc-box mb-10" data-pagefind-ignore>
+            <summary class="flex items-center justify-between gap-4 cursor-pointer select-none px-4 py-2.5 text-[14px] text-strong">
+              <span>Contents <span class="text-dim">· {toc.filter((h) => h.depth === 2).length} sections</span></span>
+              <span class="toc-chevron text-dim" aria-hidden="true">+</span>
+            </summary>
+            <nav class="toc px-4 pb-4 pt-1" aria-label="Contents">
+              {toc.map((h) => <a href={`#${h.slug}`} data-depth={h.depth}>{h.text}</a>)}
             </nav>
-          </aside>
+          </details>
         )}
+
         <div class="prose" data-pagefind-body data-pagefind-meta={`title:${post.data.title}`}>
           <Content />
         </div>
@@ -98,6 +92,7 @@ const jsonLd = {
     </div>
 
     <footer class="band" data-pagefind-ignore>
+      <div class="max-w-[72ch] mx-auto">
       <p class="text-[14px] text-dim mb-8">
         Thanks for reading. Questions, corrections, or a bug you want to talk about?
         <a href="mailto:realnits@gmail.com" class="link">Email me</a>.
@@ -118,6 +113,7 @@ const jsonLd = {
           ) : <div class="hidden md:block" />}
         </nav>
       )}
+      </div>
     </footer>
   </article>
 </BaseLayout>
