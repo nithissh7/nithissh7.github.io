@@ -3,14 +3,14 @@ import { SITE_TITLE } from "../consts";
 
 const navLinks = [
   { href: "/blog/", label: "Blog" },
+  { href: "/tags/", label: "Tags" },
   { href: "/cves/", label: "CVEs" },
   { href: "/certifications/", label: "Certifications", short: "Certs" },
   { href: "/about/", label: "About" },
 ];
 
 const path = Astro.url.pathname;
-const isActive = (href: string) =>
-  path.startsWith(href) || (href === "/blog/" && path.startsWith("/tags"));
+const isActive = (href: string) => path.startsWith(href);
 ---
 
 <header class="site-header sticky top-0 z-40 bg-bg/85 backdrop-blur-md">

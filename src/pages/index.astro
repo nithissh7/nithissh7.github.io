@@ -59,12 +59,7 @@ const explore = [
           <a href={`/blog/${latest.id}/`} class="hover:underline decoration-border-strong underline-offset-[6px] decoration-1">{latest.data.title}</a>
         </h2>
         <p class="lede mb-5">{latest.data.description}</p>
-        <div class="flex flex-wrap items-baseline gap-x-6 gap-y-2">
-          <a href={`/blog/${latest.id}/`} class="btn !text-[14px]">Read the post →</a>
-          <span class="flex flex-wrap gap-x-3">
-            {latest.data.tags.map((tag) => <a href={`/tags/${tag}/`} class="tag">{tag}</a>)}
-          </span>
-        </div>
+        <a href={`/blog/${latest.id}/`} class="btn !text-[14px]">Read the post →</a>
       </div>
     </section>
   )}

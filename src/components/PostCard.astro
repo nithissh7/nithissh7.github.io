@@ -18,7 +18,4 @@ const { post } = Astro.props;
     <span class="row-title block text-[16px] leading-snug group-hover:decoration-border-strong">{post.data.title}</span>
   </a>
   <p class="text-[14px] text-dim leading-relaxed mt-2 line-clamp-3">{post.data.description}</p>
-  <span class="flex flex-wrap gap-x-3 mt-3">
-    {post.data.tags.slice(0, 3).map((tag) => <a href={`/tags/${tag}/`} class="tag">{tag}</a>)}
-  </span>
 </article>
