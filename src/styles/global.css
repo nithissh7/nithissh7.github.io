@@ -386,6 +386,12 @@
       font-size: 17px;
     }
   }
+  /* Hybrid measure: running text stays ~85 characters wide (left-aligned);
+     code, diagrams, images and tables break out to the full content width. */
+  .prose > :not(.code-block, .diagram, .mermaid, pre, table, figure, p:has(> img)),
+  .reading-measure {
+    max-width: 48rem;
+  }
   .prose > :first-child {
     margin-top: 0;
   }
