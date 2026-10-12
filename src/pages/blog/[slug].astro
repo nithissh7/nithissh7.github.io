@@ -2,31 +2,51 @@
 import { getCollection, render } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { getReadingTime } from "../../lib/reading-time";
-import { SITE_AUTHOR, formatDate, tagColor } from "../../consts";
+import { SITE_AUTHOR, SITE_TAGLINE, formatDate, tagColor } from "../../consts";
 
 export async function getStaticPaths() {
   const posts = (await getCollection("blog", ({ data }) => !data.draft)).sort(
     (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
   );
-  return posts.map((post, i) => ({
-    params: { slug: post.id },
-    props: {
-      post,
-      newer: posts[i - 1],
-      older: posts[i + 1],
-      series: post.data.series
-        ? posts.filter((p) => p.data.series === post.data.series).reverse() // oldest first
-        : [],
-    },
-  }));
+  return posts.map((post, i) => {
+    // Related: most shared tags first, then newest; never the adjacent prev/next posts.
+    const adjacent = new Set([posts[i - 1]?.id, posts[i + 1]?.id, post.id]);
+    const related = posts
+      .filter((p) => !adjacent.has(p.id))
+      .map((p) => ({ p, score: p.data.tags.filter((t) => post.data.tags.includes(t)).length }))
+      .filter((r) => r.score > 0)
+      .sort((a, b) => b.score - a.score || b.p.data.pubDate.valueOf() - a.p.data.pubDate.valueOf())
+      .slice(0, 3)
+      .map((r) => r.p);
+    return {
+      params: { slug: post.id },
+      props: {
+        post,
+        newer: posts[i - 1],
+        older: posts[i + 1],
+        related,
+        series: post.data.series
+          ? posts.filter((p) => p.data.series === post.data.series).reverse() // oldest first
+          : [],
+      },
+    };
+  });
 }
 
-const { post, newer, older, series } = Astro.props;
+const { post, newer, older, related, series } = Astro.props;
 const part = series.findIndex((p) => p.id === post.id) + 1;
 const { Content, headings } = await render(post);
 const readTime = getReadingTime(post.body ?? "");
-const toc = headings.filter((h) => h.depth === 2 || h.depth === 3);
+const words = (post.body ?? "").split(/\s+/).filter(Boolean).length;
+const toc = headings.filter((h) => (h.depth === 2 || h.depth === 3) && h.slug !== "footnote-label");
+const hasAside = toc.length > 2;
+const sections = toc.filter((h) => h.depth === 2).length;
 const author = post.data.author ?? SITE_AUTHOR;
+const url = new URL(`/blog/${post.id}/`, Astro.site).toString();
+const share = [
+  { label: "X", href: `https://x.com/intent/post?text=${encodeURIComponent(post.data.title)}&url=${encodeURIComponent(url)}` },
+  { label: "LinkedIn", href: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}` },
+];
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -37,7 +57,8 @@ const jsonLd = {
   ...(post.data.updatedDate && { dateModified: post.data.updatedDate.toISOString() }),
   author: { "@type": "Person", name: author },
   publisher: { "@type": "Person", name: SITE_AUTHOR },
-  mainEntityOfPage: new URL(`/blog/${post.id}/`, Astro.site).toString(),
+  mainEntityOfPage: url,
+  wordCount: words,
   ...(post.data.tags.length > 0 && { keywords: post.data.tags.join(", ") }),
 };
 ---
@@ -47,54 +68,48 @@ const jsonLd = {
   description={post.data.description}
   type="article"
   pubDate={post.data.pubDate}
-  reading
   image={`/blog/${post.id}/og.png`}
 >
   <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
   <article>
-    <div class="band">
-      <div>
+    <div class:list={["band !pt-10 lg:!pt-16 post-grid", { "post-grid-single": !hasAside }]}>
+      <div class="min-w-0">
         <header class="mb-12">
-          <nav aria-label="Breadcrumb" class="text-[13px] text-dim mb-6" data-pagefind-ignore>
-            <a href="/blog/" class="nav-link">← All posts</a>
+          <nav aria-label="Breadcrumb" class="prompt" data-pagefind-ignore>
+            <a href="/blog/" class="nav-link">blog</a>
+            <span aria-hidden="true">/</span>
+            <span class="truncate">{post.id}</span>
           </nav>
-          <div class="page-icon" aria-hidden="true">📄</div>
-          <h1 class="text-[28px] lg:text-[36px] font-bold leading-[1.25] tracking-tight text-strong text-balance mb-5">
+          <h1 class="text-[28px] sm:text-[32px] lg:text-[38px] font-extrabold leading-[1.18] tracking-[-0.035em] text-strong text-balance mb-5">
             {post.data.title}
           </h1>
-          <p class="text-[16px] lg:text-[17px] leading-[1.75] text-dim mb-6">{post.data.description}</p>
-          <div class="flex flex-wrap items-center gap-x-3 gap-y-2 text-[14px] text-dim" data-pagefind-ignore>
+          <p class="text-[16px] lg:text-[17px] leading-[1.75] text-dim mb-7 text-pretty">{post.data.description}</p>
+          <div class="flex flex-wrap items-center gap-x-5 gap-y-2 py-3 border-y border-border text-[13px] text-dim" data-pagefind-ignore>
+            <span class="text-strong font-medium">{author}</span>
             <time datetime={post.data.pubDate.toISOString()}>{formatDate(post.data.pubDate, "medium")}</time>
-            <span aria-hidden="true">·</span>
+            {post.data.updatedDate && <span>updated {formatDate(post.data.updatedDate, "medium")}</span>}
             <span>{readTime}</span>
-            {post.data.updatedDate && (
-              <>
-                <span aria-hidden="true">·</span>
-                <span>updated {formatDate(post.data.updatedDate, "medium")}</span>
-              </>
-            )}
-            <span aria-hidden="true">·</span>
-            <span>{author}</span>
+            <span class="hidden sm:inline tabular-nums">{words.toLocaleString("en-US")} words</span>
           </div>
           {post.data.tags.length > 0 && (
-            <div class="flex flex-wrap gap-1.5 mt-3" data-pagefind-ignore>
+            <div class="flex flex-wrap gap-1.5 mt-4" data-pagefind-ignore>
               {post.data.tags.map((tag) => <a href={`/tags/${tag}/`} class="tag" data-color={tagColor(tag)}>{tag}</a>)}
             </div>
           )}
         </header>
 
         {series.length > 1 && (
-          <nav aria-label="Series" class="mb-8 text-[14px]" data-pagefind-ignore>
-            <p class="text-dim mb-2">
-              Part {part} of {series.length} in <span class="text-strong">{post.data.series}</span>
+          <nav aria-label="Series" class="card mb-10 p-5 text-[14px]" data-pagefind-ignore>
+            <p class="text-dim mb-3">
+              Part {part} of {series.length} · <span class="text-strong font-bold">{post.data.series}</span>
             </p>
-            <ol class="space-y-1">
+            <ol class="space-y-1.5">
               {series.map((p, i) => (
                 <li class="flex gap-3">
-                  <span class="text-dim tabular-nums w-5">{i + 1}.</span>
+                  <span class="text-dim tabular-nums w-6">{String(i + 1).padStart(2, "0")}</span>
                   {p.id === post.id
                     ? <span class="text-strong font-bold">{p.data.title}</span>
-                    : <a href={`/blog/${p.id}/`} class="link !font-normal">{p.data.title}</a>}
+                    : <a href={`/blog/${p.id}/`} class="link">{p.data.title}</a>}
                 </li>
               ))}
             </ol>
@@ -102,46 +117,104 @@ const jsonLd = {
         )}
 
         {toc.length > 2 && (
-          <details class="toc-box mb-10" data-pagefind-ignore>
-            <summary class="flex items-center gap-3 cursor-pointer select-none py-1 text-[14px] text-strong">
-              <span>Contents <span class="text-dim">· {toc.filter((h) => h.depth === 2).length} sections</span></span>
+          <details class="toc-box mb-12 min-[1200px]:hidden" data-pagefind-ignore>
+            <summary class="flex items-center justify-between gap-3 cursor-pointer select-none py-1 text-[14px] text-strong">
+              <span>Contents <span class="text-dim">· {sections} sections</span></span>
               <span class="toc-chevron text-dim" aria-hidden="true">+</span>
             </summary>
-            <nav class="toc pt-3" aria-label="Contents">
+            <nav class="toc pt-3 pb-1" aria-label="Contents">
               {toc.map((h) => <a href={`#${h.slug}`} data-depth={h.depth}>{h.text}</a>)}
             </nav>
           </details>
         )}
 
-        <div class="prose" data-pagefind-body data-pagefind-meta={`title:${post.data.title}`}>
+        <div class="prose" data-reading-body data-pagefind-body data-pagefind-meta={`title:${post.data.title}`}>
           <Content />
         </div>
+
+        <footer class="mt-16" data-pagefind-ignore>
+          <div class="flex flex-wrap items-center gap-x-4 gap-y-3 py-4 border-y border-border text-[13px]">
+            <span class="text-dim">Share</span>
+            <button type="button" class="nav-link cursor-pointer" data-copy-text={url}>copy link</button>
+            {share.map((s) => (
+              <a href={s.href} target="_blank" rel="noopener noreferrer" class="nav-link">{s.label} ↗</a>
+            ))}
+            <a href="#main-content" class="nav-link ml-auto">↑ top</a>
+          </div>
+
+          <div class="card p-6 mt-10">
+            <p class="text-[13px] text-dim mb-2"><span class="accent">$</span> whoami</p>
+            <p class="text-strong font-bold mb-2">{author}</p>
+            <p class="text-[14px] leading-relaxed mb-4">{SITE_TAGLINE}</p>
+            <p class="text-[14px]">
+              Questions, corrections, or a bug you want to talk about?
+              <a href="mailto:realnits@gmail.com" class="link">Email me</a> or
+              <a href="/rss.xml" class="link">subscribe via RSS</a>.
+            </p>
+          </div>
+        </footer>
       </div>
+
+      {hasAside && (
+        <aside class="hidden min-[1200px]:block" data-pagefind-ignore>
+          <div class="post-aside">
+            <p class="flex items-center justify-between text-[12px] text-dim mb-3">
+              <span class="text-strong font-bold">On this page</span>
+              <span class="tabular-nums" data-progress-pct>0%</span>
+            </p>
+            <nav class="toc" aria-label="On this page">
+              {toc.map((h) => <a href={`#${h.slug}`} data-depth={h.depth}>{h.text}</a>)}
+            </nav>
+            <div class="mt-6 pt-4 border-t border-border flex flex-col items-start gap-2 text-[12px]">
+              <a href="#main-content" class="nav-link">↑ Back to top</a>
+              <button type="button" class="nav-link cursor-pointer" data-copy-text={url}>copy link</button>
+            </div>
+          </div>
+        </aside>
+      )}
     </div>
 
-    <footer class="band" data-pagefind-ignore>
-      <div>
-      <p class="text-[15px] text-dim mb-8">
-        Thanks for reading. Questions, corrections, or a bug you want to talk about?
-        <a href="mailto:realnits@gmail.com" class="link">Email me</a>.
-      </p>
-      {(newer || older) && (
-        <nav aria-label="More posts" class="grid md:grid-cols-2 gap-8 pt-8 border-t border-border">
-          {older ? (
-            <a href={`/blog/${older.id}/`} class="group block">
-              <span class="block text-[13px] text-dim mb-2">← Previous post</span>
-              <span class="row-title block leading-snug group-hover:decoration-border-strong">{older.data.title}</span>
-            </a>
-          ) : <div class="hidden md:block" />}
-          {newer ? (
-            <a href={`/blog/${newer.id}/`} class="group block md:text-right">
-              <span class="block text-[13px] text-dim mb-2">Next post →</span>
-              <span class="row-title block leading-snug group-hover:decoration-border-strong">{newer.data.title}</span>
-            </a>
-          ) : <div class="hidden md:block" />}
-        </nav>
-      )}
-      </div>
-    </footer>
+    {(related.length > 0 || newer || older) && (
+      <section class="band !pt-0" aria-label="Keep reading" data-pagefind-ignore>
+        <div class:list={["post-grid", { "post-grid-single": !hasAside }]}>
+          <div class="min-w-0">
+            {(newer || older) && (
+              <nav aria-label="More posts" class="grid sm:grid-cols-2 gap-4">
+                {older ? (
+                  <a href={`/blog/${older.id}/`} class="card p-5 group">
+                    <span class="block text-[12px] text-dim mb-2">← Previous</span>
+                    <span class="row-title block leading-snug">{older.data.title}</span>
+                  </a>
+                ) : <div class="hidden sm:block" />}
+                {newer ? (
+                  <a href={`/blog/${newer.id}/`} class="card p-5 group sm:text-right">
+                    <span class="block text-[12px] text-dim mb-2">Next →</span>
+                    <span class="row-title block leading-snug">{newer.data.title}</span>
+                  </a>
+                ) : <div class="hidden sm:block" />}
+              </nav>
+            )}
+            {related.length > 0 && (
+              <div class="mt-14">
+                <h2 class="h-section mb-5">Related reading</h2>
+                <ul>
+                  {related.map((p) => (
+                    <li>
+                      <a href={`/blog/${p.id}/`} class="trow block py-4 px-3 -mx-3">
+                        <span class="row-title block leading-snug">{p.data.title}</span>
+                        <span class="block text-[13px] text-dim mt-1 tabular-nums">
+                          {formatDate(p.data.pubDate, "medium")} · {getReadingTime(p.body ?? "")}
+                        </span>
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+          {hasAside && <div class="hidden min-[1200px]:block" />}
+        </div>
+      </section>
+    )}
   </article>
 </BaseLayout>

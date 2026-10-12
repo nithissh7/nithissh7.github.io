@@ -21,10 +21,9 @@ const { posts } = Astro.props;
 
 <BaseLayout title={`Posts tagged ${tag}`} description={`Posts tagged ${tag}.`}>
   <section class="band">
-    <nav aria-label="Breadcrumb" class="text-[13px] text-dim mb-8">
-      <a href="/tags/" class="nav-link">Tags</a><span class="mx-2" aria-hidden="true">/</span><span>{tag}</span>
+    <nav aria-label="Breadcrumb" class="prompt">
+      <a href="/tags/" class="nav-link">tags</a><span aria-hidden="true">/</span><span>{tag}</span>
     </nav>
-    <div class="page-icon" aria-hidden="true">🏷️</div>
     <h1 class="mb-5"><span class="tag !text-[28px] lg:!text-[34px] !leading-[1.35] !px-3 font-bold" data-color={tagColor(tag)}>{tag}</span></h1>
     <p class="lede">{posts.length} {posts.length === 1 ? "post" : "posts"} on this topic.</p>
   </section>

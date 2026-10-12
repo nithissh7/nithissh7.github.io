@@ -1,93 +1,142 @@
 ---
 import { getCollection } from "astro:content";
 import BaseLayout from "../layouts/BaseLayout.astro";
-import PostCard from "../components/PostCard.astro";
-import { SITE_TAGLINE, formatDate, yearOf } from "../consts";
+import { SITE_TAGLINE, formatDate, tagColor, yearOf } from "../consts";
 import { getReadingTime } from "../lib/reading-time";
+import { severityColor, splitCveTitle } from "../lib/cve";
 
 const posts = (await getCollection("blog", ({ data }) => !data.draft)).sort(
   (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
 );
-const cves = await getCollection("cves", ({ data }) => !data.draft);
+const cves = (await getCollection("cves", ({ data }) => !data.draft)).sort(
+  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf() || (b.data.cvssScore ?? 0) - (a.data.cvssScore ?? 0)
+);
 const certs = await getCollection("certifications");
 const [latest, ...rest] = posts;
 const firstYear = Math.min(...[...posts, ...cves].map((e) => yearOf(e.data.pubDate)));
+const short = (p: (typeof posts)[number]) => getReadingTime(p.body ?? "").replace(" read", "");
 
 const stats = [
   { n: posts.length, label: "posts", href: "/blog/" },
   { n: cves.length, label: "CVEs", href: "/cves/" },
-  { n: certs.length, label: "certifications", href: "/certifications/" },
-  { n: firstYear, label: "writing since", href: "/about/", before: true },
-];
-
-const explore = [
-  { href: "/cves/", title: "CVEs", body: `${cves.length} vulnerabilities I've found and responsibly disclosed, with severity and CVSS.` },
-  { href: "/certifications/", title: "Certifications", body: `${certs.length} credentials across web, cloud, and DevSecOps, each with a verification link.` },
-  { href: "/about/", title: "About", body: "Who I am, what I work on during the day, and what I hunt at night." },
+  { n: certs.length, label: "certs", href: "/certifications/" },
+  { n: `${firstYear}→`, label: "writing since", href: "/about/" },
 ];
 ---
 
 <BaseLayout>
-  <section class="band !pt-14 lg:!pt-24">
-    <div class="max-w-3xl">
-      <div class="page-icon" aria-hidden="true">👋</div>
-      <span class="eyebrow">Nithissh · security researcher</span>
-      <h1 class="h-page mb-6">Security research, written down.</h1>
-      <p class="lede mb-8">{SITE_TAGLINE}</p>
-      <div class="flex flex-wrap items-baseline gap-x-8 gap-y-3 mb-12">
-        <a href="/blog/" class="btn">Read the blog →</a>
-        <a href="/about/" class="btn btn-ghost">About me</a>
+  <section class="band !pt-14 lg:!pt-24 !pb-12 lg:!pb-20">
+    <div class="grid lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] gap-12 lg:gap-16 items-center">
+      <div>
+        <p class="prompt">whoami</p>
+        <h1 class="h-page mb-6">Security research,<br class="hidden sm:block" /> written down<span class="accent">.</span></h1>
+        <p class="lede mb-9">{SITE_TAGLINE}</p>
+        <div class="flex flex-wrap items-center gap-3 mb-12">
+          <a href="/blog/" class="btn">Read the blog <span aria-hidden="true">→</span></a>
+          <a href="/cves/" class="btn btn-ghost">Browse CVEs</a>
+        </div>
+        <ul class="grid grid-cols-2 sm:grid-cols-4 gap-px bg-border border border-border rounded-lg overflow-hidden text-[13px]">
+          {stats.map((s) => (
+            <li class="bg-bg">
+              <a href={s.href} class="group block px-4 py-3 hover:bg-[var(--hover)] transition-colors">
+                <span class="block text-strong font-extrabold text-[20px] tabular-nums leading-tight">{s.n}</span>
+                <span class="block text-dim group-hover:text-strong transition-colors">{s.label}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
       </div>
-      <ul class="flex flex-wrap gap-x-10 gap-y-4 text-[14px]">
-        {stats.map((s) => (
-          <li>
-            <a href={s.href} class="group flex items-baseline gap-2">
-              {s.before && <span class="text-dim group-hover:text-strong transition-colors">{s.label}</span>}
-              <span class="text-strong font-bold text-[20px] tabular-nums">{s.n}</span>
-              {!s.before && <span class="text-dim group-hover:text-strong transition-colors">{s.label}</span>}
-            </a>
-          </li>
-        ))}
-      </ul>
+
+      <div class="term hidden md:block" aria-hidden="true">
+        <div class="term-bar"><i></i><i></i><i></i><span>~/realnits</span></div>
+        <div class="term-body">
+          <p class="cmd text-strong">cat profile.txt</p>
+          <p class="text-dim mb-3">security architect · bug bounty hunter</p>
+          <p class="cmd text-strong">ls -t ~/blog | head -3</p>
+          <ul class="mb-3">
+            {posts.slice(0, 3).map((p) => (
+              <li class="truncate"><span class="text-dim tabular-nums">{formatDate(p.data.pubDate)}</span>  {p.id}.md</li>
+            ))}
+          </ul>
+          <p class="cmd text-strong">grep -c CVE disclosures.log</p>
+          <p class="text-dim mb-3">{cves.length}</p>
+          <p class="cmd text-strong">echo $STATUS</p>
+          <p>hunting<span class="caret"></span></p>
+        </div>
+      </div>
     </div>
   </section>
 
   {latest && (
-    <section class="band" aria-labelledby="latest">
-      <div class="max-w-3xl">
-        <span class="eyebrow">Latest · {formatDate(latest.data.pubDate, "medium")} · {getReadingTime(latest.body ?? "")}</span>
-        <h2 id="latest" class="text-[22px] lg:text-[26px] font-bold leading-[1.3] tracking-tight mb-4 text-balance">
-          <a href={`/blog/${latest.id}/`} class="hover:underline decoration-border-strong underline-offset-[6px] decoration-1">{latest.data.title}</a>
-        </h2>
-        <p class="lede mb-5">{latest.data.description}</p>
-        <a href={`/blog/${latest.id}/`} class="btn !text-[14px]">Read the post →</a>
+    <section class="band !pt-0" aria-labelledby="latest">
+      <div class="band-head">
+        <h2 class="h-section">Latest</h2>
       </div>
+      <a href={`/blog/${latest.id}/`} class="card group block p-6 sm:p-8 lg:p-10">
+        <span class="flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-dim mb-4 tabular-nums">
+          <span class="accent font-medium">● new</span>
+          <span>{formatDate(latest.data.pubDate, "medium")}</span>
+          <span>{getReadingTime(latest.body ?? "")}</span>
+        </span>
+        <span id="latest" class="row-title block text-[22px] lg:text-[30px] font-extrabold leading-[1.2] tracking-[-0.03em] mb-4 text-balance">
+          {latest.data.title}
+        </span>
+        <span class="block text-[15px] leading-[1.8] max-w-[72ch] mb-6">{latest.data.description}</span>
+        <span class="flex flex-wrap items-center gap-1.5">
+          {latest.data.tags.map((tag) => <span class="tag" data-color={tagColor(tag)}>{tag}</span>)}
+          <span class="ml-auto text-[14px] text-strong font-medium group-hover:text-[var(--accent)] transition-colors">Read the write-up →</span>
+        </span>
+      </a>
     </section>
   )}
 
   {rest.length > 0 && (
-    <section class="band" aria-labelledby="more">
+    <section class="band !pt-6" aria-labelledby="more">
       <div class="band-head">
-        <h2 id="more" class="h-section">More writing</h2>
+        <h2 id="more" class="h-section">Recent writing</h2>
         <a href="/blog/" class="nav-link text-[14px]">All {posts.length} posts →</a>
       </div>
-      <div class="cells md:grid-cols-3 !gap-x-12">
-        {rest.slice(0, 3).map((post) => <PostCard post={post} />)}
-      </div>
+      <ul class="border-t border-border">
+        {rest.slice(0, 5).map((post) => (
+          <li>
+            <a href={`/blog/${post.id}/`} class="trow grid md:grid-cols-[8rem_minmax(0,1fr)_4.5rem] gap-x-6 gap-y-1 py-5 px-3 -mx-3">
+              <span class="text-[13px] text-dim tabular-nums md:pt-0.5">{formatDate(post.data.pubDate, "medium")}</span>
+              <span class="min-w-0">
+                <span class="row-title block leading-snug">{post.data.title}</span>
+                <span class="block text-[14px] text-dim mt-1.5 leading-relaxed line-clamp-2">{post.data.description}</span>
+              </span>
+              <span class="hidden md:block text-[13px] text-dim text-right tabular-nums pt-0.5">{short(post)}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
     </section>
   )}
 
-  <section class="band !pb-20" aria-labelledby="explore">
-    <div class="band-head">
-      <h2 id="explore" class="h-section">Also here</h2>
-    </div>
-    <div class="cells md:grid-cols-3 !gap-x-12">
-      {explore.map((e) => (
-        <a href={e.href} class="group block">
-          <span class="row-title block group-hover:decoration-border-strong">{e.title} →</span>
-          <span class="block text-[14px] text-dim leading-relaxed mt-2">{e.body}</span>
-        </a>
-      ))}
-    </div>
-  </section>
+  {cves.length > 0 && (
+    <section class="band !pt-6 !pb-20" aria-labelledby="cves">
+      <div class="band-head">
+        <h2 id="cves" class="h-section">Recent disclosures</h2>
+        <a href="/cves/" class="nav-link text-[14px]">All {cves.length} CVEs →</a>
+      </div>
+      <ul class="border-t border-border">
+        {cves.slice(0, 5).map((cve) => {
+          const { vuln, product } = splitCveTitle(cve.data.title);
+          return (
+            <li>
+              <a href={`/cves/${cve.id}/`} class="trow grid md:grid-cols-[10rem_minmax(0,1fr)_6rem_3rem] gap-x-6 gap-y-1 items-baseline py-4 px-3 -mx-3">
+                <span class="text-[13px] text-strong tabular-nums">{cve.data.cveId}</span>
+                <span class="min-w-0">
+                  <span class="row-title block leading-snug">{vuln}</span>
+                  {product && <span class="block text-[13px] text-dim mt-1 truncate">{product}</span>}
+                </span>
+                <span><span class="tag" data-color={severityColor(cve.data.severity)}>{cve.data.severity}</span></span>
+                <span class="hidden md:block text-[13px] text-dim text-right tabular-nums">{cve.data.cvssScore?.toFixed(1) ?? "—"}</span>
+              </a>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  )}
 </BaseLayout>

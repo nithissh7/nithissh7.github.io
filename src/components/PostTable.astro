@@ -1,6 +1,6 @@
 ---
 import type { CollectionEntry } from "astro:content";
-import { formatDate, tagColor } from "../consts";
+import { formatDate, tagColor, yearOf } from "../consts";
 import { getReadingTime } from "../lib/reading-time";
 
 interface Props {
@@ -8,36 +8,35 @@ interface Props {
 }
 
 const { posts } = Astro.props;
-const cols = "md:grid md:grid-cols-[9rem_minmax(0,1fr)_13rem_4.5rem] md:gap-8";
+// Posts arrive newest first; group them under year headings.
+const years = [...new Set(posts.map((p) => yearOf(p.data.pubDate)))];
+const short = (p: CollectionEntry<"blog">) => getReadingTime(p.body ?? "").replace(" read", "");
 ---
 
 <div class="tlist">
-  <div class={`table-head hidden ${cols} py-2.5 px-3 -mx-3`} aria-hidden="true">
-    <span>Date</span><span>Title</span><span>Tags</span><span class="text-right">Read</span>
-  </div>
-  <ul>
-    {posts.map((post) => (
-      <li>
-        <a href={`/blog/${post.id}/`} class={`trow block ${cols} py-5 px-3 -mx-3 rounded-sm`}>
-          <span class="block text-[13px] text-dim tabular-nums md:text-[14px] md:pt-px">
-            {formatDate(post.data.pubDate, "medium")}
-            <span class="md:hidden"> · {getReadingTime(post.body ?? "").replace(" read", "")}</span>
-            {post.data.updatedDate && (
-              <span class="block text-[12px] text-dim">updated {formatDate(post.data.updatedDate, "medium")}</span>
-            )}
-          </span>
-          <span class="block min-w-0 mt-1 md:mt-0">
-            <span class="row-title block leading-snug">{post.data.title}</span>
-            <span class="block text-[14px] text-dim mt-1.5 leading-relaxed line-clamp-2">{post.data.description}</span>
-          </span>
-          <span class="hidden md:flex flex-wrap content-start gap-1.5 pt-0.5">
-            {post.data.tags.slice(0, 3).map((tag) => <span class="tag" data-color={tagColor(tag)}>{tag}</span>)}
-          </span>
-          <span class="hidden md:block text-[14px] text-dim text-right tabular-nums">
-            {getReadingTime(post.body ?? "").replace(" read", "")}
-          </span>
-        </a>
-      </li>
-    ))}
-  </ul>
+  {years.map((year) => (
+    <section data-year-group>
+      <h2 class="year-head">{year}</h2>
+      <ul>
+        {posts.filter((p) => yearOf(p.data.pubDate) === year).map((post) => (
+          <li data-tags={post.data.tags.join(" ")}>
+            <a href={`/blog/${post.id}/`} class="trow grid md:grid-cols-[6.5rem_minmax(0,1fr)_4.5rem] gap-x-6 gap-y-1 py-5 px-3 -mx-3">
+              <span class="text-[13px] text-dim tabular-nums md:pt-0.5">
+                {formatDate(post.data.pubDate, "medium").replace(/, \d{4}$/, "")}
+                <span class="md:hidden"> · {short(post)}</span>
+              </span>
+              <span class="min-w-0">
+                <span class="row-title block leading-snug text-[15.5px]">{post.data.title}</span>
+                <span class="block text-[14px] text-dim mt-1.5 leading-relaxed line-clamp-2">{post.data.description}</span>
+                <span class="flex flex-wrap gap-1.5 mt-3">
+                  {post.data.tags.slice(0, 4).map((tag) => <span class="tag" data-color={tagColor(tag)}>{tag}</span>)}
+                </span>
+              </span>
+              <span class="hidden md:block text-[13px] text-dim text-right tabular-nums pt-0.5">{short(post)}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
+  ))}
 </div>

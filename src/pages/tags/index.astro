@@ -12,9 +12,8 @@ const tags = [...counts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
 <BaseLayout title="Tags" description="Every topic written about on realnits.">
   <section class="band !pt-14 lg:!pt-20 !pb-24 min-h-[60vh]">
     <div class="max-w-3xl">
-      <div class="page-icon" aria-hidden="true">🏷️</div>
-      <span class="eyebrow">Tags</span>
-      <h1 class="h-page mb-5">Topics</h1>
+      <p class="prompt">tags</p>
+      <h1 class="h-page mb-5">Topics<span class="accent">.</span></h1>
       <p class="lede mb-10">{tags.length} topics across {posts.length} posts. Pick one to see its posts.</p>
       <ul class="flex flex-wrap gap-2.5" aria-label="Topics">
         {tags.map(([tag, n]) => (

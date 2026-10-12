@@ -15,8 +15,8 @@ const isActive = (href: string) => path.startsWith(href);
 
 <header class="site-header sticky top-0 z-40 bg-bg/85 backdrop-blur-md">
   <div class="h-16 flex items-center gap-6 px-5 sm:px-8 lg:px-12">
-    <a href="/" class="flex items-center gap-2.5 shrink-0 text-strong font-bold text-[15px]" aria-label={`${SITE_TITLE}, home`}>
-      {SITE_TITLE}
+    <a href="/" class="flex items-center shrink-0 text-strong font-extrabold text-[15px] tracking-tight" aria-label={`${SITE_TITLE}, home`}>
+      <span class="accent mr-1.5" aria-hidden="true">&gt;</span>{SITE_TITLE}<span class="caret" aria-hidden="true"></span>
     </a>
 
     <nav aria-label="Main" class="hidden md:flex items-center gap-7 text-[14px] ml-6">
@@ -66,12 +66,6 @@ const isActive = (href: string) => path.startsWith(href);
 </header>
 
 <style>
-  .mark {
-    width: 0.8rem;
-    height: 0.8rem;
-    background: var(--strong);
-    border-radius: 2px;
-  }
   .theme-icon-moon {
     display: none;
   }

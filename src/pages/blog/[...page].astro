@@ -4,35 +4,73 @@ import { getCollection } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import PostTable from "../../components/PostTable.astro";
 import Pagination from "../../components/Pagination.astro";
+import { tagColor } from "../../consts";
 
 export const getStaticPaths = (async ({ paginate }) => {
   const posts = (await getCollection("blog", ({ data }) => !data.draft)).sort(
     (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
   );
-  return paginate(posts, { pageSize: 5, props: { total: posts.length } });
+  const counts = new Map<string, number>();
+  for (const post of posts) for (const tag of post.data.tags) counts.set(tag, (counts.get(tag) ?? 0) + 1);
+  const topics = [...counts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, 10);
+  return paginate(posts, { pageSize: 30, props: { total: posts.length, topics } });
 }) satisfies GetStaticPaths;
 
-const { page, total } = Astro.props;
+const { page, total, topics } = Astro.props;
 ---
 
 <BaseLayout
   title={page.currentPage > 1 ? `Blog — page ${page.currentPage}` : "Blog"}
   description="Write-ups on vulnerability research, CVE teardowns, bug bounty findings, and security challenges."
 >
-  <section class="band">
-    <div class="page-icon" aria-hidden="true">📝</div>
-    <span class="eyebrow">Blog · {total} posts</span>
-    <h1 class="h-page mb-5">Writing</h1>
-    <p class="lede mb-6">
-      Write-ups on vulnerability research, CVE teardowns, bug bounty findings, and security challenges — newest first.
+  <section class="band !pb-6">
+    <p class="prompt">blog</p>
+    <h1 class="h-page mb-5">Writing<span class="accent">.</span></h1>
+    <p class="lede mb-8">
+      {total} write-ups on vulnerability research, CVE teardowns, bug bounty findings, and security challenges — newest first.
     </p>
-    <a href="/tags/" class="nav-link text-[14px]">Browse by topic →</a>
+    <div class="flex flex-wrap items-center gap-2" role="group" aria-label="Filter by topic" data-post-filter>
+      <button type="button" class="tag cursor-pointer" aria-pressed="true" data-filter="all">all <span class="tabular-nums opacity-70">{total}</span></button>
+      {topics.map(([tag, n]) => (
+        <button type="button" class="tag cursor-pointer" aria-pressed="false" data-filter={tag} data-color={tagColor(tag)}>
+          {tag} <span class="tabular-nums opacity-70">{n}</span>
+        </button>
+      ))}
+      <a href="/tags/" class="nav-link text-[13px] ml-2">all topics →</a>
+    </div>
   </section>
 
-  <section class="band !pt-2">
+  <section class="band !pt-0">
     <PostTable posts={page.data} />
+    <p class="text-[14px] text-dim py-10 hidden" data-filter-empty>No posts on this page with that topic.</p>
     <div class="mt-10">
       <Pagination current={page.currentPage} last={page.lastPage} prev={page.url.prev} next={page.url.next} base="/blog" />
     </div>
   </section>
 </BaseLayout>
+
+<script>
+  document.addEventListener("astro:page-load", () => {
+    const group = document.querySelector<HTMLElement>("[data-post-filter]");
+    if (!group || group.dataset.ready) return;
+    group.dataset.ready = "true";
+    group.addEventListener("click", (e) => {
+      const btn = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-filter]");
+      if (!btn) return;
+      const f = btn.dataset.filter!;
+      group.querySelectorAll("[data-filter]").forEach((b) => b.setAttribute("aria-pressed", String(b === btn)));
+      let shown = 0;
+      document.querySelectorAll<HTMLElement>("[data-year-group]").forEach((section) => {
+        let inYear = 0;
+        section.querySelectorAll<HTMLElement>("li[data-tags]").forEach((li) => {
+          const hit = f === "all" || li.dataset.tags!.split(" ").includes(f);
+          li.hidden = !hit;
+          if (hit) inYear++;
+        });
+        section.hidden = inYear === 0;
+        shown += inYear;
+      });
+      document.querySelector("[data-filter-empty]")?.classList.toggle("hidden", shown > 0);
+    });
+  });
+</script>

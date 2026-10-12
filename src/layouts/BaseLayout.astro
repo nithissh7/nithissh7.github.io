@@ -45,8 +45,8 @@ const ogImageURL = new URL(image, Astro.site);
     </script>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <meta name="theme-color" content="#fdfcfc" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#0c0c0e" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#fcfbf9" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0d0d0f" media="(prefers-color-scheme: dark)" />
     <meta name="generator" content={Astro.generator} />
     <meta name="description" content={description} />
     <link rel="canonical" href={canonicalURL} />
@@ -69,6 +69,7 @@ const ogImageURL = new URL(image, Astro.site);
     <ClientRouter />
   </head>
   <body>
+    <div class="read-progress" data-progress hidden></div>
     <a
       href="#main-content"
       class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:bg-strong focus:text-bg focus:px-3 focus:py-1.5 focus:rounded"
@@ -96,6 +97,13 @@ const ogImageURL = new URL(image, Astro.site);
         </div>
       </dialog>
     )}
+    <dialog id="lightbox" class="lightbox" aria-label="Image preview">
+      <img alt="" />
+      <p></p>
+    </dialog>
+    <button type="button" class="to-top" data-to-top aria-label="Back to top">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"></path></svg>
+    </button>
     <p id="announcer" class="sr-only" aria-live="polite"></p>
 
     <script>
@@ -107,13 +115,14 @@ const ogImageURL = new URL(image, Astro.site);
 
         const copyText = target.closest<HTMLButtonElement>("[data-copy-text]");
         if (copyText) {
+          const label = copyText.dataset.label ?? (copyText.dataset.label = copyText.textContent ?? "copy");
           try {
             await navigator.clipboard.writeText(copyText.dataset.copyText ?? "");
-            copyText.textContent = "copied";
+            copyText.textContent = "copied ✓";
           } catch {
             copyText.textContent = "failed";
           }
-          setTimeout(() => (copyText.textContent = "copy"), 1500);
+          setTimeout(() => (copyText.textContent = label), 1500);
           return;
         }
 
@@ -122,13 +131,35 @@ const ogImageURL = new URL(image, Astro.site);
           const code = copyBtn.closest(".code-block")?.querySelector("pre")?.innerText ?? "";
           try {
             await navigator.clipboard.writeText(code.replace(/\n$/, ""));
-            copyBtn.textContent = "copied";
+            copyBtn.textContent = "copied ✓";
             const announcer = document.getElementById("announcer");
             if (announcer) announcer.textContent = "Code copied to clipboard";
           } catch {
             copyBtn.textContent = "failed";
           }
           setTimeout(() => (copyBtn.textContent = "copy"), 1500);
+          return;
+        }
+
+        const zoomable = target.closest<HTMLImageElement>(".prose img");
+        if (zoomable && !target.closest("a")) {
+          const box = document.getElementById("lightbox") as HTMLDialogElement | null;
+          if (box) {
+            const img = box.querySelector("img")!;
+            img.src = zoomable.currentSrc || zoomable.src;
+            img.alt = zoomable.alt;
+            box.querySelector("p")!.textContent = zoomable.alt;
+            box.showModal();
+          }
+          return;
+        }
+        if (target.closest("#lightbox")) {
+          (document.getElementById("lightbox") as HTMLDialogElement).close();
+          return;
+        }
+
+        if (target.closest("[data-to-top]")) {
+          window.scrollTo({ top: 0 });
           return;
         }
 
@@ -166,6 +197,7 @@ const ogImageURL = new URL(image, Astro.site);
       }
       document.addEventListener("astro:before-swap", () => {
         (document.getElementById("search-dialog") as HTMLDialogElement | null)?.close();
+        (document.getElementById("lightbox") as HTMLDialogElement | null)?.close();
       });
 
       // ⌘K / Ctrl+K / "/" open search from anywhere.
@@ -191,6 +223,20 @@ const ogImageURL = new URL(image, Astro.site);
           anchor.setAttribute("aria-label", "Link to this section");
           anchor.textContent = "#";
           heading.append(anchor);
+        });
+
+        // A paragraph holding only an image becomes a figure captioned with its alt text.
+        prose.querySelectorAll<HTMLImageElement>("p > img").forEach((img) => {
+          const p = img.parentElement!;
+          if (p.childElementCount !== 1 || p.textContent!.trim()) return;
+          const figure = document.createElement("figure");
+          figure.append(img);
+          if (img.alt) {
+            const caption = document.createElement("figcaption");
+            caption.textContent = img.alt;
+            figure.append(caption);
+          }
+          p.replaceWith(figure);
         });
 
         const links = [...document.querySelectorAll<HTMLAnchorElement>(".toc a")];
@@ -271,9 +317,23 @@ const ogImageURL = new URL(image, Astro.site);
         window.open(URL.createObjectURL(new Blob([doc], { type: "text/html" })), "_blank", "noopener");
       });
 
-      // The header gets its hairline only once the page scrolls under it.
-      const markHeader = () =>
+      // The header gets its hairline only once the page scrolls under it; on articles a
+      // progress bar tracks how far through the text the reader is.
+      const markHeader = () => {
         document.querySelector(".site-header")?.toggleAttribute("data-scrolled", window.scrollY > 8);
+        document.querySelector("[data-to-top]")?.toggleAttribute("data-visible", window.scrollY > 900);
+        const bar = document.querySelector<HTMLElement>("[data-progress]");
+        const body = document.querySelector<HTMLElement>("[data-reading-body]");
+        if (!bar) return;
+        bar.hidden = !body;
+        if (!body) return;
+        const rect = body.getBoundingClientRect();
+        const total = rect.height - window.innerHeight * 0.6;
+        const done = Math.min(1, Math.max(0, -rect.top / Math.max(total, 1)));
+        bar.style.transform = `scaleX(${done})`;
+        const pct = document.querySelector("[data-progress-pct]");
+        if (pct) pct.textContent = `${Math.round(done * 100)}%`;
+      };
       window.addEventListener("scroll", markHeader, { passive: true });
 
       document.addEventListener("astro:page-load", () => {

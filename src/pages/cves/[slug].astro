@@ -36,13 +36,12 @@ const shortTitle = (t: string) => splitCveTitle(t).vuln;
 >
   <article>
     <header class="band !pb-4">
-      <nav aria-label="Breadcrumb" class="text-[13px] text-dim mb-6" data-pagefind-ignore>
-        <a href="/cves/" class="nav-link">CVEs</a>
-        <span class="mx-2" aria-hidden="true">/</span>
+      <nav aria-label="Breadcrumb" class="prompt" data-pagefind-ignore>
+        <a href="/cves/" class="nav-link">cves</a>
+        <span aria-hidden="true">/</span>
         <span>{d.cveId}</span>
       </nav>
-      <div class="page-icon" aria-hidden="true">🛡️</div>
-      <h1 class="text-[28px] lg:text-[36px] font-bold leading-[1.25] tracking-tight text-strong text-balance mb-3">{vuln}</h1>
+      <h1 class="text-[28px] lg:text-[36px] font-extrabold leading-[1.18] tracking-[-0.035em] text-strong text-balance mb-3">{vuln}</h1>
       <p class="text-[16px] lg:text-[17px] text-dim mb-5">{product}{d.vendor && <> · {d.vendor}</>}</p>
       <div class="flex flex-wrap gap-2" data-pagefind-ignore>
         <span class="tag" data-color={severityColor(d.severity)}>{d.severity}</span>

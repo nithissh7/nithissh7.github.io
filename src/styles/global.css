@@ -3,25 +3,31 @@
 @import "@fontsource/jetbrains-mono/400-italic.css";
 @import "@fontsource/jetbrains-mono/500.css";
 @import "@fontsource/jetbrains-mono/700.css";
+@import "@fontsource/jetbrains-mono/800.css";
 
 /*
-  realnits — a full-width, framed, monospaced site.
-  Structure: a 1200px frame with hairline side borders, split into horizontal
-  "bands". Inside bands, content sits on a grid; lists are aligned tables.
-  Hierarchy comes from two text tones (strong / text) plus weight and size.
+  realnits — a monospaced research notebook.
+  One typeface (JetBrains Mono), one accent (signal red, shared with inline code),
+  three text tones (strong / text / dim). Pages are a 1200px frame of horizontal
+  "bands"; articles read in a ~70ch column with a sticky outline beside it.
 */
 :root {
-  /* Notion light */
-  --bg: #ffffff;
-  --bg-raised: #f7f6f3;
-  --hover: rgba(55, 53, 47, 0.06);
-  --border: #ededec;
-  --border-strong: #dfdfde;
-  --strong: #37352f;
-  --text: #37352f;
-  --dim: #73726e;
-  --select: rgba(35, 131, 226, 0.28);
+  --bg: #fcfbf9;
+  --bg-raised: #f4f2ee;
+  --bg-code: #f6f5f2;
+  --hover: rgba(40, 36, 30, 0.055);
+  --border: #e8e5e0;
+  --border-strong: #d6d2cb;
+  --strong: #1c1b19;
+  --text: #34322e;
+  --dim: #6c6962;
+  --accent: #c4352e;
+  --accent-soft: rgba(196, 53, 46, 0.09);
+  --select: rgba(196, 53, 46, 0.18);
   --find-mark: #fdecc8;
+  --shadow: 0 1px 2px rgba(20, 18, 15, 0.04), 0 8px 24px -12px rgba(20, 18, 15, 0.12);
+  --code-ink: #c4352e;
+  --code-bg: #fbeceb;
   color-scheme: light;
 
   --tag-gray: #ebeae8;   --tag-gray-ink: #32302c;
@@ -36,20 +42,25 @@
 }
 
 :root[data-theme="dark"] {
-  /* Notion dark */
-  --bg: #191919;
-  --bg-raised: #202020;
-  --hover: rgba(255, 255, 255, 0.055);
-  --border: #2f2f2f;
-  --border-strong: #3a3a3a;
-  --strong: #ececec;
-  --text: #cfcfcf;
-  --dim: #9b9b9b;
-  --select: rgba(45, 170, 219, 0.3);
+  --bg: #0d0d0f;
+  --bg-raised: #151518;
+  --bg-code: #121215;
+  --hover: rgba(255, 255, 255, 0.05);
+  --border: #232328;
+  --border-strong: #313137;
+  --strong: #f0f0f2;
+  --text: #c8c8cd;
+  --dim: #8e8e96;
+  --accent: #ff7369;
+  --accent-soft: rgba(255, 115, 105, 0.1);
+  --select: rgba(255, 115, 105, 0.28);
   --find-mark: #564328;
+  --shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 12px 32px -16px rgba(0, 0, 0, 0.6);
+  --code-ink: #ff7369;
+  --code-bg: #2a1d1c;
   color-scheme: dark;
 
-  --tag-gray: #373737;   --tag-gray-ink: #e3e3e3;
+  --tag-gray: #2c2c30;   --tag-gray-ink: #e3e3e3;
   --tag-brown: #4a3228;  --tag-brown-ink: #e3e3e3;
   --tag-orange: #5c3b23; --tag-orange-ink: #e3e3e3;
   --tag-yellow: #564328; --tag-yellow-ink: #e3e3e3;
@@ -69,13 +80,14 @@
   --color-strong: var(--strong);
   --color-text: var(--text);
   --color-dim: var(--dim);
+  --color-accent: var(--accent);
 }
 
 @layer base {
   html {
     background: var(--bg);
     -webkit-text-size-adjust: 100%;
-    scroll-padding-top: 5rem;
+    scroll-padding-top: 5.5rem;
   }
   body {
     font-family: var(--font-mono);
@@ -103,7 +115,7 @@
     background: var(--select);
   }
   :focus-visible {
-    outline: 2px solid var(--strong);
+    outline: 2px solid var(--accent);
     outline-offset: 2px;
     border-radius: 2px;
   }
@@ -122,24 +134,9 @@
     max-width: 1200px;
     margin-inline: auto;
   }
-  /* Article pages: one centred column (848px of content) shared by header,
-     title, text, code and images — the proportions of the original post page. */
   .wrap-reading {
     max-width: 944px;
   }
-  .wrap-reading .prose {
-    font-size: 16px;
-    line-height: 1.75;
-  }
-  .wrap-reading .prose h2 {
-    font-size: 22px;
-    padding-bottom: 0.5rem;
-    border-bottom: 1px solid var(--border);
-  }
-  .wrap-reading .prose h3 {
-    font-size: 18px;
-  }
-  /* Sections are separated by space, not lines. */
   .band {
     padding: 2.5rem 1.25rem;
   }
@@ -158,7 +155,20 @@
     padding-bottom: 1.75rem;
   }
 
-  /* Small label above a heading or at the head of a band. */
+  /* Terminal-style location line above a page title: "~/blog". */
+  .prompt {
+    display: flex;
+    align-items: center;
+    gap: 0.5ch;
+    font-size: 13px;
+    color: var(--dim);
+    margin-bottom: 1.25rem;
+  }
+  .prompt::before {
+    content: "~/";
+    color: var(--accent);
+    margin-right: -0.5ch;
+  }
   .eyebrow {
     display: block;
     font-size: 13px;
@@ -168,36 +178,46 @@
 
   .h-page {
     font-size: 30px;
-    line-height: 1.25;
-    font-weight: 700;
-    letter-spacing: -0.02em;
+    line-height: 1.2;
+    font-weight: 800;
+    letter-spacing: -0.035em;
     color: var(--strong);
     text-wrap: balance;
   }
   @media (min-width: 1024px) {
     .h-page {
-      font-size: 38px;
+      font-size: 42px;
     }
   }
   .h-section {
-    font-size: 17px;
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    font-size: 15px;
     font-weight: 700;
     color: var(--strong);
+  }
+  .h-section::before {
+    content: "##";
+    color: var(--accent);
+    font-weight: 500;
   }
   .lede {
     font-size: 16px;
     line-height: 1.8;
     color: var(--text);
     max-width: 62ch;
+    text-wrap: pretty;
   }
-
-  /* Band header: title on the left, action on the right. */
   .band-head {
     display: flex;
     align-items: baseline;
     justify-content: space-between;
     gap: 1rem;
-    margin-bottom: 2rem;
+    margin-bottom: 1.75rem;
+  }
+  .accent {
+    color: var(--accent);
   }
 
   /* ---------- Links + buttons ---------- */
@@ -208,40 +228,62 @@
     text-decoration-color: var(--border-strong);
     text-decoration-thickness: 1px;
     text-underline-offset: 4px;
-    transition: text-decoration-color 0.15s ease;
+    transition: text-decoration-color 0.15s ease, color 0.15s ease;
   }
   .link:hover {
-    text-decoration-color: var(--strong);
+    text-decoration-color: var(--accent);
   }
   .nav-link {
     color: var(--dim);
-    transition: color 0.15s ease;
+    transition: color 0.15s ease, background-color 0.1s ease;
   }
   .nav-link:hover,
   .nav-link[aria-current="page"] {
     color: var(--strong);
   }
-  /* Call-to-action: a strong underlined link, not a button box. */
+  header .nav-link,
+  footer .nav-link {
+    border-radius: 4px;
+    padding: 2px 6px;
+    margin: -2px -6px;
+  }
+  header .nav-link:hover,
+  footer .nav-link:hover {
+    background: var(--hover);
+  }
+  header nav .nav-link[aria-current="page"] {
+    box-shadow: inset 0 -2px 0 var(--accent);
+    border-radius: 0;
+  }
+
+  /* Primary action: a solid block. Ghost: a quiet underlined link. */
   .btn {
-    font-size: 15px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    height: 2.5rem;
+    padding: 0 1rem;
+    font-size: 14px;
     font-weight: 500;
-    color: var(--strong);
-    text-decoration: underline;
-    text-decoration-color: var(--border-strong);
-    text-decoration-thickness: 1px;
-    text-underline-offset: 5px;
-    transition: text-decoration-color 0.15s ease;
+    color: var(--bg);
+    background: var(--strong);
+    border-radius: 6px;
+    transition: transform 0.15s ease, background-color 0.15s ease;
   }
   .btn:hover {
-    text-decoration-color: var(--strong);
+    background: var(--accent);
+  }
+  .btn:active {
+    transform: translateY(1px);
   }
   .btn-ghost {
-    font-weight: 400;
-    color: var(--dim);
-    text-decoration-color: transparent;
+    color: var(--strong);
+    background: transparent;
+    box-shadow: inset 0 0 0 1px var(--border-strong);
   }
   .btn-ghost:hover {
-    color: var(--strong);
+    background: var(--hover);
+    box-shadow: inset 0 0 0 1px var(--dim);
   }
   .icon-btn {
     display: inline-grid;
@@ -250,30 +292,51 @@
     height: 2.25rem;
     border-radius: 6px;
     color: var(--dim);
+    cursor: pointer;
     transition: color 0.15s ease, background-color 0.15s ease;
   }
-  .icon-btn:hover {
+  .icon-btn:hover,
+  [data-search-open]:hover {
     color: var(--strong);
-    background: var(--bg-raised);
+    background: var(--hover);
+    border-radius: 6px;
   }
   .kbd {
-    font-size: 12px;
+    font-size: 11px;
+    line-height: 1;
     color: var(--dim);
+    padding: 3px 5px;
+    border: 1px solid var(--border-strong);
+    border-bottom-width: 2px;
+    border-radius: 4px;
   }
 
-  /* ---------- Cell grids (shared hairlines, like a spreadsheet) ---------- */
+  /* ---------- Cards ---------- */
 
-  /* Plain grid: items separated by whitespace only. */
+  .card {
+    display: block;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--bg-raised);
+    transition: border-color 0.15s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  a.card:hover {
+    border-color: var(--border-strong);
+    box-shadow: var(--shadow);
+  }
+  a.card:hover .row-title {
+    text-decoration-color: var(--accent);
+  }
+
   .cells {
     display: grid;
     gap: 2.25rem 3rem;
   }
-
   .stat-num {
     display: block;
     font-size: 28px;
     line-height: 1.1;
-    font-weight: 700;
+    font-weight: 800;
     color: var(--strong);
     font-variant-numeric: tabular-nums;
   }
@@ -284,24 +347,36 @@
     margin-top: 0.4rem;
   }
 
+  /* ---------- Tags (Notion "select" pills) ---------- */
+
   .tag {
     display: inline-block;
-    font-size: 13px;
-    line-height: 1.5;
-    color: var(--dim);
+    font-size: 12px;
+    line-height: 20px;
+    padding: 0 6px;
+    border-radius: 4px;
     white-space: nowrap;
-  }
-  .tag::before {
-    content: "#";
-    opacity: 0.6;
-  }
-  a.tag,
-  button.tag {
-    transition: color 0.15s ease;
+    background: var(--tag-gray);
+    color: var(--tag-gray-ink);
+    transition: filter 0.15s ease, box-shadow 0.15s ease;
   }
   a.tag:hover,
   button.tag:hover {
-    color: var(--strong);
+    filter: brightness(0.96);
+  }
+  :root[data-theme="dark"] :is(a.tag, button.tag):hover {
+    filter: brightness(1.2);
+  }
+  .tag[data-color="brown"] { background: var(--tag-brown); color: var(--tag-brown-ink); }
+  .tag[data-color="orange"] { background: var(--tag-orange); color: var(--tag-orange-ink); }
+  .tag[data-color="yellow"] { background: var(--tag-yellow); color: var(--tag-yellow-ink); }
+  .tag[data-color="green"] { background: var(--tag-green); color: var(--tag-green-ink); }
+  .tag[data-color="blue"] { background: var(--tag-blue); color: var(--tag-blue-ink); }
+  .tag[data-color="purple"] { background: var(--tag-purple); color: var(--tag-purple-ink); }
+  .tag[data-color="pink"] { background: var(--tag-pink); color: var(--tag-pink-ink); }
+  .tag[data-color="red"] { background: var(--tag-red); color: var(--tag-red-ink); }
+  .tag[aria-pressed="true"] {
+    box-shadow: inset 0 0 0 1px currentColor;
   }
 
   /* ---------- Tables (post index, CVEs) ---------- */
@@ -316,27 +391,49 @@
   }
   .trow {
     border-bottom: 1px solid var(--border);
-    transition: background-color 0.15s ease;
+    transition: background-color 0.1s ease;
   }
-  a.trow:hover .row-title {
-    text-decoration-color: var(--border-strong);
+  a.trow {
+    border-radius: 4px;
+  }
+  a.trow:hover {
+    background: var(--hover);
+  }
+  a.trow:hover .row-title,
+  a:hover > .row-title {
+    text-decoration-color: var(--accent);
   }
   .row-title {
     color: var(--strong);
-    font-weight: 500;
+    font-weight: 700;
     text-decoration: underline;
     text-decoration-color: transparent;
     text-decoration-thickness: 1px;
     text-underline-offset: 4px;
     transition: text-decoration-color 0.15s ease;
   }
+  .year-head {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--dim);
+    font-variant-numeric: tabular-nums;
+    padding: 2.25rem 0 0.5rem;
+  }
+  .year-head::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
 
   /* ---------- Code ---------- */
 
   :not(pre) > code {
-    color: var(--strong);
-    background: var(--bg-raised);
-    border: 1px solid var(--border);
+    color: var(--code-ink);
+    background: var(--code-bg);
     border-radius: 4px;
     padding: 0.1em 0.35em;
     font-size: 0.88em;
@@ -352,106 +449,163 @@
   }
   .code-block {
     margin: 1.75rem 0;
-    border-radius: 6px;
-    background: var(--bg-raised);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg-code);
     overflow: hidden;
   }
   .code-block-bar {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    height: 2rem;
-    padding: 0.35rem 0.5rem 0 1.25rem;
+    height: 2.25rem;
+    padding: 0 0.5rem 0 1rem;
     font-size: 12px;
     color: var(--dim);
+    border-bottom: 1px solid var(--border);
+  }
+  .code-block-bar > span {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+  .code-block-bar > span::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    opacity: 0.85;
   }
   .code-block-bar button {
     color: var(--dim);
     cursor: pointer;
-    padding: 0.1rem 0.5rem;
+    padding: 0.15rem 0.55rem;
     border-radius: 4px;
     transition: color 0.15s ease, background-color 0.15s ease;
   }
   .code-block-bar button:hover {
     color: var(--strong);
-    background: var(--bg);
+    background: var(--hover);
   }
   .code-block pre {
     margin: 0;
-    padding: 0.5rem 1.25rem 1.1rem;
+    padding: 1rem 1.25rem 1.15rem;
     overflow-x: auto;
     font-size: 13.5px;
     line-height: 1.7;
     background: transparent !important;
+    tab-size: 2;
   }
   .code-block pre span {
     background-color: transparent !important;
   }
+  .code-block .line.highlighted {
+    display: inline-block;
+    min-width: calc(100% + 2.5rem);
+    margin: 0 -1.25rem;
+    padding: 0 1.25rem;
+    background: var(--accent-soft);
+    box-shadow: inset 2px 0 0 var(--accent);
+  }
 
   /* ---------- Prose ---------- */
 
-  /* Full-width reading: the article uses the whole content width, with larger
-     type so long lines stay comfortable. */
   .prose {
     font-size: 16px;
-    line-height: 1.9;
+    line-height: 1.85;
     color: var(--text);
     overflow-wrap: break-word;
+    counter-reset: section;
   }
-  @media (min-width: 1024px) {
+  @media (max-width: 639px) {
     .prose {
-      font-size: 17px;
+      font-size: 15px;
+      line-height: 1.8;
     }
   }
   .prose > :first-child {
     margin-top: 0;
   }
-  .prose :is(p, ul, ol, blockquote, table) {
-    margin: 0 0 1.4rem;
+  .prose :is(p, ul, ol, blockquote, table, figure) {
+    margin: 0 0 1.5rem;
+  }
+  .prose p {
+    text-wrap: pretty;
   }
   .prose :is(h2, h3, h4) {
     color: var(--strong);
     font-weight: 700;
-    line-height: 1.45;
-    scroll-margin-top: 5rem;
+    line-height: 1.4;
+    letter-spacing: -0.015em;
+    scroll-margin-top: 5.5rem;
+    text-wrap: balance;
   }
   .prose h2 {
-    font-size: 19px;
-    margin: 3.5rem 0 1rem;
+    font-size: 21px;
+    font-weight: 800;
+    margin: 4rem 0 1.25rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border);
+  }
+  /* Numbered sections, mirrored in the outline. */
+  .prose h2:not(.sr-only)::before {
+    counter-increment: section;
+    content: counter(section, decimal-leading-zero);
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    color: var(--accent);
+    margin-bottom: 0.35rem;
   }
   .prose > h2:first-child {
     margin-top: 0;
   }
   .prose h3 {
-    font-size: 16px;
-    margin: 2.25rem 0 0.75rem;
+    font-size: 17.5px;
+    margin: 2.75rem 0 0.85rem;
   }
   .prose h4 {
-    font-size: 15px;
-    font-weight: 500;
-    margin: 1.75rem 0 0.5rem;
+    font-size: 16px;
+    margin: 2rem 0 0.6rem;
+  }
+  .prose h4::before {
+    content: "› ";
+    color: var(--accent);
   }
   .prose :is(h2, h3) a.anchor {
     margin-left: 0.5rem;
     color: var(--dim);
     font-weight: 400;
     opacity: 0;
-    transition: opacity 0.15s ease;
+    transition: opacity 0.15s ease, color 0.15s ease;
   }
   .prose :is(h2, h3):hover a.anchor,
   .prose a.anchor:focus-visible {
     opacity: 1;
   }
-  .prose a:not(.anchor) {
+  .prose a.anchor:hover {
+    color: var(--accent);
+  }
+  .prose a:not(.anchor, [data-footnote-ref], [data-footnote-backref]) {
     color: var(--strong);
     text-decoration: underline;
-    text-decoration-color: var(--border-strong);
+    text-decoration-color: color-mix(in srgb, var(--accent) 45%, transparent);
     text-decoration-thickness: 1px;
     text-underline-offset: 4px;
-    transition: text-decoration-color 0.15s ease;
+    transition: text-decoration-color 0.15s ease, color 0.15s ease;
   }
   .prose a:not(.anchor):hover {
-    text-decoration-color: var(--strong);
+    color: var(--accent);
+    text-decoration-color: var(--accent);
+  }
+  .prose strong {
+    font-weight: 700;
+  }
+  .prose em {
+    font-style: italic;
+    color: var(--strong);
   }
   .prose ul,
   .prose ol {
@@ -464,37 +618,77 @@
     position: relative;
   }
   .prose ul > li::before {
-    content: "-";
+    content: "→";
     position: absolute;
-    left: -1.25rem;
+    left: -1.5rem;
+    color: var(--accent);
+    font-size: 0.85em;
+    line-height: inherit;
+  }
+  .prose ul ul > li::before {
+    content: "·";
     color: var(--dim);
   }
   .prose ol {
-    list-style: decimal;
+    list-style: decimal-leading-zero;
+    padding-left: 2.25rem;
   }
   .prose ol > li::marker {
     color: var(--dim);
+    font-size: 0.9em;
   }
   .prose li {
-    margin-bottom: 0.45rem;
+    margin-bottom: 0.5rem;
   }
   .prose li > :is(ul, ol) {
-    margin: 0.45rem 0 0;
+    margin: 0.5rem 0 0;
+  }
+  .prose li > p {
+    margin-bottom: 0.5rem;
   }
   .prose blockquote {
     border-left: 2px solid var(--border-strong);
-    padding-left: 1.25rem;
+    padding: 0.1rem 0 0.1rem 1.25rem;
     color: var(--dim);
+    font-style: italic;
   }
   .prose blockquote p:last-child {
     margin-bottom: 0;
+  }
+  /* "> **Note:** …" — a blockquote that opens in bold — reads as a callout. */
+  .prose blockquote:has(> p:first-child > strong:first-child) {
+    font-style: normal;
+    color: var(--text);
+    background: var(--accent-soft);
+    border-left-color: var(--accent);
+    border-radius: 0 8px 8px 0;
+    padding: 1rem 1.25rem;
+  }
+  .prose blockquote > p:first-child > strong:first-child {
+    color: var(--accent);
+  }
+  .prose figure {
+    margin: 2.25rem 0;
   }
   .prose img {
     display: block;
     max-width: 100%;
     height: auto;
-    margin: 2rem 0;
-    border-radius: 6px;
+    margin: 2rem auto;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    cursor: zoom-in;
+  }
+  .prose figure img {
+    margin: 0 auto;
+  }
+  .prose figcaption {
+    margin-top: 0.75rem;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--dim);
+    text-align: center;
+    text-wrap: balance;
   }
   .prose hr {
     display: none; /* h2 already carries a rule */
@@ -509,27 +703,76 @@
   }
   .prose :is(th, td) {
     border-bottom: 1px solid var(--border);
-    padding: 0.55rem 1.25rem 0.55rem 0;
+    padding: 0.6rem 1.25rem 0.6rem 0;
     text-align: left;
     vertical-align: top;
   }
   .prose th {
     color: var(--strong);
     font-weight: 700;
+    font-size: 12.5px;
     border-bottom-color: var(--border-strong);
   }
-  /* Diagrams: never shrink below ~72% of natural size; scroll sideways instead. */
+  .prose tbody tr:hover {
+    background: var(--hover);
+  }
+  .prose mark {
+    color: var(--strong);
+    background: var(--find-mark);
+    border-radius: 2px;
+    padding: 0 2px;
+  }
+  /* Footnotes */
+  .prose sup a[data-footnote-ref] {
+    color: var(--accent);
+    font-size: 0.75em;
+    padding: 0 1px;
+  }
+  .prose sup a[data-footnote-ref]::before {
+    content: "[";
+  }
+  .prose sup a[data-footnote-ref]::after {
+    content: "]";
+  }
+  .prose .footnotes {
+    margin-top: 4rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+    font-size: 14px;
+    color: var(--dim);
+  }
+  .prose .footnotes::before {
+    content: "Notes";
+    display: block;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--strong);
+    margin-bottom: 0.75rem;
+  }
+  .prose .footnotes a[data-footnote-backref] {
+    color: var(--accent);
+    margin-left: 0.25rem;
+  }
+
+  /* ---------- Diagrams ---------- */
+
   .diagram {
     margin: 2rem 0;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg-code);
+    overflow: hidden;
   }
   .diagram-bar {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
+    height: 2.25rem;
+    padding: 0 0.75rem 0 1rem;
     font-size: 12px;
     color: var(--dim);
-    margin-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
   }
   .diagram-bar button {
     color: var(--dim);
@@ -541,7 +784,7 @@
   .prose .mermaid {
     display: block !important; /* astro-mermaid makes this a centered flex box, which shrinks the SVG */
     margin: 0;
-    padding: 1.25rem 0;
+    padding: 1.25rem;
     background: transparent;
     overflow-x: auto;
     text-align: left;
@@ -555,7 +798,6 @@
     flex-shrink: 0;
     margin-inline: auto;
   }
-  /* Monochrome diagrams in both themes, driven by the site tokens. */
   .mermaid svg :is(rect, polygon, circle, ellipse):not([fill="none"]) {
     fill: var(--bg-raised) !important;
     stroke: var(--dim) !important;
@@ -573,7 +815,7 @@
     font-family: var(--font-mono) !important;
   }
   .mermaid svg :is(.edgeLabel, .labelBkg) {
-    background-color: var(--bg) !important;
+    background-color: var(--bg-code) !important;
   }
   .mermaid svg :is(line, path, .messageLine0, .messageLine1, .flowchart-link, .loopLine) {
     stroke: var(--dim) !important;
@@ -583,11 +825,8 @@
     fill: var(--dim) !important;
     stroke: var(--dim) !important;
   }
-  .prose mark {
-    color: var(--strong);
-    background: var(--bg-raised);
-    box-shadow: inset 0 -0.4em 0 var(--border-strong);
-  }
+
+  /* ---------- Chrome ---------- */
 
   .site-header {
     border-bottom: 1px solid transparent;
@@ -596,16 +835,112 @@
   .site-header[data-scrolled] {
     border-bottom-color: var(--border);
   }
-
-  .search-dialog::backdrop {
-    background: rgb(0 0 0 / 0.55);
-    backdrop-filter: blur(2px);
+  .caret {
+    display: inline-block;
+    width: 0.55em;
+    height: 1.05em;
+    margin-left: 2px;
+    background: var(--accent);
+    vertical-align: -0.15em;
+  }
+  /* The header caret stays still while reading; it blinks on hover and in the home terminal. */
+  @media (prefers-reduced-motion: no-preference) {
+    .term .caret,
+    a:hover > .caret {
+      animation: blink 1.1s steps(1) infinite;
+    }
+  }
+  @keyframes blink {
+    50% {
+      opacity: 0;
+    }
   }
 
-  /* ---------- Contents (collapsible, top of post) ---------- */
+  .read-progress {
+    position: fixed;
+    inset: 0 0 auto 0;
+    height: 2px;
+    z-index: 60;
+    background: var(--accent);
+    transform-origin: 0 50%;
+    transform: scaleX(0);
+    pointer-events: none;
+  }
 
-  .toc-box summary {
-    width: fit-content;
+  .search-dialog {
+    border-radius: 12px;
+    border-color: transparent;
+    box-shadow: rgba(15, 15, 15, 0.05) 0 0 0 1px, rgba(15, 15, 15, 0.1) 0 5px 10px, rgba(15, 15, 15, 0.2) 0 15px 40px;
+  }
+  :root[data-theme="dark"] .search-dialog {
+    box-shadow: rgba(255, 255, 255, 0.07) 0 0 0 1px, rgba(0, 0, 0, 0.5) 0 15px 40px;
+    background: var(--bg-raised);
+  }
+  .search-dialog::backdrop,
+  .lightbox::backdrop {
+    background: rgba(8, 8, 10, 0.7);
+    backdrop-filter: blur(3px);
+  }
+  .search-excerpt mark {
+    background: var(--find-mark);
+    color: inherit;
+    border-radius: 2px;
+    padding: 0 1px;
+  }
+  .lightbox {
+    max-width: 96vw;
+    max-height: 94vh;
+    margin: auto;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    overflow: visible;
+  }
+  .lightbox img {
+    max-width: 96vw;
+    max-height: 86vh;
+    width: auto;
+    height: auto;
+    border-radius: 8px;
+    cursor: zoom-out;
+  }
+  .lightbox p {
+    color: #d4d4d8;
+    font-size: 13px;
+    text-align: center;
+    margin-top: 0.75rem;
+  }
+
+  /* ---------- Article layout ---------- */
+
+  .post-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 70ch);
+    justify-content: center;
+  }
+  @media (min-width: 1200px) {
+    .post-grid {
+      grid-template-columns: minmax(0, 70ch) 15rem;
+      gap: 4.5rem;
+    }
+  }
+  .post-grid.post-grid-single {
+    grid-template-columns: minmax(0, 70ch);
+  }
+  .post-aside {
+    position: sticky;
+    top: 5.5rem;
+    max-height: calc(100vh - 7rem);
+    overflow-y: auto;
+    scrollbar-width: none;
+  }
+
+  /* Contents (collapsible, small screens) */
+  .toc-box {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg-raised);
+    padding: 0.6rem 1rem;
   }
   .toc-box summary {
     list-style: none;
@@ -621,140 +956,75 @@
     transition: transform 0.15s ease;
   }
 
-  /* ---------- On this page ---------- */
-
+  /* Outline: numbered like the section headings. */
+  .toc {
+    counter-reset: toc;
+  }
   .toc a {
-    display: block;
+    display: flex;
+    gap: 0.6rem;
     color: var(--dim);
     font-size: 13px;
     line-height: 1.5;
-    padding: 0.35rem 0 0.35rem 0.9rem;
+    padding: 0.32rem 0 0.32rem 0.9rem;
     border-left: 1px solid var(--border);
     transition: color 0.15s ease, border-color 0.15s ease;
   }
+  .toc a[data-depth="2"]::before {
+    counter-increment: toc;
+    content: counter(toc, decimal-leading-zero);
+    flex-shrink: 0;
+    font-size: 11px;
+    line-height: 19.5px;
+    color: var(--dim);
+    opacity: 0.8;
+  }
   .toc a[data-depth="3"] {
-    padding-left: 1.8rem;
+    padding-left: 2.6rem;
+    font-size: 12.5px;
   }
   .toc a:hover {
     color: var(--strong);
   }
   .toc a[aria-current="true"] {
     color: var(--strong);
-    border-left-color: var(--strong);
+    border-left-color: var(--accent);
   }
-}
-
-::view-transition-old(root),
-::view-transition-new(root) {
-  animation-duration: 0.18s;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    transition-duration: 0.01ms !important;
-  }
-}
-
-
-/* ============ Notion touches (on top of the mono design) ============ */
-@layer components {
-  /* Page icon above each title. */
-  .page-icon {
-    font-size: 64px;
-    line-height: 1;
-    margin-bottom: 1rem;
-    font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
-  }
-  @media (min-width: 1024px) {
-    .page-icon {
-      font-size: 78px;
-    }
+  .toc a[aria-current="true"]::before {
+    color: var(--accent);
+    opacity: 1;
   }
 
-  /* Tags as Notion "select" pills (still JetBrains Mono). */
-  .tag {
-    font-size: 12px;
-    line-height: 20px;
-    padding: 0 6px;
-    border-radius: 3px;
-    background: var(--tag-gray);
-    color: var(--tag-gray-ink);
+  .to-top {
+    position: fixed;
+    right: 1.25rem;
+    bottom: 1.25rem;
+    z-index: 30;
+    width: 2.75rem;
+    height: 2.75rem;
+    display: grid;
+    place-items: center;
+    border-radius: 999px;
+    border: 1px solid var(--border-strong);
+    background: var(--bg-raised);
+    color: var(--strong);
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    opacity: 0;
+    transform: translateY(8px);
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease, color 0.15s ease;
   }
-  .tag::before {
-    content: none;
+  .to-top[data-visible] {
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
   }
-  a.tag:hover,
-  button.tag:hover {
-    color: inherit;
-    filter: brightness(0.96);
-  }
-  :root[data-theme="dark"] :is(a.tag, button.tag):hover {
-    filter: brightness(1.15);
-  }
-  .tag[data-color="brown"] { background: var(--tag-brown); color: var(--tag-brown-ink); }
-  .tag[data-color="orange"] { background: var(--tag-orange); color: var(--tag-orange-ink); }
-  .tag[data-color="yellow"] { background: var(--tag-yellow); color: var(--tag-yellow-ink); }
-  .tag[data-color="green"] { background: var(--tag-green); color: var(--tag-green-ink); }
-  .tag[data-color="blue"] { background: var(--tag-blue); color: var(--tag-blue-ink); }
-  .tag[data-color="purple"] { background: var(--tag-purple); color: var(--tag-purple-ink); }
-  .tag[data-color="pink"] { background: var(--tag-pink); color: var(--tag-pink-ink); }
-  .tag[data-color="red"] { background: var(--tag-red); color: var(--tag-red-ink); }
-
-  /* Notion grey hover on menu items and archive rows. */
-  header .nav-link,
-  footer .nav-link {
-    border-radius: 4px;
-    padding: 2px 6px;
-    margin: -2px -6px;
-    transition: background-color 0.1s ease, color 0.1s ease;
-  }
-  header .nav-link:hover,
-  footer .nav-link:hover {
-    background: var(--hover);
-  }
-  .icon-btn {
-    border-radius: 4px;
-  }
-  .icon-btn:hover,
-  [data-search-open]:hover {
-    background: var(--hover);
-    border-radius: 4px;
-  }
-  a.trow {
-    border-radius: 4px;
-    transition: background-color 0.1s ease;
-  }
-  a.trow:hover {
-    background: var(--hover);
+  .to-top:hover {
+    color: var(--accent);
   }
 
-  /* Quick Find style search overlay. */
-  .search-dialog {
-    border-radius: 12px;
-    border-color: transparent;
-    box-shadow: rgba(15, 15, 15, 0.05) 0 0 0 1px, rgba(15, 15, 15, 0.1) 0 5px 10px, rgba(15, 15, 15, 0.2) 0 15px 40px;
-  }
-  :root[data-theme="dark"] .search-dialog {
-    box-shadow: rgba(255, 255, 255, 0.07) 0 0 0 1px, rgba(0, 0, 0, 0.4) 0 15px 40px;
-    background: #252525;
-  }
-  .search-dialog::backdrop {
-    background: rgba(15, 15, 15, 0.6);
-    backdrop-filter: none;
-  }
-  .search-excerpt mark {
-    background: var(--find-mark);
-    color: inherit;
-    border-radius: 2px;
-    padding: 0 1px;
-  }
-}
-
-/* Notion-style page properties (CVE pages). */
-@layer components {
+  /* Notion-style page properties (CVE pages). */
   .props > div {
     display: grid;
     grid-template-columns: 7rem minmax(0, 1fr);
@@ -784,38 +1054,55 @@
       gap: 0.25rem;
     }
   }
+
+  /* Terminal card on the home page. */
+  .term {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--bg-code);
+    box-shadow: var(--shadow);
+    font-size: 13.5px;
+    line-height: 1.75;
+    overflow: hidden;
+  }
+  .term-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 2.25rem;
+    padding: 0 0.9rem;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--dim);
+  }
+  .term-bar i {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--border-strong);
+  }
+  .term-bar span {
+    margin-left: auto;
+  }
+  .term-body {
+    padding: 1rem 1.15rem 1.15rem;
+  }
+  .term-body .cmd::before {
+    content: "$ ";
+    color: var(--accent);
+  }
 }
 
-/* Highlighted code lines: ```lang {3,5-7} */
-@layer components {
-  .code-block .line.highlighted {
-    display: inline-block;
-    min-width: calc(100% + 2.5rem);
-    margin: 0 -1.25rem;
-    padding: 0 1.25rem;
-    background: var(--hl-line, rgba(35, 131, 226, 0.12));
-    box-shadow: inset 2px 0 0 var(--hl-edge, #2383e2);
-  }
-  :root[data-theme="dark"] .code-block .line.highlighted {
-    --hl-line: rgba(82, 156, 202, 0.16);
-    --hl-edge: #529cca;
-  }
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.18s;
 }
 
-/* Inline code in red (Notion-style), contrast-checked per theme:
-   light #c4352e on #fbeceb = 4.7:1, dark #ff7369 on #2e2120 = 5.8:1. */
-@layer components {
-  :root {
-    --code-ink: #c4352e;
-    --code-bg: #fbeceb;
-  }
-  :root[data-theme="dark"] {
-    --code-ink: #ff7369;
-    --code-bg: #2e2120;
-  }
-  :not(pre) > code {
-    color: var(--code-ink);
-    background: var(--code-bg);
-    border-color: transparent;
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
   }
 }
