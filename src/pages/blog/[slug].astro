@@ -1,6 +1,8 @@
 ---
 import { getCollection, render } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import ReaderSettings from "../../components/ReaderSettings.astro";
+import Comments from "../../components/Comments.astro";
 import { getReadingTime } from "../../lib/reading-time";
 import { SITE_AUTHOR, SITE_TAGLINE, formatDate, tagColor } from "../../consts";
 
@@ -70,7 +72,21 @@ const jsonLd = {
   image={`/blog/${post.id}/og.png`}
 >
   <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
-  <article>
+  <article data-post-nav data-prev={older ? `/blog/${older.id}/` : undefined} data-next={newer ? `/blog/${newer.id}/` : undefined}>
+    {toc.length > 2 && (
+      <div class="section-bar" data-section-bar data-pagefind-ignore>
+        <div class="section-bar-inner">
+          <button type="button" class="section-bar-toggle" data-section-toggle aria-expanded="false" aria-controls="section-menu">
+            <span class="truncate" data-section-label>Contents</span>
+            <span class="text-dim shrink-0" aria-hidden="true">▾</span>
+          </button>
+          <ReaderSettings />
+        </div>
+        <nav id="section-menu" class="toc section-menu" data-section-menu aria-label="Jump to section" hidden>
+          {toc.map((h) => <a href={`#${h.slug}`} data-depth={h.depth}>{h.text}</a>)}
+        </nav>
+      </div>
+    )}
     <div class="band !pt-10 lg:!pt-16 post-grid">
       <div class="min-w-0">
         <header class="mb-12">
@@ -89,6 +105,7 @@ const jsonLd = {
             {post.data.updatedDate && <span>updated {formatDate(post.data.updatedDate, "medium")}</span>}
             <span>{readTime}</span>
             <span class="hidden sm:inline tabular-nums">{words.toLocaleString("en-US")} words</span>
+            <span class="ml-auto"><ReaderSettings /></span>
           </div>
           {post.data.tags.length > 0 && (
             <div class="flex flex-wrap gap-1.5 mt-4" data-pagefind-ignore>
@@ -127,6 +144,14 @@ const jsonLd = {
           </details>
         )}
 
+        <div class="resume" data-resume hidden data-pagefind-ignore>
+          <span>Continue where you left off? <span class="text-strong" data-resume-label></span></span>
+          <span class="flex gap-3 shrink-0">
+            <button type="button" class="nav-link cursor-pointer text-strong" data-resume-go>resume ↓</button>
+            <button type="button" class="nav-link cursor-pointer" data-resume-dismiss aria-label="Dismiss">✕</button>
+          </span>
+        </div>
+
         <div class="prose" data-reading-body data-pagefind-body data-pagefind-meta={`title:${post.data.title}`}>
           <Content />
         </div>
@@ -141,6 +166,12 @@ const jsonLd = {
             <a href="#main-content" class="nav-link ml-auto">↑ top</a>
           </div>
 
+          <p class="hidden md:block text-[12px] text-dim mt-4">
+            Tip: <span class="kbd">j</span> <span class="kbd">k</span> jump between sections,
+            <span class="kbd">←</span> <span class="kbd">→</span> switch posts, <span class="kbd">?</span> for all shortcuts.
+            Select any passage to copy a link to it.
+          </p>
+
           <div class="card p-6 mt-10">
             <p class="text-[13px] text-dim mb-2"><span class="accent">$</span> whoami</p>
             <p class="text-strong font-bold mb-2">{author}</p>
@@ -151,6 +182,7 @@ const jsonLd = {
               <a href="/rss.xml" class="link">subscribe via RSS</a>.
             </p>
           </div>
+          <Comments />
         </footer>
       </div>
 
@@ -197,5 +229,6 @@ const jsonLd = {
         </div>
       </section>
     )}
+    <button type="button" class="quote-btn" data-quote-btn hidden>copy link to quote</button>
   </article>
 </BaseLayout>

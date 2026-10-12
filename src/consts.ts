@@ -37,3 +37,13 @@ export function tagColor(tag: string): string {
   for (const ch of tag) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
   return TAG_COLORS[h % TAG_COLORS.length];
 }
+
+// Comments via giscus (GitHub Discussions). Stays hidden until `categoryId` is set:
+// enable Discussions on the repo, install https://github.com/apps/giscus, then copy
+// the category ID from https://giscus.app.
+export const GISCUS = {
+  repo: "nithissh7/nithissh7.github.io",
+  repoId: "R_kgDOT8b9DQ",
+  category: "Comments",
+  categoryId: "",
+};

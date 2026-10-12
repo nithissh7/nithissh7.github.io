@@ -2,7 +2,7 @@
 import { getCollection, render } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { formatDate, tagColor } from "../../consts";
-import { severityColor, splitCveTitle, vulnClass } from "../../lib/cve";
+import { explainVector, severityColor, splitCveTitle, vulnClass } from "../../lib/cve";
 
 export async function getStaticPaths() {
   const cves = (await getCollection("cves", ({ data }) => !data.draft)).sort(
@@ -24,6 +24,15 @@ const refLabel = (u: string) =>
   : u.includes("cve.org") ? "CVE.org"
   : host(u);
 const shortTitle = (t: string) => splitCveTitle(t).vuln;
+const score = d.cvssScore ?? d.externalCvss?.score;
+const metrics = explainVector(d.cvssVector);
+// CVSS 3.x bands: low 0.1–3.9, medium 4–6.9, high 7–8.9, critical 9–10.
+const bands = [
+  { name: "low", from: 0, to: 4 },
+  { name: "medium", from: 4, to: 7 },
+  { name: "high", from: 7, to: 9 },
+  { name: "critical", from: 9, to: 10 },
+];
 ---
 
 <BaseLayout
@@ -84,6 +93,43 @@ const shortTitle = (t: string) => splitCveTitle(t).vuln;
           </div>
         )}
       </dl>
+
+      {(score !== undefined || metrics.length > 0) && (
+        <div class="cvss card p-5 sm:p-6 mt-8" data-pagefind-ignore>
+          {score !== undefined && (
+            <div class="cvss-gauge" role="img" aria-label={`CVSS ${score.toFixed(1)} out of 10, ${d.severity}`}>
+              <div class="flex items-baseline justify-between mb-3">
+                <span class="text-[13px] text-dim">CVSS base score</span>
+                <span><span class="text-strong font-extrabold text-[22px] tabular-nums">{score.toFixed(1)}</span><span class="text-dim text-[13px]"> / 10</span></span>
+              </div>
+              <div class="cvss-track">
+                {bands.map((b) => <span data-band={b.name} style={`flex:${b.to - b.from}`}></span>)}
+                <i style={`left:${score * 10}%`}></i>
+              </div>
+              <div class="cvss-scale" aria-hidden="true">
+                {bands.map((b) => <span style={`flex:${b.to - b.from}`}>{b.name}</span>)}
+              </div>
+            </div>
+          )}
+          {metrics.length > 0 && (
+            <>
+              <ul class="cvss-metrics" aria-label="CVSS metrics">
+                {metrics.map((m) => (
+                  <li data-risk={m.risk}>
+                    <span class="text-dim">{m.label}</span>
+                    <span class="text-strong">{m.value}</span>
+                  </li>
+                ))}
+              </ul>
+              <p class="flex flex-wrap items-center gap-3 mt-4 text-[12px] text-dim">
+                <code class="!text-[12px] break-all">{d.cvssVector}</code>
+                <button type="button" class="nav-link cursor-pointer" data-copy-text={d.cvssVector}>copy vector</button>
+                <span class="ml-auto flex items-center gap-3"><span class="risk-key" data-risk="high">attacker-friendly</span><span class="risk-key" data-risk="low">limiting</span></span>
+              </p>
+            </>
+          )}
+        </div>
+      )}
 
       <div class="prose mt-8" data-pagefind-body data-pagefind-meta={`title:${d.cveId} · ${vuln}${product ? ` — ${product}` : ""}`}>
         {klass && <span class="sr-only">{klass} vulnerability in {product}.</span>}

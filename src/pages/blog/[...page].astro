@@ -29,6 +29,11 @@ const { page, total, topics } = Astro.props;
     <p class="lede mb-8">
       {total} write-ups on vulnerability research, CVE teardowns, bug bounty findings, and security challenges — newest first.
     </p>
+    <label class="filter-box mb-4">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+      <span class="sr-only">Filter posts</span>
+      <input type="search" placeholder="filter posts — try “xss” or “kestra”" autocomplete="off" spellcheck="false" data-post-query />
+    </label>
     <div class="flex flex-wrap items-center gap-2" role="group" aria-label="Filter by topic" data-post-filter>
       <button type="button" class="tag cursor-pointer" aria-pressed="true" data-filter="all">all <span class="tabular-nums opacity-70">{total}</span></button>
       {topics.map(([tag, n]) => (
@@ -42,7 +47,7 @@ const { page, total, topics } = Astro.props;
 
   <section class="band !pt-0">
     <PostTable posts={page.data} />
-    <p class="text-[14px] text-dim py-10 hidden" data-filter-empty>No posts on this page with that topic.</p>
+    <p class="text-[14px] text-dim py-10 hidden" data-filter-empty>No posts match that filter.</p>
     <div class="mt-10">
       <Pagination current={page.currentPage} last={page.lastPage} prev={page.url.prev} next={page.url.next} base="/blog" />
     </div>
@@ -52,18 +57,21 @@ const { page, total, topics } = Astro.props;
 <script>
   document.addEventListener("astro:page-load", () => {
     const group = document.querySelector<HTMLElement>("[data-post-filter]");
-    if (!group || group.dataset.ready) return;
+    const input = document.querySelector<HTMLInputElement>("[data-post-query]");
+    if (!group || !input || group.dataset.ready) return;
     group.dataset.ready = "true";
-    group.addEventListener("click", (e) => {
-      const btn = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-filter]");
-      if (!btn) return;
-      const f = btn.dataset.filter!;
-      group.querySelectorAll("[data-filter]").forEach((b) => b.setAttribute("aria-pressed", String(b === btn)));
+    let topic = "all";
+
+    // Topic buttons and the text box combine: a post must match both.
+    const apply = () => {
+      const words = input.value.toLowerCase().split(/\s+/).filter(Boolean);
       let shown = 0;
       document.querySelectorAll<HTMLElement>("[data-year-group]").forEach((section) => {
         let inYear = 0;
         section.querySelectorAll<HTMLElement>("li[data-tags]").forEach((li) => {
-          const hit = f === "all" || li.dataset.tags!.split(" ").includes(f);
+          const hit =
+            (topic === "all" || li.dataset.tags!.split(" ").includes(topic)) &&
+            words.every((w) => li.dataset.text!.includes(w));
           li.hidden = !hit;
           if (hit) inYear++;
         });
@@ -71,6 +79,14 @@ const { page, total, topics } = Astro.props;
         shown += inYear;
       });
       document.querySelector("[data-filter-empty]")?.classList.toggle("hidden", shown > 0);
+    };
+    group.addEventListener("click", (e) => {
+      const btn = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-filter]");
+      if (!btn) return;
+      topic = btn.dataset.filter!;
+      group.querySelectorAll("[data-filter]").forEach((b) => b.setAttribute("aria-pressed", String(b === btn)));
+      apply();
     });
+    input.addEventListener("input", apply);
   });
 </script>

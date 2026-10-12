@@ -29,14 +29,25 @@ const METRICS: Record<string, [string, Record<string, string>]> = {
   I: ["Integrity", { N: "None", L: "Low", H: "High" }],
   A: ["Availability", { N: "None", L: "Low", H: "High" }],
 };
-export function explainVector(vector?: string): { label: string; value: string }[] {
+// How much each metric value helps an attacker: "high" means worst case for the defender.
+const RISK: Record<string, Record<string, "high" | "med" | "low">> = {
+  AV: { N: "high", A: "med", L: "low", P: "low" },
+  AC: { L: "high", H: "low" },
+  PR: { N: "high", L: "med", H: "low" },
+  UI: { N: "high", R: "low" },
+  S: { C: "high", U: "low" },
+  C: { H: "high", L: "med", N: "low" },
+  I: { H: "high", L: "med", N: "low" },
+  A: { H: "high", L: "med", N: "low" },
+};
+export function explainVector(vector?: string): { key: string; label: string; value: string; risk: "high" | "med" | "low" }[] {
   if (!vector) return [];
   return vector
     .split("/")
     .slice(1)
     .map((part) => part.split(":"))
     .filter(([k]) => METRICS[k])
-    .map(([k, v]) => ({ label: METRICS[k][0], value: METRICS[k][1][v] ?? v }));
+    .map(([k, v]) => ({ key: k, label: METRICS[k][0], value: METRICS[k][1][v] ?? v, risk: RISK[k]?.[v] ?? "low" }));
 }
 
 // Notion select colour for a severity.

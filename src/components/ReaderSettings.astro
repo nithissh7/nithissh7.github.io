@@ -1,0 +1,27 @@
+---
+// "Aa" menu: text size and column width, remembered per reader (see scripts/reader.ts).
+const sizes = [
+  { v: "s", label: "S" },
+  { v: "m", label: "M" },
+  { v: "l", label: "L" },
+];
+const widths = [
+  { v: "narrow", label: "narrow" },
+  { v: "normal", label: "normal" },
+  { v: "wide", label: "wide" },
+];
+---
+
+<div class="settings">
+  <button type="button" class="settings-toggle" data-settings-toggle aria-expanded="false" aria-label="Reading settings">Aa</button>
+  <div class="settings-panel" data-settings-panel hidden>
+    <p>Text size</p>
+    <div class="seg" role="group" aria-label="Text size">
+      {sizes.map((s) => <button type="button" data-setting={`size:${s.v}`} aria-pressed="false">{s.label}</button>)}
+    </div>
+    <p>Column width</p>
+    <div class="seg" role="group" aria-label="Column width">
+      {widths.map((w) => <button type="button" data-setting={`measure:${w.v}`} aria-pressed="false">{w.label}</button>)}
+    </div>
+  </div>
+</div>

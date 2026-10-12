@@ -99,13 +99,13 @@ const stats = [
       <ul class="border-t border-border">
         {rest.slice(0, 5).map((post) => (
           <li>
-            <a href={`/blog/${post.id}/`} class="trow grid md:grid-cols-[8rem_minmax(0,1fr)_4.5rem] gap-x-6 gap-y-1 py-5 px-3 -mx-3">
+            <a href={`/blog/${post.id}/`} data-post-link class="trow grid md:grid-cols-[8rem_minmax(0,1fr)_4.5rem] gap-x-6 gap-y-1 py-5 px-3 -mx-3">
               <span class="text-[13px] text-dim tabular-nums md:pt-0.5">{formatDate(post.data.pubDate, "medium")}</span>
               <span class="min-w-0">
                 <span class="row-title block leading-snug">{post.data.title}</span>
                 <span class="block text-[14px] text-dim mt-1.5 leading-relaxed line-clamp-2">{post.data.description}</span>
               </span>
-              <span class="hidden md:block text-[13px] text-dim text-right tabular-nums pt-0.5">{short(post)}</span>
+              <span class="text-[13px] text-dim md:text-right tabular-nums md:pt-0.5" data-read-slot><span class="hidden md:block">{short(post)}</span></span>
             </a>
           </li>
         ))}

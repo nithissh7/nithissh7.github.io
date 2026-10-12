@@ -38,6 +38,13 @@ const ogImageURL = new URL(image, Astro.site);
             theme = matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
           }
           document.documentElement.dataset.theme = theme;
+          // Reader settings (text size, column width) chosen from the "Aa" menu.
+          try {
+            const size = localStorage.getItem("reader:size");
+            const measure = localStorage.getItem("reader:measure");
+            if (size) document.documentElement.dataset.textSize = size;
+            if (measure) document.documentElement.dataset.measure = measure;
+          } catch {}
         };
         apply();
         document.addEventListener("astro:after-swap", apply);
@@ -104,8 +111,36 @@ const ogImageURL = new URL(image, Astro.site);
     <button type="button" class="to-top" data-to-top aria-label="Back to top">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"></path></svg>
     </button>
+    <dialog id="diagram-viewer" class="diagram-viewer" aria-label="Diagram viewer">
+      <div class="dv-bar">
+        <span class="dv-hint">drag to pan · scroll or +/− to zoom</span>
+        <div class="dv-actions">
+          <button type="button" data-dv="out" aria-label="Zoom out">−</button>
+          <button type="button" data-dv="fit">fit</button>
+          <button type="button" data-dv="in" aria-label="Zoom in">+</button>
+          <button type="button" data-dv="close" aria-label="Close">esc</button>
+        </div>
+      </div>
+      <div class="dv-stage" data-dv-stage></div>
+    </dialog>
+    <dialog id="shortcuts" class="shortcuts" aria-label="Keyboard shortcuts">
+      <p class="text-strong font-bold mb-4">Keyboard shortcuts</p>
+      <dl>
+        <div><dt><span class="kbd">/</span> <span class="kbd">⌘K</span></dt><dd>search</dd></div>
+        <div><dt><span class="kbd">j</span> <span class="kbd">k</span></dt><dd>next / previous section</dd></div>
+        <div><dt><span class="kbd">←</span> <span class="kbd">→</span></dt><dd>previous / next post</dd></div>
+        <div><dt><span class="kbd">t</span></dt><dd>toggle light / dark</dd></div>
+        <div><dt><span class="kbd">g</span> <span class="kbd">g</span></dt><dd>back to top</dd></div>
+        <div><dt><span class="kbd">?</span></dt><dd>this help</dd></div>
+      </dl>
+      <form method="dialog" class="mt-5 text-right"><button class="nav-link cursor-pointer text-[13px]">close <span class="kbd">esc</span></button></form>
+    </dialog>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
     <p id="announcer" class="sr-only" aria-live="polite"></p>
 
+    <script>
+      import "../scripts/reader";
+    </script>
     <script>
       import { navigate } from "astro:transitions/client";
 
@@ -282,7 +317,7 @@ const ogImageURL = new URL(image, Astro.site);
           wrap.className = "diagram";
           const bar = document.createElement("div");
           bar.className = "diagram-bar";
-          bar.innerHTML = `<span></span><button type="button" data-diagram-open>open full size ↗</button>`;
+          bar.innerHTML = `<span></span><button type="button" data-diagram-open>zoom ⤢</button>`;
           pre.replaceWith(wrap);
           wrap.append(bar, pre);
         }
@@ -307,18 +342,6 @@ const ogImageURL = new URL(image, Astro.site);
           new MutationObserver(() => sizeDiagram(pre)).observe(pre, { childList: true, subtree: true });
         });
       }
-      document.addEventListener("click", (event) => {
-        const btn = (event.target as HTMLElement).closest("[data-diagram-open]");
-        const svg = btn?.closest(".diagram")?.querySelector("svg");
-        if (!svg) return;
-        const clone = svg.cloneNode(true) as SVGSVGElement;
-        // Open fitted to the screen (pinch/zoom to read details), never larger than natural size.
-        clone.setAttribute("style", `width:100%;height:auto;max-width:${svg.viewBox.baseVal.width}px;display:block;margin:0 auto`);
-        const styles = getComputedStyle(document.documentElement);
-        const bg = styles.getPropertyValue("--bg").trim();
-        const doc = `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Diagram</title><body style="margin:0;padding:16px;background:${bg}">${clone.outerHTML}</body>`;
-        window.open(URL.createObjectURL(new Blob([doc], { type: "text/html" })), "_blank", "noopener");
-      });
 
       // The header gets its hairline only once the page scrolls under it; on articles a
       // progress bar tracks how far through the text the reader is.
