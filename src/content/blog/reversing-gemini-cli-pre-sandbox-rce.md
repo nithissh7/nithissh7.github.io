@@ -220,21 +220,26 @@ Three sinks, one root cause. The patch closes all three from the same choke poin
 Here's the full path, source to sink:
 
 ```mermaid
+---
+config:
+  sequence:
+    wrap: false
+---
 sequenceDiagram
-    participant Attacker
-    participant PR as Pull Request
-    participant Runner as CI Runner (host)
+    participant A as Attacker
+    participant PR as Pull request
+    participant R as CI runner (host)
     participant Env as process.env
-    participant Sink as spawn() / docker run
+    participant S as spawn() / docker
 
-    Attacker->>PR: commit .gemini/.env with<br/>GEMINI_SANDBOX_PROXY_COMMAND=...
-    PR->>Runner: workflow checks out untrusted code
-    Runner->>Runner: gemini --sandbox -p "review this PR"
-    Note over Runner: headless detected (CI=true)
-    Runner->>Env: PRE-PATCH: folder auto-trusted<br/>loadEnvironment() copies ALL keys
-    Env->>Sink: start_sandbox() reads<br/>GEMINI_SANDBOX_PROXY_COMMAND
-    Sink->>Runner: spawn(cmd, { shell: true })
-    Note over Runner: 💥 attacker code runs on HOST<br/>before the container exists
+    A->>PR: commit .gemini/.env:<br/>GEMINI_SANDBOX_<br/>PROXY_COMMAND=…
+    PR->>R: workflow checks out<br/>untrusted code
+    Note over R: gemini --sandbox<br/>-p "review this PR"
+    Note over R: headless detected<br/>(CI=true)
+    R->>Env: PRE-PATCH: auto-trusted,<br/>loadEnvironment()<br/>copies ALL keys
+    Env->>S: start_sandbox() reads<br/>the proxy command
+    S->>R: spawn(cmd, { shell: true })
+    Note over R,S: 💥 attacker code runs on HOST<br/>before the container exists
 ```
 
 ---
