@@ -271,17 +271,14 @@ const ogImageURL = new URL(image, Astro.site);
       // Mermaid renders client-side (and re-renders on theme change), so size every
       // SVG it inserts: never below MIN_SCALE of natural size; scroll sideways instead.
       const MIN_SCALE = 0.72;
+      // Wide screens: a diagram that doesn't fit the text column spreads over the
+      // outline column (which fades out while it's on screen) instead of scrolling.
+      const wideQuery = matchMedia("(min-width: 1200px)");
+      let wideObserver: IntersectionObserver | undefined;
       function sizeDiagram(pre: HTMLElement) {
         const svg = pre.querySelector("svg");
         if (!svg || svg.dataset.sized) return;
         svg.dataset.sized = "true";
-        const natural = svg.viewBox.baseVal?.width || svg.getBoundingClientRect().width;
-        const available = pre.clientWidth - 40;
-        const width = Math.min(natural, Math.max(available, natural * MIN_SCALE));
-        // astro-mermaid forces width:100% !important; an inline !important wins.
-        svg.style.setProperty("max-width", "none", "important");
-        svg.style.setProperty("width", `${Math.round(width)}px`, "important");
-        svg.style.setProperty("height", "auto", "important");
 
         let wrap = pre.closest<HTMLElement>(".diagram");
         if (!wrap) {
@@ -293,8 +290,34 @@ const ogImageURL = new URL(image, Astro.site);
           pre.replaceWith(wrap);
           wrap.append(bar, pre);
         }
+
+        const natural = svg.viewBox.baseVal?.width || svg.getBoundingClientRect().width;
+        wrap.classList.remove("diagram-wide");
+        const pad = 40;
+        if (natural > pre.clientWidth - pad && wideQuery.matches && document.querySelector(".post-aside")) {
+          wrap.classList.add("diagram-wide");
+          wideObserver?.observe(wrap);
+        }
+        const available = pre.clientWidth - pad;
+        const width = Math.min(natural, Math.max(available, natural * MIN_SCALE));
+        // astro-mermaid forces width:100% !important; an inline !important wins.
+        svg.style.setProperty("max-width", "none", "important");
+        svg.style.setProperty("width", `${Math.round(width)}px`, "important");
+        svg.style.setProperty("height", "auto", "important");
+
         const overflows = pre.scrollWidth > pre.clientWidth + 1;
         wrap.querySelector(".diagram-bar span")!.textContent = overflows ? "diagram · scroll →" : "diagram";
+      }
+      function watchWide() {
+        wideObserver?.disconnect();
+        const aside = document.querySelector<HTMLElement>(".post-aside");
+        if (!aside) return;
+        const visible = new Set<Element>();
+        wideObserver = new IntersectionObserver((entries) => {
+          for (const e of entries) e.isIntersecting ? visible.add(e.target) : visible.delete(e.target);
+          aside.toggleAttribute("data-yield", visible.size > 0);
+        });
+        document.querySelectorAll(".diagram-wide").forEach((el) => wideObserver!.observe(el));
       }
       function watchDiagrams() {
         document.querySelectorAll<HTMLElement>(".prose .mermaid").forEach((pre) => {
@@ -339,6 +362,7 @@ const ogImageURL = new URL(image, Astro.site);
       document.addEventListener("astro:page-load", () => {
         markHeader();
         enhancePost();
+        watchWide();
         watchDiagrams();
       });
     </script>

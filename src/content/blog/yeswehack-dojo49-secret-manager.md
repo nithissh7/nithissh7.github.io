@@ -25,7 +25,7 @@ Let me walk you through the entire journey.
 
 The challenge lives at:
 
-```
+```text title="url"
 https://dojo-yeswehack.com/challenge-of-the-month/dojo-49
 ```
 
@@ -51,7 +51,7 @@ The Dojo platform lets you see the template code that runs on the server for eac
 
 Before each challenge run, the server sets up this file structure:
 
-```
+```text title="directory tree"
 /tmp/
 ├── templates/
 │   └── index.html              ← Jinja2 template
@@ -237,7 +237,7 @@ One request. Two files. Complete bypass.
 
 Here's the actual payload:
 
-```
+```http
 POST /api/challenges/223402b4-9aa5-4132-aebb-17c99f7513db
 Content-Type: application/x-www-form-urlencoded
 Cookie: jwt=<your-token>
@@ -285,7 +285,7 @@ for match in re.findall(r'<pre[^>]*>(.*?)</pre>', result["output"], re.DOTALL):
 
 Ran the exploit and got this back:
 
-```
+```text title="response"
 Flagged: True
 
 Search results for '.':
@@ -310,7 +310,7 @@ The `flagged: true` in the response confirmed the challenge was solved. Felt ins
 
 Let me lay out the entire attack chain step by step because the beauty is in how the pieces fit together.
 
-```
+```text title="attack chain"
 ┌─────────────────────────────────────────────────────────┐
 │ STEP 1: File Creation                                   │
 │                                                         │

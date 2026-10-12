@@ -143,22 +143,20 @@ Here's the decision, before and after:
 
 ```mermaid
 flowchart TD
-    A[Gemini CLI starts in CI] --> B{Headless mode?}
+    A[Gemini CLI starts in CI] --> B(Headless mode?)
     B -->|"CI=true / GITHUB_ACTIONS=true"| C[Headless: yes]
 
-    C --> D{"PRE-PATCH: trust the folder?"}
+    C --> D("PRE-PATCH: trust the folder?")
     D -->|"auto-trust in headless"| E["isTrusted = true<br/>load ALL of .env into process.env"]
 
-    C --> F{"POST-PATCH: trust the folder?"}
+    C --> F("POST-PATCH: trust the folder?")
     F -->|"no IDE ctx, no trustedFolders.json"| G["isTrusted = false<br/>only 4 whitelisted vars,<br/>values sanitized"]
 
     E --> H["Attacker-controlled env vars<br/>reach host command sinks"]
     G --> I["Attacker .env is inert"]
 
-    style E fill:#ff6b6b,color:#000
-    style H fill:#ff6b6b,color:#000
-    style G fill:#51cf66,color:#000
-    style I fill:#51cf66,color:#000
+    class E,H bug
+    class G,I ok
 ```
 
 So the primitive an attacker gets is: **arbitrary control over `process.env` for the Gemini CLI process, by committing a `.env` file to a pull request.** That's it. That's the whole entry condition. Now — what's worth setting?

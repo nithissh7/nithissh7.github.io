@@ -28,6 +28,8 @@
   --shadow: 0 1px 2px rgba(20, 18, 15, 0.04), 0 8px 24px -12px rgba(20, 18, 15, 0.12);
   --code-ink: #c4352e;
   --code-bg: #fbeceb;
+  --ok: #2f7d4f;
+  --ok-soft: rgba(47, 125, 79, 0.1);
   color-scheme: light;
 
   --tag-gray: #ebeae8;   --tag-gray-ink: #32302c;
@@ -58,6 +60,8 @@
   --shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 12px 32px -16px rgba(0, 0, 0, 0.6);
   --code-ink: #ff7369;
   --code-bg: #2a1d1c;
+  --ok: #5fc48a;
+  --ok-soft: rgba(95, 196, 138, 0.1);
   color-scheme: dark;
 
   --tag-gray: #2c2c30;   --tag-gray-ink: #e3e3e3;
@@ -820,6 +824,18 @@
   .mermaid svg :is(line, path, .messageLine0, .messageLine1, .flowchart-link, .loopLine) {
     stroke: var(--dim) !important;
   }
+  /* Semantic node classes for diagrams: `class A,B bug` marks the vulnerable path,
+     `class C ok` the safe/fixed one. Works in both themes via the site tokens. */
+  .mermaid svg :is(.node, .cluster).bug :is(rect, polygon, circle, path.basic) {
+    fill: var(--accent-soft) !important;
+    stroke: var(--accent) !important;
+    stroke-width: 1.5px !important;
+  }
+  .mermaid svg :is(.node, .cluster).ok :is(rect, polygon, circle, path.basic) {
+    fill: var(--ok-soft) !important;
+    stroke: var(--ok) !important;
+    stroke-width: 1.5px !important;
+  }
   .mermaid svg marker path,
   .mermaid svg :is(.arrowheadPath, .arrowMarkerPath) {
     fill: var(--dim) !important;
@@ -926,6 +942,21 @@
   }
   .post-grid.post-grid-single {
     grid-template-columns: minmax(0, 70ch);
+  }
+  /* Diagrams too wide for the text column extend over the outline column. */
+  @media (min-width: 1200px) {
+    .post-grid:not(.post-grid-single) .diagram-wide {
+      margin-right: calc(-1 * (15rem + 4.5rem));
+      position: relative;
+      z-index: 1;
+    }
+  }
+  .post-aside {
+    transition: opacity 0.2s ease;
+  }
+  .post-aside[data-yield] {
+    opacity: 0;
+    pointer-events: none;
   }
   .post-aside {
     position: sticky;

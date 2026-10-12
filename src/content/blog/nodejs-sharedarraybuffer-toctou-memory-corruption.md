@@ -95,14 +95,14 @@ Now here's what happens when a Worker thread corrupts those bytes mid-conversion
 
 ```mermaid
 flowchart TD
-    A[SharedArrayBuffer filled with valid 3-byte UTF-8] --> B{validate_utf8}
+    A[SharedArrayBuffer filled with valid 3-byte UTF-8] --> B(validate_utf8)
     B -->|PASS ✓| C[utf16_length_from_utf8 calculates output size]
     C --> D[Allocate output buffer: N code units]
 
     E[Worker Thread] -->|"Between validate and convert"| F[Corrupts bytes to 0xFF]
 
     D --> G[convert_valid_utf8_to_utf16 starts processing]
-    G --> H{What does converter see?}
+    G --> H(What does the converter see?)
     H -->|"Corrupted multi-byte sequences"| I[Writes MORE code units than allocated]
     I --> J[💥 Heap Buffer Overflow]
     H -->|"Truncated sequences"| K[CHECK_EQ assertion fails]
@@ -186,7 +186,7 @@ That's exit code 139. `SIGSEGV`. The process didn't throw an error — it corrup
 
 Sometimes you get the assertion failure instead:
 
-```
+```log
 node[12345]: ../src/string_bytes.cc:594:
   Assertion `written == u16size' failed.
 Aborted: 6
@@ -207,8 +207,8 @@ Let's be honest about the impact:
 **Information Disclosure** — If corruption *shrinks* the output, the allocated buffer contains uninitialized heap bytes. Those bytes become part of a JavaScript string. You might leak pointers, fragments of other strings, internal V8 state.
 
 ```mermaid
-flowchart LR
-    A[Race Condition Won] --> B{Corruption Type}
+flowchart TD
+    A[Race Condition Won] --> B(Corruption Type)
     B -->|"Increases UTF-16 size"| C[Heap Buffer Overflow]
     B -->|"Decreases UTF-16 size"| D[Info Leak via Uninitialized Memory]
     B -->|"Creates invalid sequences"| E[Undefined Behavior in Converter]

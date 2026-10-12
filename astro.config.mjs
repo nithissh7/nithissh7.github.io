@@ -8,12 +8,14 @@ import sitemap from "@astrojs/sitemap";
 const el = (tagName, properties, children) => ({ type: "element", tagName, properties, children });
 const text = (value) => ({ type: "text", value });
 
-/** Wraps every highlighted block in a header bar with the language and a copy button. */
+/** Wraps every highlighted block in a header bar with the language (or title) and a copy button. */
 const codeChrome = {
   name: "code-chrome",
   root(root) {
     const lang = this.options.lang;
-    const label = !lang || lang === "plaintext" || lang === "txt" ? "text" : lang;
+    // ```text title="directory tree"``` overrides the label.
+    const title = this.options.meta?.__raw?.match(/title="([^"]+)"/)?.[1];
+    const label = title ?? (!lang || lang === "plaintext" || lang === "txt" ? "text" : lang);
     root.children = [
       el("div", { className: ["code-block"] }, [
         el("div", { className: ["code-block-bar"] }, [
@@ -62,6 +64,14 @@ export default defineConfig({
       theme: "neutral",
       autoTheme: true,
       enableLog: false,
+      // Diagrams live in a ~70ch reading column: wrap long messages and keep
+      // spacing tight so they fit instead of scrolling sideways.
+      mermaidConfig: {
+        fontFamily: "JetBrains Mono, ui-monospace, monospace",
+        fontSize: 13,
+        flowchart: { nodeSpacing: 28, rankSpacing: 36, padding: 10, wrappingWidth: 220, htmlLabels: true },
+        sequence: { wrap: true, width: 130, actorMargin: 24, actorFontSize: 13, messageFontSize: 13, noteFontSize: 13, messageMargin: 32, boxMargin: 6, noteMargin: 8, mirrorActors: false },
+      },
     }),
     sitemap(),
   ],

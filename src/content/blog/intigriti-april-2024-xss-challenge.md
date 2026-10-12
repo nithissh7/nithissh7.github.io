@@ -25,7 +25,7 @@ The April challenge was titled **"Test Your Race Condition!"** which immediately
 
 The challenge lives at:
 
-```
+```text title="url"
 https://challenge-0424.intigriti.io/challenge
 ```
 
@@ -54,7 +54,7 @@ So visiting `?debug=true` reveals a download link for `/code.zip` (password: `in
 
 The welcome page links to the main game page at:
 
-```
+```text title="url"
 https://admin:debug@challenge-0424.intigriti.io/private/play.html?gameId=/challenge/game_barspacer.html
 ```
 
@@ -66,7 +66,7 @@ Two things to note here:
 
 Once you hit `/private/play.html` (with the creds), the page structure becomes clear:
 
-```
+```text title="page structure"
 play.html
   └── <iframe id="gameFrame" sandbox="allow-scripts allow-same-origin">
         └── src = whatever ?gameId= says

