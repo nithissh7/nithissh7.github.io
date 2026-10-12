@@ -271,9 +271,6 @@ const ogImageURL = new URL(image, Astro.site);
       // Mermaid renders client-side (and re-renders on theme change), so size every
       // SVG it inserts: never below MIN_SCALE of natural size; scroll sideways instead.
       const MIN_SCALE = 0.72;
-      // Wide screens: a diagram that doesn't fit the text column spreads into the
-      // margins instead of scrolling.
-      const wideQuery = matchMedia("(min-width: 1200px)");
       function sizeDiagram(pre: HTMLElement) {
         const svg = pre.querySelector("svg");
         if (!svg || svg.dataset.sized) return;
@@ -291,11 +288,7 @@ const ogImageURL = new URL(image, Astro.site);
         }
 
         const natural = svg.viewBox.baseVal?.width || svg.getBoundingClientRect().width;
-        wrap.classList.remove("diagram-wide");
-        const pad = 40;
-        if (natural > pre.clientWidth - pad && wideQuery.matches && wrap.closest(".post-grid")) {
-          wrap.classList.add("diagram-wide");
-        }
+        const pad = 32;
         const available = pre.clientWidth - pad;
         const width = Math.min(natural, Math.max(available, natural * MIN_SCALE));
         // astro-mermaid forces width:100% !important; an inline !important wins.

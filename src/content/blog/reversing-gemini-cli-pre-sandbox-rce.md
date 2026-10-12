@@ -220,25 +220,21 @@ Three sinks, one root cause. The patch closes all three from the same choke poin
 Here's the full path, source to sink:
 
 ```mermaid
----
-config:
-  sequence:
-    wrap: false
----
 sequenceDiagram
     participant A as Attacker
-    participant PR as Pull request
-    participant R as CI runner (host)
+    participant PR as PR
+    participant R as CI runner<br/>(host)
     participant Env as process.env
-    participant S as spawn() / docker
+    participant S as spawn()
 
-    A->>PR: commit .gemini/.env:<br/>GEMINI_SANDBOX_<br/>PROXY_COMMAND=…
-    PR->>R: workflow checks out<br/>untrusted code
+    A->>PR: commit<br/>.gemini/.env
+    Note over A,PR: GEMINI_SANDBOX_<br/>PROXY_COMMAND=…
+    PR->>R: checkout<br/>untrusted code
     Note over R: gemini --sandbox<br/>-p "review this PR"
-    Note over R: headless detected<br/>(CI=true)
-    R->>Env: PRE-PATCH: auto-trusted,<br/>loadEnvironment()<br/>copies ALL keys
-    Env->>S: start_sandbox() reads<br/>the proxy command
-    S->>R: spawn(cmd, { shell: true })
+    Note over R: headless<br/>(CI=true)
+    R->>Env: PRE-PATCH:<br/>auto-trusted,<br/>copy ALL keys
+    Env->>S: start_sandbox()<br/>reads proxy cmd
+    S->>R: spawn(cmd,<br/>{shell: true})
     Note over R,S: 💥 attacker code runs on HOST<br/>before the container exists
 ```
 

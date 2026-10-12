@@ -69,8 +69,8 @@ export default defineConfig({
       mermaidConfig: {
         fontFamily: "JetBrains Mono, ui-monospace, monospace",
         fontSize: 13,
-        flowchart: { nodeSpacing: 28, rankSpacing: 36, padding: 10, wrappingWidth: 220, htmlLabels: true },
-        sequence: { wrap: true, width: 130, actorMargin: 24, actorFontSize: 13, messageFontSize: 13, noteFontSize: 13, messageMargin: 32, boxMargin: 6, noteMargin: 8, mirrorActors: false },
+        flowchart: { diagramPadding: 4, nodeSpacing: 22, rankSpacing: 32, padding: 8, wrappingWidth: 200, htmlLabels: true },
+        sequence: { wrap: false, width: 100, actorMargin: 16, diagramMarginX: 4, diagramMarginY: 8, actorFontSize: 13, messageFontSize: 13, noteFontSize: 13, messageMargin: 32, boxMargin: 6, noteMargin: 8, mirrorActors: false },
       },
     }),
     sitemap(),

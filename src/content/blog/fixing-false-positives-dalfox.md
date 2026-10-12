@@ -45,17 +45,17 @@ Here is a simple flow to understand the mismatch:
 
 ```mermaid
 sequenceDiagram
-    participant DX as Dalfox Scanner
+    participant DX as Dalfox
     participant API as Misconfigured API
-    participant BW as Actual Web Browser
+    participant BW as Browser
 
-    DX->>API: Inject payload ?q=<script>alert(1)</script>
-    API-->>DX: Returns text/html header with JSON body containing payload
-    Note over DX: Check header? OK (text/html)<br/>Check payload in body? OK<br/>Result: False Positive!
-    
-    BW->>API: User visits URL
-    API-->>BW: Returns text/html header with JSON body
-    Note over BW: Browser reads content.<br/>Detects JSON format.<br/>Does NOT execute script. Safe.
+    DX->>API: ?q=<script>alert(1)</script>
+    API-->>DX: text/html header,<br/>JSON body with payload
+    Note over DX: header text/html ✓<br/>payload in body ✓<br/>→ false positive!
+
+    BW->>API: user visits URL
+    API-->>BW: text/html header,<br/>JSON body
+    Note over BW: sees JSON,<br/>script never runs.<br/>Safe.
 ```
 
 ---

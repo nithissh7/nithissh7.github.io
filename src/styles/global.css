@@ -788,7 +788,7 @@
   .prose .mermaid {
     display: block !important; /* astro-mermaid makes this a centered flex box, which shrinks the SVG */
     margin: 0;
-    padding: 1.25rem;
+    padding: 1rem 0.75rem;
     background: transparent;
     overflow-x: auto;
     text-align: left;
@@ -933,15 +933,6 @@
     display: grid;
     grid-template-columns: minmax(0, 70ch);
     justify-content: center;
-  }
-  /* Diagrams too wide for the text column spread evenly into the margins. */
-  @media (min-width: 1200px) {
-    .prose .diagram-wide {
-      width: min(1104px, calc(100vw - 6rem));
-      margin-left: calc(50% - min(552px, 50vw - 3rem));
-      position: relative;
-      z-index: 1;
-    }
   }
 
   /* Contents (collapsible, small screens) */

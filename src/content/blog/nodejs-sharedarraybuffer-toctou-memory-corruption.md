@@ -59,26 +59,26 @@ Let me break down what each call does and why this sequence is deadly:
 
 ```mermaid
 sequenceDiagram
-    participant Main as Main Thread (toString)
-    participant Native as Native C++ (string_bytes.cc)
-    participant SAB as SharedArrayBuffer Memory
-    participant Worker as Worker Thread (attacker)
+    participant Main as Main thread<br/>(toString)
+    participant Native as Native C++<br/>(string_bytes.cc)
+    participant SAB as SharedArray<br/>Buffer
+    participant Worker as Worker<br/>(attacker)
 
-    Main->>Native: Buffer.from(sab).toString('utf8')
-    Native->>SAB: validate_utf8(buf) — "Is this valid?"
-    SAB-->>Native: ✓ Yes, all bytes are valid UTF-8
-    Note over Native: Validation PASSED at T1
+    Main->>Native: Buffer.from(sab)<br/>.toString('utf8')
+    Native->>SAB: validate_utf8(buf)
+    SAB-->>Native: ✓ all valid UTF-8
+    Note over Native: T1: validation<br/>PASSED
 
-    Worker->>SAB: Overwrite bytes with 0xFF 0xFF 0xFF...
-    Note over SAB: Memory is now CORRUPT
+    Worker->>SAB: overwrite with<br/>0xFF 0xFF…
+    Note over SAB: memory now<br/>CORRUPT
 
-    Native->>SAB: utf16_length_from_utf8(buf) — "How big is the output?"
-    SAB-->>Native: Returns size based on CORRUPTED data
-    Note over Native: Allocates output buffer at T2
+    Native->>SAB: utf16_length_from_utf8()
+    SAB-->>Native: size from<br/>corrupted data
+    Note over Native: T2: allocate<br/>output buffer
 
-    Native->>SAB: convert_valid_utf8_to_utf16(buf, dst)
-    Note over Native: Converts with ZERO validation<br/>Trusts the T1 result blindly<br/>Writes past allocated buffer
-    Note over Native: 💥 HEAP BUFFER OVERFLOW
+    Native->>SAB: convert_valid_utf8_to_utf16()
+    Note over Native: no re-validation,<br/>trusts T1,<br/>writes past buffer
+    Note over Native: 💥 HEAP BUFFER<br/>OVERFLOW
 ```
 
 The function `convert_valid_utf8_to_utf16` has "valid" right there in the name. It's a performance-optimized converter from the `simdutf` library that explicitly assumes its input has already been validated. It performs no bounds checking, no byte validation, nothing. That's by design — you validate once, then convert fast.
@@ -95,20 +95,18 @@ Now here's what happens when a Worker thread corrupts those bytes mid-conversion
 
 ```mermaid
 flowchart TD
-    A[SharedArrayBuffer filled with valid 3-byte UTF-8] --> B(validate_utf8)
-    B -->|PASS ✓| C[utf16_length_from_utf8 calculates output size]
-    C --> D[Allocate output buffer: N code units]
-
-    E[Worker Thread] -->|"Between validate and convert"| F[Corrupts bytes to 0xFF]
-
-    D --> G[convert_valid_utf8_to_utf16 starts processing]
-    G --> H(What does the converter see?)
-    H -->|"Corrupted multi-byte sequences"| I[Writes MORE code units than allocated]
-    I --> J[💥 Heap Buffer Overflow]
-    H -->|"Truncated sequences"| K[CHECK_EQ assertion fails]
-    K --> L[💥 Process SIGABRT]
-    H -->|"Reads past buffer"| M[Accesses invalid memory]
-    M --> N[💥 Process SIGSEGV]
+    A["SAB filled with valid<br/>3-byte UTF-8"] --> B(validate_utf8)
+    B -->|PASS ✓| C["utf16_length_from_utf8<br/>sizes the output"]
+    C --> D["allocate N<br/>code units"]
+    E["Worker thread"] -->|"between validate<br/>and convert"| F["corrupt bytes<br/>to 0xFF"]
+    D --> G["convert_valid_utf8_to_utf16"]
+    G --> H("what does the<br/>converter see?")
+    H -->|"multi-byte<br/>garbage"| I["writes MORE<br/>than allocated"]
+    I --> J["💥 heap<br/>overflow"]
+    H -->|"truncated<br/>sequences"| K["CHECK_EQ<br/>fails"]
+    K --> L["💥 SIGABRT"]
+    H -->|"reads past<br/>buffer"| M["invalid<br/>memory access"]
+    M --> N["💥 SIGSEGV"]
 ```
 
 The window is tight — microseconds at most. But with a Worker thread running a tight corruption loop, you win the race reliably within seconds on any multi-core machine.
@@ -208,14 +206,13 @@ Let's be honest about the impact:
 
 ```mermaid
 flowchart TD
-    A[Race Condition Won] --> B(Corruption Type)
-    B -->|"Increases UTF-16 size"| C[Heap Buffer Overflow]
-    B -->|"Decreases UTF-16 size"| D[Info Leak via Uninitialized Memory]
-    B -->|"Creates invalid sequences"| E[Undefined Behavior in Converter]
-
-    C --> F[Potential Code Execution]
-    D --> G[Pointer/Data Leakage]
-    E --> H[Process Crash — SIGSEGV]
+    A["race won"] --> B(corruption type)
+    B -->|"UTF-16 size ↑"| C["heap<br/>overflow"]
+    B -->|"UTF-16 size ↓"| D["uninitialized<br/>memory leak"]
+    B -->|"invalid<br/>sequences"| E["undefined<br/>behaviour"]
+    C --> F["possible code<br/>execution"]
+    D --> G["pointer / data<br/>leakage"]
+    E --> H["crash<br/>SIGSEGV"]
 ```
 
 ---
