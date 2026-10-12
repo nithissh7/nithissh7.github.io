@@ -39,7 +39,6 @@ const { Content, headings } = await render(post);
 const readTime = getReadingTime(post.body ?? "");
 const words = (post.body ?? "").split(/\s+/).filter(Boolean).length;
 const toc = headings.filter((h) => (h.depth === 2 || h.depth === 3) && h.slug !== "footnote-label");
-const hasAside = toc.length > 2;
 const sections = toc.filter((h) => h.depth === 2).length;
 const author = post.data.author ?? SITE_AUTHOR;
 const url = new URL(`/blog/${post.id}/`, Astro.site).toString();
@@ -72,7 +71,7 @@ const jsonLd = {
 >
   <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
   <article>
-    <div class:list={["band !pt-10 lg:!pt-16 post-grid", { "post-grid-single": !hasAside }]}>
+    <div class="band !pt-10 lg:!pt-16 post-grid">
       <div class="min-w-0">
         <header class="mb-12">
           <nav aria-label="Breadcrumb" class="prompt" data-pagefind-ignore>
@@ -117,7 +116,7 @@ const jsonLd = {
         )}
 
         {toc.length > 2 && (
-          <details class="toc-box mb-12 min-[1200px]:hidden" data-pagefind-ignore>
+          <details class="toc-box mb-12" data-pagefind-ignore>
             <summary class="flex items-center justify-between gap-3 cursor-pointer select-none py-1 text-[14px] text-strong">
               <span>Contents <span class="text-dim">· {sections} sections</span></span>
               <span class="toc-chevron text-dim" aria-hidden="true">+</span>
@@ -155,28 +154,11 @@ const jsonLd = {
         </footer>
       </div>
 
-      {hasAside && (
-        <aside class="hidden min-[1200px]:block" data-pagefind-ignore>
-          <div class="post-aside">
-            <p class="flex items-center justify-between text-[12px] text-dim mb-3">
-              <span class="text-strong font-bold">On this page</span>
-              <span class="tabular-nums" data-progress-pct>0%</span>
-            </p>
-            <nav class="toc" aria-label="On this page">
-              {toc.map((h) => <a href={`#${h.slug}`} data-depth={h.depth}>{h.text}</a>)}
-            </nav>
-            <div class="mt-6 pt-4 border-t border-border flex flex-col items-start gap-2 text-[12px]">
-              <a href="#main-content" class="nav-link">↑ Back to top</a>
-              <button type="button" class="nav-link cursor-pointer" data-copy-text={url}>copy link</button>
-            </div>
-          </div>
-        </aside>
-      )}
     </div>
 
     {(related.length > 0 || newer || older) && (
       <section class="band !pt-0" aria-label="Keep reading" data-pagefind-ignore>
-        <div class:list={["post-grid", { "post-grid-single": !hasAside }]}>
+        <div class="post-grid">
           <div class="min-w-0">
             {(newer || older) && (
               <nav aria-label="More posts" class="grid sm:grid-cols-2 gap-4">
@@ -212,7 +194,6 @@ const jsonLd = {
               </div>
             )}
           </div>
-          {hasAside && <div class="hidden min-[1200px]:block" />}
         </div>
       </section>
     )}

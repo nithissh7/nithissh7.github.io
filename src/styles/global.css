@@ -934,36 +934,14 @@
     grid-template-columns: minmax(0, 70ch);
     justify-content: center;
   }
+  /* Diagrams too wide for the text column spread evenly into the margins. */
   @media (min-width: 1200px) {
-    .post-grid {
-      grid-template-columns: minmax(0, 70ch) 15rem;
-      gap: 4.5rem;
-    }
-  }
-  .post-grid.post-grid-single {
-    grid-template-columns: minmax(0, 70ch);
-  }
-  /* Diagrams too wide for the text column extend over the outline column. */
-  @media (min-width: 1200px) {
-    .post-grid:not(.post-grid-single) .diagram-wide {
-      margin-right: calc(-1 * (15rem + 4.5rem));
+    .prose .diagram-wide {
+      width: min(1104px, calc(100vw - 6rem));
+      margin-left: calc(50% - min(552px, 50vw - 3rem));
       position: relative;
       z-index: 1;
     }
-  }
-  .post-aside {
-    transition: opacity 0.2s ease;
-  }
-  .post-aside[data-yield] {
-    opacity: 0;
-    pointer-events: none;
-  }
-  .post-aside {
-    position: sticky;
-    top: 5.5rem;
-    max-height: calc(100vh - 7rem);
-    overflow-y: auto;
-    scrollbar-width: none;
   }
 
   /* Contents (collapsible, small screens) */
