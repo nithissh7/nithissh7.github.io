@@ -20,7 +20,7 @@ const PAPER = "#14120f";
 const INK = "#f3efe6";
 const INK_SOFT = "#918a7d";
 const LINE = "#3a362e";
-const ACCENT_BG = "#4c6ef5";
+const ACCENT_BG = "#4263eb";
 const ACCENT_INK = "#ffffff";
 
 interface OgImageOptions {

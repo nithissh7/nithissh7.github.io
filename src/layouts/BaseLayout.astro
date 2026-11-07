@@ -333,6 +333,17 @@ const ogImageURL = new URL(image, Astro.site);
 
         const overflows = pre.scrollWidth > pre.clientWidth + 1;
         wrap.querySelector(".diagram-bar span")!.textContent = overflows ? "diagram · scroll →" : "diagram";
+        // A sideways-scrolling diagram must be reachable by keyboard.
+        if (overflows) {
+          pre.tabIndex = 0;
+          pre.setAttribute("role", "region");
+          const n = [...document.querySelectorAll(".prose .diagram")].indexOf(wrap) + 1;
+          pre.setAttribute("aria-label", `Diagram ${n} (scrolls sideways)`);
+        } else {
+          pre.removeAttribute("tabindex");
+          pre.removeAttribute("role");
+          pre.removeAttribute("aria-label");
+        }
       }
       function watchDiagrams() {
         document.querySelectorAll<HTMLElement>(".prose .mermaid").forEach((pre) => {
@@ -344,10 +355,16 @@ const ogImageURL = new URL(image, Astro.site);
       }
 
       // The header gets its hairline only once the page scrolls under it; on articles a
-      // progress bar tracks how far through the text the reader is.
+      // progress bar tracks how far through the text the reader is. "Back to top" shows
+      // only while scrolling up, so it never sits on top of text being read.
+      let lastY = window.scrollY;
       const markHeader = () => {
-        document.querySelector(".site-header")?.toggleAttribute("data-scrolled", window.scrollY > 8);
-        document.querySelector("[data-to-top]")?.toggleAttribute("data-visible", window.scrollY > 900);
+        const y = window.scrollY;
+        document.querySelector(".site-header")?.toggleAttribute("data-scrolled", y > 8);
+        const toTop = document.querySelector("[data-to-top]");
+        if (y < 900) toTop?.removeAttribute("data-visible");
+        else if (Math.abs(y - lastY) > 6) toTop?.toggleAttribute("data-visible", y < lastY);
+        lastY = y;
         const bar = document.querySelector<HTMLElement>("[data-progress]");
         const body = document.querySelector<HTMLElement>("[data-reading-body]");
         if (!bar) return;

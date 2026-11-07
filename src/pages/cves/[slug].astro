@@ -50,7 +50,7 @@ const bands = [
         <span class="sep">/</span>
         <span>{d.cveId}</span>
       </nav>
-      <h1 class="text-[28px] lg:text-[38px] font-bold leading-[1.18] tracking-[-0.03em] text-strong text-balance mb-4">{vuln}</h1>
+      <h1 class="text-[26px] sm:text-[32px] lg:text-[38px] font-bold leading-[1.18] tracking-[-0.03em] text-strong text-balance mb-4">{vuln}</h1>
       <p class="text-[16px] lg:text-[17px] text-dim mb-7">{product}{d.vendor && <> · {d.vendor}</>}</p>
       <div class="flex flex-wrap items-center gap-2" data-pagefind-ignore>
         <span class="sev sev-pill" data-sev={severityKey(d.severity)}>{d.severity}{score !== undefined && <span class="text-dim tabular-nums">{score.toFixed(1)}</span>}</span>

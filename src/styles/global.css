@@ -18,7 +18,7 @@
   --bg-code: #f1eee7;
   --hover: rgba(40, 34, 24, 0.05);
   --border: #e3ded4;
-  --border-strong: #d0c9bc;
+  --border-strong: #bdb5a6;
   --strong: #17150f;
   --text: #36332c;
   --dim: #716b60;
@@ -31,9 +31,9 @@
   --shadow: 0 1px 2px rgba(30, 24, 14, 0.04), 0 10px 30px -14px rgba(30, 24, 14, 0.16);
   --code-ink: var(--strong);
   --code-bg: #ebe7de;
-  --ok: #2f8a57;
-  --ok-soft: rgba(47, 138, 87, 0.1);
-  --sev-low: #2f8a57;
+  --ok: #277a4a;
+  --ok-soft: rgba(39, 122, 74, 0.1);
+  --sev-low: #277a4a;
   --sev-medium: #a87f0e;
   --sev-high: #c75d1f;
   --sev-critical: #c9302c;
@@ -49,12 +49,12 @@
   --bg-code: #181612;
   --hover: rgba(255, 248, 235, 0.05);
   --border: #2a2721;
-  --border-strong: #3a362e;
+  --border-strong: #4a453c;
   --strong: #f3efe6;
   --text: #cfc9bd;
   --dim: #918a7d;
   --accent: #8b9dff;
-  --accent-solid: #4c6ef5;
+  --accent-solid: #4263eb;
   --on-accent: #ffffff;
   --accent-soft: rgba(139, 157, 255, 0.1);
   --select: rgba(139, 157, 255, 0.28);
@@ -496,7 +496,6 @@
     box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 55%, transparent);
   }
   .tag .n {
-    opacity: 0.65;
     font-variant-numeric: tabular-nums;
   }
   /* Inline topic list in post rows: "XSS · CTF · WRITEUP". */
@@ -781,6 +780,14 @@
     color: var(--accent);
     text-decoration-color: var(--accent);
   }
+  .prose a[href^="http"]:not([href^="https://nithissh7.github.io"])::after {
+    content: "↗";
+    display: inline-block;
+    margin-left: 0.15em;
+    font-size: 0.8em;
+    color: var(--dim);
+    text-decoration: none;
+  }
   .prose strong {
     font-weight: 700;
   }
@@ -868,7 +875,10 @@
   .prose hr {
     border: 0;
     border-top: 1px solid var(--border);
-    margin: 3rem 0;
+    margin: 3.25rem 0 2.75rem;
+  }
+  .prose hr + :is(h2, h3) {
+    margin-top: 0;
   }
   .prose table {
     display: block;
@@ -1704,6 +1714,20 @@
   }
   .filter-box input::placeholder {
     color: var(--dim);
+  }
+  /* The browser's own clear button is a bright white glyph; draw it in the text colour instead. */
+  input[type="search"]::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    cursor: pointer;
+    background-color: var(--dim);
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round'%3E%3Cpath d='M6 6l12 12M18 6 6 18'/%3E%3C/svg%3E") center / contain no-repeat;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round'%3E%3Cpath d='M6 6l12 12M18 6 6 18'/%3E%3C/svg%3E") center / contain no-repeat;
+  }
+  input[type="search"]::-webkit-search-cancel-button:hover {
+    background-color: var(--strong);
   }
   .read-mark {
     display: inline-block;

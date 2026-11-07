@@ -45,6 +45,23 @@ const highlightLines = {
   },
 };
 
+/** Darkens/lightens the few github-light/github-dark token colours that miss 4.5:1 on the site's code backgrounds. */
+const READABLE = {
+  light: { "#D73A49": "#C13442", "#6A737D": "#626A73", "#22863A": "#1F7934", "#E36209": "#AF4B07" },
+  dark: { "#6A737D": "#7D858E" },
+};
+const readableTokens = {
+  name: "readable-tokens",
+  span(node) {
+    const style = node.properties?.style;
+    if (typeof style !== "string") return;
+    node.properties.style = style.replace(
+      /--shiki-(light|dark):(#[0-9a-fA-F]{6})/g,
+      (m, theme, hex) => `--shiki-${theme}:${READABLE[theme][hex.toUpperCase()] ?? hex}`
+    );
+  },
+};
+
 // https://astro.build/config
 export default defineConfig({
   site: "https://nithissh7.github.io",
@@ -58,7 +75,7 @@ export default defineConfig({
       themes: { light: "github-light", dark: "github-dark" },
       defaultColor: false,
       wrap: false,
-      transformers: [highlightLines, codeChrome],
+      transformers: [readableTokens, highlightLines, codeChrome],
     },
   },
   integrations: [

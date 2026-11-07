@@ -26,6 +26,11 @@ export function formatDate(date: Date, style: "short" | "iso" | "long" | "medium
   return style === "short" ? iso.slice(5) : iso;
 }
 
+// Splits a title so CVE IDs can be kept on one line: odd indexes are the IDs.
+export function titleParts(title: string): string[] {
+  return title.split(/(CVE-\d{4}-\d+)/);
+}
+
 export function yearOf(date: Date): number {
   return Number(formatDate(date).slice(0, 4));
 }

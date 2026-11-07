@@ -4,7 +4,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 import ReaderSettings from "../../components/ReaderSettings.astro";
 import Comments from "../../components/Comments.astro";
 import { getReadingTime } from "../../lib/reading-time";
-import { SITE_AUTHOR, SITE_TAGLINE, formatDate } from "../../consts";
+import { SITE_AUTHOR, SITE_TAGLINE, formatDate, titleParts } from "../../consts";
 
 export async function getStaticPaths() {
   const posts = (await getCollection("blog", ({ data }) => !data.draft)).sort(
@@ -94,11 +94,11 @@ const jsonLd = {
             <a href="/blog/">Blog</a>
             {post.data.series && <><span class="sep">/</span><span>{post.data.series}</span></>}
           </nav>
-          <h1 class="text-[28px] sm:text-[34px] lg:text-[40px] font-bold leading-[1.18] tracking-[-0.03em] text-strong text-balance mb-5">
-            {post.data.title}
+          <h1 class="text-[26px] sm:text-[34px] lg:text-[40px] font-bold leading-[1.2] tracking-[-0.03em] text-strong text-balance mb-5">
+            {titleParts(post.data.title).map((part, i) => (i % 2 ? <span class="whitespace-nowrap">{part}</span> : part))}
           </h1>
-          <div class="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 mb-7" data-pagefind-ignore>
-            <p class="meta">
+          <div class="flex items-start justify-between gap-4 mb-7" data-pagefind-ignore>
+            <p class="meta min-w-0 pt-1">
               <time datetime={post.data.pubDate.toISOString()}>{formatDate(post.data.pubDate, "medium")}</time>
               {post.data.updatedDate && <span>Updated {formatDate(post.data.updatedDate, "medium")}</span>}
               <span>{readTime}</span>

@@ -1,7 +1,7 @@
 ---
 import { getCollection } from "astro:content";
 import BaseLayout from "../layouts/BaseLayout.astro";
-import { SITE_TAGLINE, formatDate, yearOf } from "../consts";
+import { SITE_TAGLINE, formatDate, titleParts, yearOf } from "../consts";
 import { getReadingTime } from "../lib/reading-time";
 import { severityKey, splitCveTitle, vulnClass } from "../lib/cve";
 
@@ -116,7 +116,7 @@ const stats = [
           <span>{getReadingTime(latest.body ?? "")}</span>
         </span>
         <span id="latest" class="row-title block !font-bold text-[22px] lg:text-[32px] leading-[1.2] tracking-[-0.03em] mb-5 max-w-[38ch] text-balance">
-          {latest.data.title}
+          {titleParts(latest.data.title).map((part, i) => (i % 2 ? <span class="whitespace-nowrap">{part}</span> : part))}
         </span>
         <span class="block text-[15px] leading-[1.8] max-w-[68ch] mb-8 text-pretty">{latest.data.description}</span>
         <span class="flex flex-wrap items-center gap-x-6 gap-y-4">
