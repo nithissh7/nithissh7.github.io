@@ -5,6 +5,9 @@ import Footer from "../components/Footer.astro";
 import Search from "../components/Search.astro";
 import { ClientRouter } from "astro:transitions";
 import { SITE_DESCRIPTION, SITE_TITLE } from "../consts";
+// Body (400) and title (700) faces are on every first paint; preload them so the title isn't held back.
+import monoRegular from "@fontsource/jetbrains-mono/files/jetbrains-mono-latin-400-normal.woff2?url";
+import monoBold from "@fontsource/jetbrains-mono/files/jetbrains-mono-latin-700-normal.woff2?url";
 
 interface Props {
   title?: string;
@@ -50,6 +53,8 @@ const ogImageURL = new URL(image, Astro.site);
         document.addEventListener("astro:after-swap", apply);
       })();
     </script>
+    <link rel="preload" href={monoRegular} as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href={monoBold} as="font" type="font/woff2" crossorigin />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="theme-color" content="#f7f5f0" media="(prefers-color-scheme: light)" />
