@@ -136,8 +136,9 @@
     max-width: 1200px;
     margin-inline: auto;
   }
+  /* CVE pages: a 53rem (848px) column once band padding is taken off; articles use the same width via --measure. */
   .wrap-reading {
-    max-width: 944px;
+    max-width: 59rem;
   }
   .band {
     padding: 2.5rem 1rem;
@@ -667,7 +668,7 @@
     margin: 0;
     padding: 1rem 1.25rem 1.15rem;
     overflow-x: auto;
-    font-size: 13.5px;
+    font-size: 0.84em; /* follows the prose size: ~12.6px on phones, ~14.3px on desktop */
     line-height: 1.7;
     background: transparent !important;
     tab-size: 2;
@@ -686,17 +687,23 @@
 
   /* ---------- Prose ---------- */
 
+  /* Reading size follows the screen: 15px on phones, rising smoothly to 17px on wide desktops.
+     The "Aa" menu scales it (--prose-scale) rather than replacing it. */
+  :root {
+    --prose-size: clamp(15px, 13.6px + 0.3vw, 17px);
+    --prose-scale: 1;
+    --measure: 53rem;
+  }
   .prose {
-    font-size: 16px;
-    line-height: 1.85;
+    font-size: calc(var(--prose-size) * var(--prose-scale));
+    line-height: 1.8;
     color: var(--text);
     overflow-wrap: break-word;
     counter-reset: section;
   }
-  @media (max-width: 639px) {
+  @media (min-width: 1024px) {
     .prose {
-      font-size: 15px;
-      line-height: 1.8;
+      line-height: 1.85;
     }
   }
   .prose > :first-child {
@@ -713,17 +720,17 @@
     font-weight: 700;
     line-height: 1.4;
     letter-spacing: -0.015em;
-    /* Adds to html's 6rem scroll-padding: lands below header + nav + section bar on phones (9.5rem), header + bar on desktop (7.5rem). */
-    scroll-margin-top: 3.75rem;
+    /* Adds to html's 6rem scroll-padding: lands below header + nav row + section bar under 1024px (10.25rem), header + bar above (7.5rem). */
+    scroll-margin-top: 4.25rem;
     text-wrap: balance;
   }
-  @media (min-width: 768px) {
+  @media (min-width: 1024px) {
     .prose :is(h2, h3, h4) {
       scroll-margin-top: 1.5rem;
     }
   }
   .prose h2 {
-    font-size: 21px;
+    font-size: 1.3em;
     margin: 4rem 0 1.25rem;
   }
   /* Numbered sections, mirrored in "On this page": "3. The patch". */
@@ -737,11 +744,11 @@
     margin-top: 0;
   }
   .prose h3 {
-    font-size: 17px;
+    font-size: 1.08em;
     margin: 2.75rem 0 0.85rem;
   }
   .prose h4 {
-    font-size: 15.5px;
+    font-size: 1em;
     margin: 2rem 0 0.6rem;
   }
   .prose h4::before {
@@ -868,7 +875,7 @@
     width: 100%;
     overflow-x: auto;
     border-collapse: collapse;
-    font-size: 14px;
+    font-size: 0.875em;
     line-height: 1.6;
   }
   .prose :is(th, td) {
@@ -1165,7 +1172,7 @@
 
   .post-grid {
     display: grid;
-    grid-template-columns: minmax(0, var(--measure, 70ch));
+    grid-template-columns: minmax(0, var(--measure));
     justify-content: center;
   }
 
@@ -1316,14 +1323,10 @@
 /* ============ Reader features (see src/scripts/reader.ts) ============ */
 @layer components {
   /* Reader settings: text size and column width. */
-  :root[data-measure="narrow"] { --measure: 60ch; }
-  :root[data-measure="wide"] { --measure: 84ch; }
-  :root[data-text-size="s"] .prose { font-size: 15px; }
-  :root[data-text-size="l"] .prose { font-size: 17.5px; }
-  @media (max-width: 639px) {
-    :root[data-text-size="s"] .prose { font-size: 14px; }
-    :root[data-text-size="l"] .prose { font-size: 16.5px; }
-  }
+  :root[data-measure="narrow"] { --measure: 42rem; }
+  :root[data-measure="wide"] { --measure: 64rem; }
+  :root[data-text-size="s"] { --prose-scale: 0.92; }
+  :root[data-text-size="l"] { --prose-scale: 1.1; }
 
   .settings {
     position: relative;
@@ -1399,7 +1402,7 @@
     position: fixed;
     left: 0;
     right: 0;
-    top: 6.75rem;
+    top: 7.25rem; /* header 4.5rem + nav row 2.75rem */
     z-index: 35;
     background: color-mix(in srgb, var(--bg) 90%, transparent);
     backdrop-filter: blur(10px);
@@ -1409,7 +1412,7 @@
     pointer-events: none;
     transition: transform 0.2s ease, opacity 0.2s ease;
   }
-  @media (min-width: 768px) {
+  @media (min-width: 1024px) {
     .section-bar {
       top: 4.5rem;
     }
@@ -1423,7 +1426,7 @@
     display: flex;
     align-items: center;
     gap: 1rem;
-    max-width: calc(var(--measure, 70ch) + 2.5rem);
+    max-width: calc(var(--measure) + 2.5rem);
     margin-inline: auto;
     padding: 0.45rem 1.25rem;
     font-size: 13px;
@@ -1439,7 +1442,7 @@
     cursor: pointer;
   }
   .section-menu {
-    max-width: calc(var(--measure, 70ch) + 2.5rem);
+    max-width: calc(var(--measure) + 2.5rem);
     max-height: min(60vh, 28rem);
     overflow-y: auto;
     margin-inline: auto;

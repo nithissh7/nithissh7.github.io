@@ -21,7 +21,7 @@ const github = SOCIAL_LINKS.find((l) => l.label === "GitHub")?.href;
       <span>{SITE_TITLE}<span class="caret" aria-hidden="true"></span></span>
     </a>
 
-    <nav aria-label="Main" class="main-nav hidden md:flex items-center gap-1 ml-6">
+    <nav aria-label="Main" class="main-nav hidden lg:flex items-center gap-1 ml-6">
       {navLinks.map((link) => (
         <a href={link.href} class="nav-link" aria-current={isActive(link.href) ? "page" : undefined}>
           {link.label}
@@ -62,7 +62,7 @@ const github = SOCIAL_LINKS.find((l) => l.label === "GitHub")?.href;
     </div>
   </div>
 
-  <nav aria-label="Main" class="main-nav md:hidden flex items-center gap-1 h-11 px-2 sm:px-6 overflow-x-auto">
+  <nav aria-label="Main" class="main-nav lg:hidden flex items-center gap-1 h-11 px-2 sm:px-6 overflow-x-auto">
     {navLinks.map((link) => (
       <a href={link.href} class="nav-link shrink-0" aria-current={isActive(link.href) ? "page" : undefined}>
         {link.short ?? link.label}

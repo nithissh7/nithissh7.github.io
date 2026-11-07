@@ -43,8 +43,8 @@ const sections = () => [...(prose()?.querySelectorAll<HTMLElement>("h2[id]:not(.
 
 /* ---------------- 1. Current-section bar ---------------- */
 
-// A heading counts as current once it reaches the spot anchor jumps land it (≤ 9.5rem from the top).
-const READ_LINE = 160;
+// A heading counts as current once it reaches the spot anchor jumps land it (≤ 10.25rem from the top).
+const READ_LINE = 172;
 function currentHeading(): HTMLElement | undefined {
   let current: HTMLElement | undefined;
   for (const h of sections()) if (h.getBoundingClientRect().top < READ_LINE) current = h;
