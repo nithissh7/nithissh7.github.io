@@ -2,13 +2,6 @@ import satori from "satori";
 import { Resvg } from "@resvg/resvg-js";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { tagColor } from "../consts";
-
-// Notion dark select colours, matching the site's tag pills.
-const TAG_BG: Record<string, string> = {
-  gray: "#373737", brown: "#4a3228", orange: "#5c3b23", yellow: "#564328", green: "#243d30",
-  blue: "#143a4e", purple: "#3c2d49", pink: "#4e2c3c", red: "#522e2a",
-};
 
 const fontDir = join(process.cwd(), "node_modules/@fontsource/jetbrains-mono/files");
 const fontRegularPath = join(fontDir, "jetbrains-mono-latin-400-normal.woff");
@@ -22,12 +15,13 @@ function loadFonts() {
   return fontsPromise;
 }
 
-const PAPER = "#191919"; // Notion dark
-const INK = "#ececec";
-const INK_SOFT = "#9b9b9b";
-const LINE = "#2f2f2f";
-const ACCENT_BG = INK;
-const ACCENT_INK = PAPER;
+// Site dark theme tokens (see global.css).
+const PAPER = "#14120f";
+const INK = "#f3efe6";
+const INK_SOFT = "#918a7d";
+const LINE = "#3a362e";
+const ACCENT_BG = "#4c6ef5";
+const ACCENT_INK = "#ffffff";
 
 interface OgImageOptions {
   eyebrow: string;
@@ -70,7 +64,7 @@ export async function renderOgImage({
                 display: "flex",
                 flexDirection: "column",
                 border: `1.5px solid ${LINE}`,
-                borderRadius: "6px",
+                borderRadius: "28px",
                 padding: "48px",
                 height: "100%",
                 justifyContent: "space-between",
@@ -82,7 +76,7 @@ export async function renderOgImage({
                     style: {
                       display: "flex",
                       alignItems: "center",
-                      gap: "12px",
+                      gap: "16px",
                     },
                     children: [
                       {
@@ -90,13 +84,23 @@ export async function renderOgImage({
                         props: {
                           style: {
                             display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            width: "56px",
+                            height: "56px",
                             backgroundColor: accentBg,
                             color: accentInk,
-                            borderRadius: "4px",
-                            padding: "10px 20px",
-                            fontSize: "28px",
+                            borderRadius: "16px",
+                            fontSize: "24px",
                             fontWeight: 700,
                           },
+                          children: "rn",
+                        },
+                      },
+                      {
+                        type: "div",
+                        props: {
+                          style: { display: "flex", color: INK, fontSize: "30px", fontWeight: 700 },
                           children: "realnits",
                         },
                       },
@@ -105,9 +109,12 @@ export async function renderOgImage({
                         props: {
                           style: {
                             display: "flex",
+                            marginLeft: "auto",
                             color: INK_SOFT,
-                            fontSize: "22px",
+                            fontSize: "20px",
                             fontWeight: 400,
+                            letterSpacing: "2px",
+                            textTransform: "uppercase",
                           },
                           children: eyebrow,
                         },
@@ -158,11 +165,13 @@ export async function renderOgImage({
                             props: {
                               style: {
                                 display: "flex",
-                                color: INK,
-                                fontSize: "20px",
-                                background: TAG_BG[tagColor(tag)] ?? TAG_BG.gray,
-                                borderRadius: "6px",
-                                padding: "4px 12px",
+                                color: INK_SOFT,
+                                fontSize: "17px",
+                                letterSpacing: "1px",
+                                textTransform: "uppercase",
+                                border: `1.5px solid ${LINE}`,
+                                borderRadius: "999px",
+                                padding: "6px 16px",
                               },
                               children: tag,
                             },

@@ -4,7 +4,6 @@ import { getCollection } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import PostTable from "../../components/PostTable.astro";
 import Pagination from "../../components/Pagination.astro";
-import { tagColor } from "../../consts";
 
 export const getStaticPaths = (async ({ paginate }) => {
   const posts = (await getCollection("blog", ({ data }) => !data.draft)).sort(
@@ -23,25 +22,25 @@ const { page, total, topics } = Astro.props;
   title={page.currentPage > 1 ? `Blog — page ${page.currentPage}` : "Blog"}
   description="Write-ups on vulnerability research, CVE teardowns, bug bounty findings, and security challenges."
 >
-  <section class="band !pb-6">
-    <p class="prompt">blog</p>
+  <section class="band !pt-14 lg:!pt-20 !pb-6">
+    <p class="eyebrow">Blog</p>
     <h1 class="h-page mb-5">Writing<span class="accent">.</span></h1>
-    <p class="lede mb-8">
-      {total} write-ups on vulnerability research, CVE teardowns, bug bounty findings, and security challenges — newest first.
+    <p class="lede mb-9">
+      {total} write-ups on vulnerability research, CVE teardowns, bug bounty findings, and security challenges, newest first.
     </p>
-    <label class="filter-box mb-4">
+    <label class="filter-box mb-5">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
       <span class="sr-only">Filter posts</span>
-      <input type="search" placeholder="filter posts — try “xss” or “kestra”" autocomplete="off" spellcheck="false" data-post-query />
+      <input type="search" placeholder="Filter posts, try “xss” or “kestra”" autocomplete="off" spellcheck="false" data-post-query />
     </label>
     <div class="flex flex-wrap items-center gap-2" role="group" aria-label="Filter by topic" data-post-filter>
-      <button type="button" class="tag cursor-pointer" aria-pressed="true" data-filter="all">all <span class="tabular-nums opacity-70">{total}</span></button>
+      <button type="button" class="tag cursor-pointer" aria-pressed="true" data-filter="all">All <span class="n">{total}</span></button>
       {topics.map(([tag, n]) => (
-        <button type="button" class="tag cursor-pointer" aria-pressed="false" data-filter={tag} data-color={tagColor(tag)}>
-          {tag} <span class="tabular-nums opacity-70">{n}</span>
+        <button type="button" class="tag cursor-pointer" aria-pressed="false" data-filter={tag}>
+          {tag} <span class="n">{n}</span>
         </button>
       ))}
-      <a href="/tags/" class="nav-link text-[13px] ml-2">all topics →</a>
+      <a href="/tags/" class="more-link ml-2">All topics ▸</a>
     </div>
   </section>
 

@@ -1,6 +1,6 @@
 ---
 import type { CollectionEntry } from "astro:content";
-import { formatDate, tagColor, yearOf } from "../consts";
+import { formatDate, yearOf } from "../consts";
 import { getReadingTime } from "../lib/reading-time";
 
 interface Props {
@@ -20,17 +20,15 @@ const short = (p: CollectionEntry<"blog">) => getReadingTime(p.body ?? "").repla
       <ul>
         {posts.filter((p) => yearOf(p.data.pubDate) === year).map((post) => (
           <li data-tags={post.data.tags.join(" ")} data-text={`${post.data.title} ${post.data.description} ${post.data.tags.join(" ")}`.toLowerCase()}>
-            <a href={`/blog/${post.id}/`} data-post-link class="trow grid md:grid-cols-[6.5rem_minmax(0,1fr)_4.5rem] gap-x-6 gap-y-1 py-5 px-3 -mx-3">
+            <a href={`/blog/${post.id}/`} data-post-link class="trow grid md:grid-cols-[6.5rem_minmax(0,1fr)_5.5rem] gap-x-6 gap-y-1 py-6 px-3 -mx-3">
               <span class="text-[13px] text-dim tabular-nums md:pt-0.5">
-                {formatDate(post.data.pubDate, "medium").replace(/, \d{4}$/, "")}
+                <time datetime={post.data.pubDate.toISOString()}>{formatDate(post.data.pubDate, "medium").replace(/, \d{4}$/, "")}</time>
                 <span class="md:hidden"> · {short(post)}</span>
               </span>
               <span class="min-w-0">
-                <span class="row-title block leading-snug text-[15.5px]">{post.data.title}</span>
-                <span class="block text-[14px] text-dim mt-1.5 leading-relaxed line-clamp-2">{post.data.description}</span>
-                <span class="flex flex-wrap gap-1.5 mt-3">
-                  {post.data.tags.slice(0, 4).map((tag) => <span class="tag" data-color={tagColor(tag)}>{tag}</span>)}
-                </span>
+                <span class="row-title block leading-snug text-[16px]">{post.data.title}</span>
+                <span class="block text-[14px] text-dim mt-2 leading-relaxed line-clamp-2 max-w-[70ch]">{post.data.description}</span>
+                {post.data.tags.length > 0 && <span class="topics block mt-3">{post.data.tags.slice(0, 4).join(" · ")}</span>}
               </span>
               <span class="text-[13px] text-dim md:text-right tabular-nums md:pt-0.5" data-read-slot>
                 <span class="hidden md:block">{short(post)}</span>

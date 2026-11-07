@@ -1,9 +1,9 @@
 ---
 import { getCollection } from "astro:content";
 import BaseLayout from "../layouts/BaseLayout.astro";
-import { SITE_TAGLINE, formatDate, tagColor, yearOf } from "../consts";
+import { SITE_TAGLINE, formatDate, yearOf } from "../consts";
 import { getReadingTime } from "../lib/reading-time";
-import { severityColor, splitCveTitle } from "../lib/cve";
+import { severityKey, splitCveTitle, vulnClass } from "../lib/cve";
 
 const posts = (await getCollection("blog", ({ data }) => !data.draft)).sort(
   (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
@@ -14,129 +14,174 @@ const cves = (await getCollection("cves", ({ data }) => !data.draft)).sort(
 const certs = await getCollection("certifications");
 const [latest, ...rest] = posts;
 const firstYear = Math.min(...[...posts, ...cves].map((e) => yearOf(e.data.pubDate)));
+const cveYears = cves.map((c) => yearOf(c.data.pubDate));
+const severe = cves.filter((c) => c.data.severity === "Critical" || c.data.severity === "High").length;
 const short = (p: (typeof posts)[number]) => getReadingTime(p.body ?? "").replace(" read", "");
+// Hero panel: the newest disclosure that has a score.
+const spotlight = cves.find((c) => (c.data.cvssScore ?? c.data.externalCvss?.score) !== undefined);
+const spot = spotlight && {
+  ...splitCveTitle(spotlight.data.title),
+  klass: vulnClass(spotlight.data.title),
+  score: (spotlight.data.cvssScore ?? spotlight.data.externalCvss?.score)!,
+};
+const bands = [
+  { name: "low", flex: 4 },
+  { name: "medium", flex: 3 },
+  { name: "high", flex: 2 },
+  { name: "critical", flex: 1 },
+];
 
 const stats = [
-  { n: posts.length, label: "posts", href: "/blog/" },
-  { n: cves.length, label: "CVEs", href: "/cves/" },
-  { n: certs.length, label: "certs", href: "/certifications/" },
-  { n: `${firstYear}→`, label: "writing since", href: "/about/" },
+  { n: posts.length, label: "write-ups", desc: "CVE teardowns, bug bounty findings and challenge solutions.", href: "/blog/" },
+  {
+    n: cves.length,
+    label: "CVEs disclosed",
+    desc: `Responsibly reported since ${Math.min(...cveYears)}. ${severe} rated high or critical.`,
+    href: "/cves/",
+  },
+  { n: certs.length, label: "certifications", desc: "Web application security, cloud and DevSecOps.", href: "/certifications/" },
+  { n: `${firstYear}→`, label: "writing since", desc: "Notes for future me, so I don't relearn things twice.", href: "/about/" },
 ];
 ---
 
 <BaseLayout>
-  <section class="band !pt-14 lg:!pt-24 !pb-12 lg:!pb-20">
-    <div class="grid lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] gap-12 lg:gap-16 items-center">
-      <div>
-        <p class="prompt">whoami</p>
-        <h1 class="h-page mb-6">Security research,<br class="hidden sm:block" /> written down<span class="accent">.</span></h1>
-        <p class="lede mb-9">{SITE_TAGLINE}</p>
-        <div class="flex flex-wrap items-center gap-3 mb-12">
-          <a href="/blog/" class="btn">Read the blog <span aria-hidden="true">→</span></a>
-          <a href="/cves/" class="btn btn-ghost">Browse CVEs</a>
-        </div>
-        <ul class="grid grid-cols-2 sm:grid-cols-4 gap-px bg-border border border-border rounded-lg overflow-hidden text-[13px]">
-          {stats.map((s) => (
-            <li class="bg-bg">
-              <a href={s.href} class="group block px-4 py-3 hover:bg-[var(--hover)] transition-colors">
-                <span class="block text-strong font-extrabold text-[20px] tabular-nums leading-tight">{s.n}</span>
-                <span class="block text-dim group-hover:text-strong transition-colors">{s.label}</span>
-              </a>
-            </li>
-          ))}
-        </ul>
+  <section class="hero band !pt-16 lg:!pt-24 !pb-14 lg:!pb-20 grid lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] gap-14 lg:gap-16 items-center">
+    <div>
+      <p class="eyebrow">Security research <span class="sep">·</span> Web <span class="sep">·</span> Cloud <span class="sep">·</span> AI</p>
+      <h1 class="h-page max-w-[20ch] mb-7">Security research, <em>written down.</em></h1>
+      <p class="lede mb-9">{SITE_TAGLINE}</p>
+      <div class="flex flex-wrap items-center gap-3 mb-10">
+        <a href="/blog/" class="btn">Read the blog <span aria-hidden="true">▸</span></a>
+        <a href="/cves/" class="btn btn-ghost">Browse CVEs</a>
       </div>
-
-      <div class="term hidden md:block" aria-hidden="true">
-        <div class="term-bar"><i></i><i></i><i></i><span>~/realnits</span></div>
-        <div class="term-body">
-          <p class="cmd text-strong">cat profile.txt</p>
-          <p class="text-dim mb-3">security architect · bug bounty hunter</p>
-          <p class="cmd text-strong">ls -t ~/blog | head -3</p>
-          <ul class="mb-3">
-            {posts.slice(0, 3).map((p) => (
-              <li class="truncate"><span class="text-dim tabular-nums">{formatDate(p.data.pubDate)}</span>  {p.id}.md</li>
-            ))}
-          </ul>
-          <p class="cmd text-strong">grep -c CVE disclosures.log</p>
-          <p class="text-dim mb-3">{cves.length}</p>
-          <p class="cmd text-strong">echo $STATUS</p>
-          <p>hunting<span class="caret"></span></p>
-        </div>
-      </div>
+      <span class="chip"><span class="dot dot-live" aria-hidden="true"></span>Currently hunting</span>
     </div>
+
+    {spotlight && spot && (
+      <a href={`/cves/${spotlight.id}/`} class="card group block overflow-hidden" aria-label={`Latest disclosure: ${spotlight.data.cveId}, ${spot.vuln}`}>
+        <span class="flex items-center justify-between gap-4 h-11 px-5 border-b border-border text-[11px] tracking-[0.08em] uppercase text-dim">
+          <span class="flex items-center gap-3"><span class="win-dots" aria-hidden="true"></span>Latest disclosure</span>
+          <span class="tabular-nums">{formatDate(spotlight.data.pubDate, "medium")}</span>
+        </span>
+        <span class="block p-6 sm:p-7">
+          <span class="flex items-center justify-between gap-4 mb-4">
+            <span class="text-[13px] text-strong tabular-nums">{spotlight.data.cveId}</span>
+            <span class="sev sev-pill" data-sev={severityKey(spotlight.data.severity)}>{spotlight.data.severity}</span>
+          </span>
+          <span class="row-title block text-[18px] leading-snug mb-2 text-balance">{spot.vuln}</span>
+          <span class="meta !text-[13px] mb-7">
+            {spot.klass && <span class="topics !text-[11.5px]">{spot.klass}</span>}
+            {spot.product && <span>{spot.product}</span>}
+          </span>
+          <span class="flex items-baseline justify-between mb-3">
+            <span class="eyebrow !mb-0">CVSS</span>
+            <span><span class="text-strong font-bold text-[22px] tabular-nums">{spot.score.toFixed(1)}</span><span class="text-dim text-[13px]"> / 10</span></span>
+          </span>
+          <span class="cvss-track" aria-hidden="true">
+            {bands.map((b) => <span data-band={b.name} style={`flex:${b.flex}`}></span>)}
+            <i style={`left:${spot.score * 10}%`}></i>
+          </span>
+          <span class="flex justify-between items-center mt-7 pt-5 border-t border-border">
+            <span class="text-[12.5px] text-dim">One of {cves.length} disclosed CVEs</span>
+            <span class="more-link group-hover:text-[var(--accent)]">Read ▸</span>
+          </span>
+        </span>
+      </a>
+    )}
+  </section>
+
+  <section class="band !pt-0" aria-label="At a glance">
+    <ul class="stats">
+      {stats.map((s) => (
+        <li>
+          <a href={s.href}>
+            <span class="stat-num">{s.n}</span>
+            <span class="stat-label">{s.label}</span>
+            <span class="stat-desc">{s.desc}</span>
+          </a>
+        </li>
+      ))}
+    </ul>
   </section>
 
   {latest && (
-    <section class="band !pt-0" aria-labelledby="latest">
+    <section class="band !pt-6" aria-labelledby="latest">
       <div class="band-head">
-        <h2 class="h-section">Latest</h2>
+        <h2 class="h-section"><span class="num">01</span>Latest write-up</h2>
       </div>
-      <a href={`/blog/${latest.id}/`} class="card group block p-6 sm:p-8 lg:p-10">
-        <span class="flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-dim mb-4 tabular-nums">
-          <span class="accent font-medium">● new</span>
-          <span>{formatDate(latest.data.pubDate, "medium")}</span>
+      <a href={`/blog/${latest.id}/`} class="card group p-6 sm:p-9 lg:p-12">
+        <span class="meta mb-5">
+          <span class="text-accent">New</span>
+          <time datetime={latest.data.pubDate.toISOString()}>{formatDate(latest.data.pubDate, "medium")}</time>
           <span>{getReadingTime(latest.body ?? "")}</span>
         </span>
-        <span id="latest" class="row-title block text-[22px] lg:text-[30px] font-extrabold leading-[1.2] tracking-[-0.03em] mb-4 text-balance">
+        <span id="latest" class="row-title block !font-bold text-[22px] lg:text-[32px] leading-[1.2] tracking-[-0.03em] mb-5 max-w-[38ch] text-balance">
           {latest.data.title}
         </span>
-        <span class="block text-[15px] leading-[1.8] max-w-[72ch] mb-6">{latest.data.description}</span>
-        <span class="flex flex-wrap items-center gap-1.5">
-          {latest.data.tags.map((tag) => <span class="tag" data-color={tagColor(tag)}>{tag}</span>)}
-          <span class="ml-auto text-[14px] text-strong font-medium group-hover:text-[var(--accent)] transition-colors">Read the write-up →</span>
+        <span class="block text-[15px] leading-[1.8] max-w-[68ch] mb-8 text-pretty">{latest.data.description}</span>
+        <span class="flex flex-wrap items-center gap-x-6 gap-y-4">
+          <span class="topics">{latest.data.tags.join(" · ")}</span>
+          <span class="more-link ml-auto group-hover:text-[var(--accent)]">Read the write-up ▸</span>
         </span>
       </a>
     </section>
   )}
 
-  {rest.length > 0 && (
-    <section class="band !pt-6" aria-labelledby="more">
-      <div class="band-head">
-        <h2 id="more" class="h-section">Recent writing</h2>
-        <a href="/blog/" class="nav-link text-[14px]">All {posts.length} posts →</a>
-      </div>
-      <ul class="border-t border-border">
-        {rest.slice(0, 5).map((post) => (
-          <li>
-            <a href={`/blog/${post.id}/`} data-post-link class="trow grid md:grid-cols-[8rem_minmax(0,1fr)_4.5rem] gap-x-6 gap-y-1 py-5 px-3 -mx-3">
-              <span class="text-[13px] text-dim tabular-nums md:pt-0.5">{formatDate(post.data.pubDate, "medium")}</span>
-              <span class="min-w-0">
-                <span class="row-title block leading-snug">{post.data.title}</span>
-                <span class="block text-[14px] text-dim mt-1.5 leading-relaxed line-clamp-2">{post.data.description}</span>
-              </span>
-              <span class="text-[13px] text-dim md:text-right tabular-nums md:pt-0.5" data-read-slot><span class="hidden md:block">{short(post)}</span></span>
-            </a>
-          </li>
-        ))}
-      </ul>
-    </section>
-  )}
-
-  {cves.length > 0 && (
-    <section class="band !pt-6 !pb-20" aria-labelledby="cves">
-      <div class="band-head">
-        <h2 id="cves" class="h-section">Recent disclosures</h2>
-        <a href="/cves/" class="nav-link text-[14px]">All {cves.length} CVEs →</a>
-      </div>
-      <ul class="border-t border-border">
-        {cves.slice(0, 5).map((cve) => {
-          const { vuln, product } = splitCveTitle(cve.data.title);
-          return (
+  <div class="band !pt-10 !pb-20 grid lg:grid-cols-2 gap-14 lg:gap-16">
+    {rest.length > 0 && (
+      <section aria-labelledby="more">
+        <div class="band-head">
+          <h2 id="more" class="h-section"><span class="num">02</span>Recent writing</h2>
+          <a href="/blog/" class="more-link">All {posts.length} ▸</a>
+        </div>
+        <ul class="border-t border-border">
+          {rest.slice(0, 5).map((post) => (
             <li>
-              <a href={`/cves/${cve.id}/`} class="trow grid md:grid-cols-[10rem_minmax(0,1fr)_6rem_3rem] gap-x-6 gap-y-1 items-baseline py-4 px-3 -mx-3">
-                <span class="text-[13px] text-strong tabular-nums">{cve.data.cveId}</span>
+              <a href={`/blog/${post.id}/`} data-post-link class="trow grid grid-cols-[minmax(0,1fr)_auto] gap-x-6 py-4 px-3 -mx-3">
                 <span class="min-w-0">
-                  <span class="row-title block leading-snug">{vuln}</span>
-                  {product && <span class="block text-[13px] text-dim mt-1 truncate">{product}</span>}
+                  <span class="row-title block leading-snug">{post.data.title}</span>
+                  <span class="meta !text-[12.5px] mt-1.5">
+                    <time datetime={post.data.pubDate.toISOString()}>{formatDate(post.data.pubDate, "medium")}</time>
+                    <span>{short(post)}</span>
+                  </span>
                 </span>
-                <span><span class="tag" data-color={severityColor(cve.data.severity)}>{cve.data.severity}</span></span>
-                <span class="hidden md:block text-[13px] text-dim text-right tabular-nums">{cve.data.cvssScore?.toFixed(1) ?? "—"}</span>
+                <span class="text-right" data-read-slot></span>
               </a>
             </li>
-          );
-        })}
-      </ul>
-    </section>
-  )}
+          ))}
+        </ul>
+      </section>
+    )}
+
+    {cves.length > 0 && (
+      <section aria-labelledby="cves">
+        <div class="band-head">
+          <h2 id="cves" class="h-section"><span class="num">03</span>Recent disclosures</h2>
+          <a href="/cves/" class="more-link">All {cves.length} ▸</a>
+        </div>
+        <ul class="border-t border-border">
+          {cves.slice(0, 5).map((cve) => {
+            const { vuln, product } = splitCveTitle(cve.data.title);
+            return (
+              <li>
+                <a href={`/cves/${cve.id}/`} class="trow grid grid-cols-[minmax(0,1fr)_auto] gap-x-6 py-4 px-3 -mx-3">
+                  <span class="min-w-0">
+                    <span class="row-title block leading-snug">{vuln}</span>
+                    <span class="meta !text-[12.5px] mt-1.5">
+                      <span class="text-strong">{cve.data.cveId}</span>
+                      {product && <span class="truncate max-w-[24ch]">{product}</span>}
+                    </span>
+                  </span>
+                  <span class="flex flex-col items-end gap-1 pt-0.5">
+                    <span class="sev" data-sev={severityKey(cve.data.severity)}>{cve.data.severity}</span>
+                    <span class="text-[12.5px] text-dim tabular-nums">{cve.data.cvssScore?.toFixed(1) ?? "—"}</span>
+                  </span>
+                </a>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
+    )}
+  </div>
 </BaseLayout>

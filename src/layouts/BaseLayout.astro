@@ -12,7 +12,7 @@ interface Props {
   type?: "website" | "article";
   pubDate?: Date;
   image?: string;
-  /** Article pages: header, content and footer share one ~848px reading column. */
+  /** Narrow the main column to ~848px (CVE pages). */
   reading?: boolean;
 }
 
@@ -52,8 +52,8 @@ const ogImageURL = new URL(image, Astro.site);
     </script>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <meta name="theme-color" content="#fcfbf9" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#0d0d0f" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#f7f5f0" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#14120f" media="(prefers-color-scheme: dark)" />
     <meta name="generator" content={Astro.generator} />
     <meta name="description" content={description} />
     <link rel="canonical" href={canonicalURL} />
@@ -83,9 +83,9 @@ const ogImageURL = new URL(image, Astro.site);
     >
       Skip to content
     </a>
-    <div class:list={["wrap frame min-h-screen flex flex-col", { "wrap-reading": reading }]}>
+    <div class="wrap frame min-h-screen flex flex-col">
       <Header />
-      <main id="main-content" class="flex-1">
+      <main id="main-content" class:list={["flex-1 w-full", { "wrap-reading mx-auto": reading }]}>
         <slot />
       </main>
       <Footer />
@@ -317,7 +317,7 @@ const ogImageURL = new URL(image, Astro.site);
           wrap.className = "diagram";
           const bar = document.createElement("div");
           bar.className = "diagram-bar";
-          bar.innerHTML = `<span></span><button type="button" data-diagram-open>zoom ⤢</button>`;
+          bar.innerHTML = `<span></span><button type="button" data-diagram-open>Zoom ⤢</button>`;
           pre.replaceWith(wrap);
           wrap.append(bar, pre);
         }

@@ -1,7 +1,6 @@
 ---
 // One search UI, used on /search/ and inside the ⌘K dialog. Backed by Pagefind's JS API.
 import { getCollection } from "astro:content";
-import { tagColor } from "../consts";
 
 interface Props {
   mode: "page" | "dialog";
@@ -37,9 +36,9 @@ const inputId = mode === "page" ? "search-input" : "search-dialog-input";
   </form>
   <div class={mode === "page" ? "mt-5" : "px-4 pt-4"}>
     <div class="flex flex-wrap items-center gap-2 text-[13px]" data-search-suggestions>
-      <span class="text-dim mr-1">Try:</span>
+      <span class="eyebrow !mb-0 mr-1">Try</span>
       {suggestions.map((s) => (
-        <button type="button" class="tag cursor-pointer" data-color={tagColor(s)} data-suggest={s}>{s}</button>
+        <button type="button" class="tag cursor-pointer" data-suggest={s}>{s}</button>
       ))}
     </div>
   </div>
@@ -122,7 +121,7 @@ const inputId = mode === "page" ? "search-input" : "search-dialog-input";
         .map((d) => {
           const kind = d.url.startsWith("/cves/") ? "CVE" : "Post";
           return `<li><a href="${escape(d.url)}" class="trow block md:grid md:grid-cols-[3.5rem_minmax(0,1fr)] md:gap-5 py-4 px-3 -mx-3 rounded-sm">
-            <span class="block text-[12px] text-dim md:pt-0.5">${kind}</span>
+            <span class="block text-[11px] tracking-[0.08em] uppercase text-dim md:pt-1">${kind}</span>
             <span class="block min-w-0">
               <span class="row-title block leading-snug">${escape(d.meta.title ?? d.url)}</span>
               <span class="search-excerpt text-[14px] text-dim mt-1 leading-relaxed line-clamp-2">${d.excerpt}</span>

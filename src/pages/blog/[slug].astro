@@ -4,7 +4,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 import ReaderSettings from "../../components/ReaderSettings.astro";
 import Comments from "../../components/Comments.astro";
 import { getReadingTime } from "../../lib/reading-time";
-import { SITE_AUTHOR, SITE_TAGLINE, formatDate, tagColor } from "../../consts";
+import { SITE_AUTHOR, SITE_TAGLINE, formatDate } from "../../consts";
 
 export async function getStaticPaths() {
   const posts = (await getCollection("blog", ({ data }) => !data.draft)).sort(
@@ -41,7 +41,7 @@ const { Content, headings } = await render(post);
 const readTime = getReadingTime(post.body ?? "");
 const words = (post.body ?? "").split(/\s+/).filter(Boolean).length;
 const toc = headings.filter((h) => (h.depth === 2 || h.depth === 3) && h.slug !== "footnote-label");
-const sections = toc.filter((h) => h.depth === 2).length;
+const outline = toc.filter((h) => h.depth === 2);
 const author = post.data.author ?? SITE_AUTHOR;
 const url = new URL(`/blog/${post.id}/`, Astro.site).toString();
 const share = [
@@ -87,44 +87,44 @@ const jsonLd = {
         </nav>
       </div>
     )}
-    <div class="band !pt-10 lg:!pt-16 post-grid">
+    <div class="band !pt-12 lg:!pt-20 post-grid">
       <div class="min-w-0">
-        <header class="mb-12">
-          <nav aria-label="Breadcrumb" class="prompt" data-pagefind-ignore>
-            <a href="/blog/" class="nav-link">blog</a>
-            <span aria-hidden="true">/</span>
-            <span class="truncate">{post.id}</span>
+        <header class="mb-10">
+          <nav aria-label="Breadcrumb" class="eyebrow" data-pagefind-ignore>
+            <a href="/blog/">Blog</a>
+            {post.data.series && <><span class="sep">/</span><span>{post.data.series}</span></>}
           </nav>
-          <h1 class="text-[28px] sm:text-[32px] lg:text-[38px] font-extrabold leading-[1.18] tracking-[-0.035em] text-strong text-balance mb-5">
+          <h1 class="text-[28px] sm:text-[34px] lg:text-[40px] font-bold leading-[1.18] tracking-[-0.03em] text-strong text-balance mb-5">
             {post.data.title}
           </h1>
-          <p class="text-[16px] lg:text-[17px] leading-[1.75] text-dim mb-7 text-pretty">{post.data.description}</p>
-          <div class="flex flex-wrap items-center gap-x-5 gap-y-2 py-3 border-y border-border text-[13px] text-dim" data-pagefind-ignore>
-            <span class="text-strong font-medium">{author}</span>
-            <time datetime={post.data.pubDate.toISOString()}>{formatDate(post.data.pubDate, "medium")}</time>
-            {post.data.updatedDate && <span>updated {formatDate(post.data.updatedDate, "medium")}</span>}
-            <span>{readTime}</span>
-            <span class="hidden sm:inline tabular-nums">{words.toLocaleString("en-US")} words</span>
-            <span class="ml-auto"><ReaderSettings /></span>
+          <div class="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 mb-7" data-pagefind-ignore>
+            <p class="meta">
+              <time datetime={post.data.pubDate.toISOString()}>{formatDate(post.data.pubDate, "medium")}</time>
+              {post.data.updatedDate && <span>Updated {formatDate(post.data.updatedDate, "medium")}</span>}
+              <span>{readTime}</span>
+              <span class="hidden sm:inline">{words.toLocaleString("en-US")} words</span>
+              <span>{author}</span>
+            </p>
+            <ReaderSettings />
           </div>
+          <p class="text-[16px] lg:text-[17px] leading-[1.8] text-text text-pretty">{post.data.description}</p>
           {post.data.tags.length > 0 && (
-            <div class="flex flex-wrap gap-1.5 mt-4" data-pagefind-ignore>
-              {post.data.tags.map((tag) => <a href={`/tags/${tag}/`} class="tag" data-color={tagColor(tag)}>{tag}</a>)}
+            <div class="flex flex-wrap gap-2 mt-6" data-pagefind-ignore>
+              {post.data.tags.map((tag) => <a href={`/tags/${tag}/`} class="tag">{tag}</a>)}
             </div>
           )}
         </header>
 
         {series.length > 1 && (
-          <nav aria-label="Series" class="card mb-10 p-5 text-[14px]" data-pagefind-ignore>
-            <p class="text-dim mb-3">
-              Part {part} of {series.length} · <span class="text-strong font-bold">{post.data.series}</span>
-            </p>
+          <nav aria-label="Series" class="card mb-10 p-5 sm:p-6 text-[14px]" data-pagefind-ignore>
+            <p class="eyebrow !mb-3">Series <span class="sep">·</span> Part {part} of {series.length}</p>
+            <p class="text-strong font-semibold mb-3">{post.data.series}</p>
             <ol class="space-y-1.5">
               {series.map((p, i) => (
                 <li class="flex gap-3">
-                  <span class="text-dim tabular-nums w-6">{String(i + 1).padStart(2, "0")}</span>
+                  <span class="text-dim tabular-nums w-5 text-right">{i + 1}.</span>
                   {p.id === post.id
-                    ? <span class="text-strong font-bold">{p.data.title}</span>
+                    ? <span class="text-strong font-semibold">{p.data.title}</span>
                     : <a href={`/blog/${p.id}/`} class="link">{p.data.title}</a>}
                 </li>
               ))}
@@ -132,16 +132,13 @@ const jsonLd = {
           </nav>
         )}
 
-        {toc.length > 2 && (
-          <details class="toc-box mb-12" data-pagefind-ignore>
-            <summary class="flex items-center justify-between gap-3 cursor-pointer select-none py-1 text-[14px] text-strong">
-              <span>Contents <span class="text-dim">· {sections} sections</span></span>
-              <span class="toc-chevron text-dim" aria-hidden="true">+</span>
-            </summary>
-            <nav class="toc pt-3 pb-1" aria-label="Contents">
-              {toc.map((h) => <a href={`#${h.slug}`} data-depth={h.depth}>{h.text}</a>)}
-            </nav>
-          </details>
+        {outline.length > 1 && (
+          <nav class="toc-box mb-12" aria-label="On this page" data-pagefind-ignore>
+            <p class="eyebrow">On this page</p>
+            <ol class="otp">
+              {outline.map((h) => <li><a href={`#${h.slug}`}>{h.text}</a></li>)}
+            </ol>
+          </nav>
         )}
 
         <div class="resume" data-resume hidden data-pagefind-ignore>
@@ -157,13 +154,13 @@ const jsonLd = {
         </div>
 
         <footer class="mt-16" data-pagefind-ignore>
-          <div class="flex flex-wrap items-center gap-x-4 gap-y-3 py-4 border-y border-border text-[13px]">
+          <div class="flex flex-wrap items-center gap-x-5 gap-y-3 py-4 border-y border-border text-[12px] tracking-[0.07em] uppercase">
             <span class="text-dim">Share</span>
-            <button type="button" class="nav-link cursor-pointer" data-copy-text={url}>copy link</button>
+            <button type="button" class="nav-link cursor-pointer uppercase tracking-[0.07em]" data-copy-text={url}>Copy link</button>
             {share.map((s) => (
               <a href={s.href} target="_blank" rel="noopener noreferrer" class="nav-link">{s.label} ↗</a>
             ))}
-            <a href="#main-content" class="nav-link ml-auto">↑ top</a>
+            <a href="#main-content" class="nav-link ml-auto">Top ↑</a>
           </div>
 
           <p class="hidden md:block text-[12px] text-dim mt-4">
@@ -172,20 +169,18 @@ const jsonLd = {
             Select any passage to copy a link to it.
           </p>
 
-          <div class="card p-6 mt-10">
-            <p class="text-[13px] text-dim mb-2"><span class="accent">$</span> whoami</p>
-            <p class="text-strong font-bold mb-2">{author}</p>
-            <p class="text-[14px] leading-relaxed mb-4">{SITE_TAGLINE}</p>
-            <p class="text-[14px]">
-              Questions, corrections, or a bug you want to talk about?
-              <a href="mailto:realnits@gmail.com" class="link">Email me</a> or
-              <a href="/rss.xml" class="link">subscribe via RSS</a>.
-            </p>
+          <div class="card p-6 sm:p-8 mt-10">
+            <p class="eyebrow !mb-3">Written by</p>
+            <p class="text-strong font-bold text-[17px] mb-2">{author}</p>
+            <p class="text-[14px] leading-relaxed mb-6 max-w-[60ch]">{SITE_TAGLINE}</p>
+            <div class="flex flex-wrap gap-3">
+              <a href="/rss.xml" class="btn btn-sm">Subscribe via RSS <span aria-hidden="true">▸</span></a>
+              <a href="mailto:realnits@gmail.com" class="btn btn-sm btn-ghost">Email me</a>
+            </div>
           </div>
           <Comments />
         </footer>
       </div>
-
     </div>
 
     {(related.length > 0 || newer || older) && (
@@ -195,14 +190,14 @@ const jsonLd = {
             {(newer || older) && (
               <nav aria-label="More posts" class="grid sm:grid-cols-2 gap-4">
                 {older ? (
-                  <a href={`/blog/${older.id}/`} class="card p-5 group">
-                    <span class="block text-[12px] text-dim mb-2">← Previous</span>
+                  <a href={`/blog/${older.id}/`} class="card p-5 sm:p-6 group">
+                    <span class="eyebrow !mb-2">← Previous</span>
                     <span class="row-title block leading-snug">{older.data.title}</span>
                   </a>
                 ) : <div class="hidden sm:block" />}
                 {newer ? (
-                  <a href={`/blog/${newer.id}/`} class="card p-5 group sm:text-right">
-                    <span class="block text-[12px] text-dim mb-2">Next →</span>
+                  <a href={`/blog/${newer.id}/`} class="card p-5 sm:p-6 group sm:text-right">
+                    <span class="eyebrow !mb-2 sm:justify-end">Next →</span>
                     <span class="row-title block leading-snug">{newer.data.title}</span>
                   </a>
                 ) : <div class="hidden sm:block" />}
@@ -210,14 +205,15 @@ const jsonLd = {
             )}
             {related.length > 0 && (
               <div class="mt-14">
-                <h2 class="h-section mb-5">Related reading</h2>
-                <ul>
+                <h2 class="h-section mb-4">Related reading</h2>
+                <ul class="border-t border-border">
                   {related.map((p) => (
                     <li>
                       <a href={`/blog/${p.id}/`} class="trow block py-4 px-3 -mx-3">
                         <span class="row-title block leading-snug">{p.data.title}</span>
-                        <span class="block text-[13px] text-dim mt-1 tabular-nums">
-                          {formatDate(p.data.pubDate, "medium")} · {getReadingTime(p.body ?? "")}
+                        <span class="meta !text-[12.5px] mt-1.5">
+                          <span>{formatDate(p.data.pubDate, "medium")}</span>
+                          <span>{getReadingTime(p.body ?? "")}</span>
                         </span>
                       </a>
                     </li>

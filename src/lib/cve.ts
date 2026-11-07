@@ -50,7 +50,7 @@ export function explainVector(vector?: string): { key: string; label: string; va
     .map(([k, v]) => ({ key: k, label: METRICS[k][0], value: METRICS[k][1][v] ?? v, risk: RISK[k]?.[v] ?? "low" }));
 }
 
-// Notion select colour for a severity.
-export function severityColor(severity: string): string {
-  return { Critical: "red", High: "orange", Medium: "yellow", Low: "gray", Informational: "gray" }[severity] ?? "gray";
+// Key for the `.sev` badge colour; Informational gets the neutral dot.
+export function severityKey(severity: string): string | undefined {
+  return { Critical: "critical", High: "high", Medium: "medium", Low: "low" }[severity];
 }

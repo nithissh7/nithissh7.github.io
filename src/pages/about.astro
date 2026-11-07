@@ -16,14 +16,14 @@ const areas = [
 ---
 
 <BaseLayout title="About" description="Security architect by day, bug bounty hunter by night.">
-  <section class="band">
-    <p class="prompt">about</p>
-    <h1 class="h-page mb-5">I break things to understand how to defend them<span class="accent">.</span></h1>
+  <section class="hero band !pt-14 lg:!pt-24">
+    <p class="eyebrow">About</p>
+    <h1 class="h-page max-w-[24ch] mb-6">I break things to understand <em>how to defend them.</em></h1>
     <p class="lede">Security architect by day, bug bounty hunter by night.</p>
   </section>
 
-  <section class="band">
-    <div class="grid lg:grid-cols-12 gap-12 lg:gap-16">
+  <section class="band !pt-4">
+    <div class="grid lg:grid-cols-12 gap-12 lg:gap-16 pt-10 border-t border-border">
       <div class="lg:col-span-7 prose">
         <p>
           I'm Nithissh. I handle platform and AI security at one of the largest pharma companies. Outside work I
@@ -42,18 +42,18 @@ const areas = [
       </div>
       <div class="lg:col-span-5 space-y-10">
         <div>
-          <p class="text-[13px] text-strong font-bold mb-3">What I do</p>
+          <p class="eyebrow">What I do</p>
           <dl class="space-y-5">
             {areas.map((a) => (
               <div>
-                <dt class="text-strong font-medium mb-1">{a.k}</dt>
+                <dt class="text-strong font-semibold mb-1">{a.k}</dt>
                 <dd class="text-[14px] text-dim leading-relaxed">{a.v}</dd>
               </div>
             ))}
           </dl>
         </div>
         <div>
-          <p class="text-[13px] text-strong font-bold mb-3">Elsewhere</p>
+          <p class="eyebrow">Elsewhere</p>
           <ul class="flex flex-wrap gap-x-5 gap-y-1 text-[14px]">
             {SOCIAL_LINKS.map((link) => (
               <li>
@@ -75,10 +75,10 @@ const areas = [
 
   <section class="band">
     <div class="band-head">
-      <h2 class="h-section">Certifications</h2>
-      <a href="/certifications/" class="nav-link text-[14px]">Details →</a>
+      <h2 class="h-section"><span class="num">01</span>Certifications</h2>
+      <a href="/certifications/" class="more-link">Details ▸</a>
     </div>
-    <ul class="grid md:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-5 text-[14px]">
+    <ul class="grid md:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-5 text-[14px] pt-6 border-t border-border">
       {certs.map((c) => (
         <li>
           <span class="block text-strong">{c.data.name}</span>

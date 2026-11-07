@@ -9,13 +9,13 @@ const monthYear = (d: Date) => d.toLocaleDateString("en-US", { month: "short", y
 ---
 
 <BaseLayout title="Certifications" description="Professional certifications and credentials earned by Nithissh.">
-  <section class="band">
-    <p class="prompt">certifications</p>
+  <section class="band !pt-14 lg:!pt-20">
+    <p class="eyebrow">Credentials</p>
     <h1 class="h-page mb-5">Certifications<span class="accent">.</span></h1>
-    <p class="lede">Hands-on certifications across web application security, cloud, and DevSecOps — newest first, each with a link to verify it.</p>
+    <p class="lede">Hands-on certifications across web application security, cloud, and DevSecOps, newest first, each with a link to verify it.</p>
   </section>
 
-  <section class="band">
+  <section class="band !pt-2">
     <ul class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
       {certs.map((cert) => (
         <li class="card flex flex-col p-6">
@@ -27,17 +27,17 @@ const monthYear = (d: Date) => d.toLocaleDateString("en-US", { month: "short", y
                 width="48"
                 height="48"
                 loading="lazy"
-                class="size-12 shrink-0 object-contain rounded-md bg-white p-1"
+                class="size-12 shrink-0 object-contain rounded-xl bg-white p-1.5"
               />
             )}
             <div class="min-w-0">
               <h2 class="text-strong font-bold leading-snug">{cert.data.name}</h2>
-              <p class="text-[13px] text-dim mt-1">{cert.data.issuer} · {monthYear(cert.data.dateEarned)}</p>
+              <p class="text-[12.5px] text-dim mt-1">{cert.data.issuer} · <span class="whitespace-nowrap">{monthYear(cert.data.dateEarned)}</span></p>
             </div>
           </div>
           <p class="text-[14px] leading-relaxed mb-5">{cert.data.description}</p>
           {cert.data.credentialUrl && (
-            <a href={cert.data.credentialUrl} target="_blank" rel="noopener noreferrer" class="link text-[14px] mt-auto">
+            <a href={cert.data.credentialUrl} target="_blank" rel="noopener noreferrer" class="more-link mt-auto">
               Verify credential ↗
             </a>
           )}

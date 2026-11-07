@@ -1,8 +1,8 @@
 ---
 import { getCollection, render } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import { formatDate, tagColor } from "../../consts";
-import { explainVector, severityColor, splitCveTitle, vulnClass } from "../../lib/cve";
+import { formatDate } from "../../consts";
+import { explainVector, severityKey, splitCveTitle, vulnClass } from "../../lib/cve";
 
 export async function getStaticPaths() {
   const cves = (await getCollection("cves", ({ data }) => !data.draft)).sort(
@@ -44,18 +44,18 @@ const bands = [
   image={`/cves/${cve.id}/og.png`}
 >
   <article>
-    <header class="band !pb-4">
-      <nav aria-label="Breadcrumb" class="prompt" data-pagefind-ignore>
-        <a href="/cves/" class="nav-link">cves</a>
-        <span aria-hidden="true">/</span>
+    <header class="band !pt-12 lg:!pt-20 !pb-6">
+      <nav aria-label="Breadcrumb" class="eyebrow" data-pagefind-ignore>
+        <a href="/cves/">CVEs</a>
+        <span class="sep">/</span>
         <span>{d.cveId}</span>
       </nav>
-      <h1 class="text-[28px] lg:text-[36px] font-extrabold leading-[1.18] tracking-[-0.035em] text-strong text-balance mb-3">{vuln}</h1>
-      <p class="text-[16px] lg:text-[17px] text-dim mb-5">{product}{d.vendor && <> · {d.vendor}</>}</p>
-      <div class="flex flex-wrap gap-2" data-pagefind-ignore>
-        <span class="tag" data-color={severityColor(d.severity)}>{d.severity}</span>
-        {klass && <span class="tag" data-color={tagColor(klass)}>{klass}</span>}
-        {d.status !== "Published" && <span class="tag">{d.status}</span>}
+      <h1 class="text-[28px] lg:text-[38px] font-bold leading-[1.18] tracking-[-0.03em] text-strong text-balance mb-4">{vuln}</h1>
+      <p class="text-[16px] lg:text-[17px] text-dim mb-7">{product}{d.vendor && <> · {d.vendor}</>}</p>
+      <div class="flex flex-wrap items-center gap-2" data-pagefind-ignore>
+        <span class="sev sev-pill" data-sev={severityKey(d.severity)}>{d.severity}{score !== undefined && <span class="text-dim tabular-nums">{score.toFixed(1)}</span>}</span>
+        {klass && <span class="tag !h-7 !leading-7 !px-3">{klass}</span>}
+        {d.status !== "Published" && <span class="tag !h-7 !leading-7 !px-3">{d.status}</span>}
       </div>
     </header>
 
@@ -64,8 +64,8 @@ const bands = [
         <div>
           <dt>CVE ID</dt>
           <dd class="flex items-center gap-3">
-            <code class="!text-[14px]">{d.cveId}</code>
-            <button type="button" class="nav-link text-[12px] cursor-pointer" data-copy-text={d.cveId}>copy</button>
+            <span class="tabular-nums">{d.cveId}</span>
+            <button type="button" class="more-link cursor-pointer" data-copy-text={d.cveId}>Copy</button>
           </dd>
         </div>
         <div>
@@ -95,11 +95,11 @@ const bands = [
       </dl>
 
       {(score !== undefined || metrics.length > 0) && (
-        <div class="cvss card p-5 sm:p-6 mt-8" data-pagefind-ignore>
+        <div class="cvss card p-5 sm:p-7 mt-10" data-pagefind-ignore>
           {score !== undefined && (
             <div class="cvss-gauge" role="img" aria-label={`CVSS ${score.toFixed(1)} out of 10, ${d.severity}`}>
               <div class="flex items-baseline justify-between mb-3">
-                <span class="text-[13px] text-dim">CVSS base score</span>
+                <span class="eyebrow !mb-0">CVSS base score</span>
                 <span><span class="text-strong font-extrabold text-[22px] tabular-nums">{score.toFixed(1)}</span><span class="text-dim text-[13px]"> / 10</span></span>
               </div>
               <div class="cvss-track">
@@ -123,7 +123,7 @@ const bands = [
               </ul>
               <p class="flex flex-wrap items-center gap-3 mt-4 text-[12px] text-dim">
                 <code class="!text-[12px] break-all">{d.cvssVector}</code>
-                <button type="button" class="nav-link cursor-pointer" data-copy-text={d.cvssVector}>copy vector</button>
+                <button type="button" class="more-link cursor-pointer" data-copy-text={d.cvssVector}>Copy vector</button>
                 <span class="ml-auto flex items-center gap-3"><span class="risk-key" data-risk="high">attacker-friendly</span><span class="risk-key" data-risk="low">limiting</span></span>
               </p>
             </>
@@ -131,7 +131,7 @@ const bands = [
         </div>
       )}
 
-      <div class="prose mt-8" data-pagefind-body data-pagefind-meta={`title:${d.cveId} · ${vuln}${product ? ` — ${product}` : ""}`}>
+      <div class="prose mt-12" data-pagefind-body data-pagefind-meta={`title:${d.cveId} · ${vuln}${product ? ` — ${product}` : ""}`}>
         {klass && <span class="sr-only">{klass} vulnerability in {product}.</span>}
         <Content />
       </div>
@@ -142,13 +142,13 @@ const bands = [
         <div class="grid md:grid-cols-2 gap-8 pt-8 border-t border-border">
           {older ? (
             <a href={`/cves/${older.id}/`} class="group block">
-              <span class="block text-[13px] text-dim mb-2">← Older · {older.data.cveId}</span>
+              <span class="eyebrow !mb-2">← Older · {older.data.cveId}</span>
               <span class="row-title block leading-snug group-hover:decoration-border-strong">{shortTitle(older.data.title)}</span>
             </a>
           ) : <div class="hidden md:block" />}
           {newer ? (
             <a href={`/cves/${newer.id}/`} class="group block md:text-right">
-              <span class="block text-[13px] text-dim mb-2">Newer · {newer.data.cveId} →</span>
+              <span class="eyebrow !mb-2 md:justify-end">Newer · {newer.data.cveId} →</span>
               <span class="row-title block leading-snug group-hover:decoration-border-strong">{shortTitle(newer.data.title)}</span>
             </a>
           ) : <div class="hidden md:block" />}

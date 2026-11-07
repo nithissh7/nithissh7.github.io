@@ -43,9 +43,11 @@ const sections = () => [...(prose()?.querySelectorAll<HTMLElement>("h2[id]:not(.
 
 /* ---------------- 1. Current-section bar ---------------- */
 
+// A heading counts as current once it reaches the spot anchor jumps land it (≤ 9.5rem from the top).
+const READ_LINE = 160;
 function currentHeading(): HTMLElement | undefined {
   let current: HTMLElement | undefined;
-  for (const h of sections()) if (h.getBoundingClientRect().top < 140) current = h;
+  for (const h of sections()) if (h.getBoundingClientRect().top < READ_LINE) current = h;
   return current;
 }
 
@@ -54,7 +56,7 @@ function sectionNumber(h: HTMLElement): string {
   const h2s = [...(prose()?.querySelectorAll("h2[id]:not(.sr-only)") ?? [])];
   const parent = h.tagName === "H2" ? h : findPrevH2(h);
   const n = parent ? h2s.indexOf(parent) + 1 : 0;
-  return n > 0 ? String(n).padStart(2, "0") : "";
+  return n > 0 ? `${n}.` : "";
 }
 function findPrevH2(el: Element): Element | null {
   let node: Element | null = el.previousElementSibling;
@@ -81,7 +83,7 @@ function updateSectionBar() {
   const label = bar.querySelector("[data-section-label]");
   if (label) {
     const num = h ? sectionNumber(h) : "";
-    label.innerHTML = h ? `${num ? `<span class="accent">${num}</span> · ` : ""}${escapeHtml(headingText(h))}` : "Contents";
+    label.innerHTML = h ? `${num ? `<span class="accent">${num}</span> ` : ""}${escapeHtml(headingText(h))}` : "Contents";
   }
 }
 function closeSectionMenu() {
@@ -153,7 +155,7 @@ function offerResume() {
   const h = document.getElementById(state.id);
   if (!h) return;
   const num = sectionNumber(h);
-  prompt.querySelector("[data-resume-label]")!.textContent = `${num ? num + " · " : ""}${headingText(h)}`;
+  prompt.querySelector("[data-resume-label]")!.textContent = `${num ? num + " " : ""}${headingText(h)}`;
   prompt.dataset.target = state.id;
   prompt.hidden = false;
 }
@@ -166,7 +168,7 @@ function markReadPosts() {
     if (!state) return;
     const mark = document.createElement("span");
     mark.className = "read-mark";
-    mark.textContent = state.done ? "✓ read" : `${Math.round(state.pct * 100)}% read`;
+    mark.textContent = state.done ? "✓ Read" : `${Math.round(state.pct * 100)}% read`;
     a.querySelector("[data-read-slot]")?.append(mark);
   });
 }
@@ -477,7 +479,7 @@ document.addEventListener("keydown", (e) => {
   const heads = sections().filter((h) => h.tagName === "H2");
   if ((e.key === "j" || e.key === "k") && heads.length) {
     const tops = heads.map((h) => h.getBoundingClientRect().top);
-    const target = e.key === "j" ? heads[tops.findIndex((top) => top > 100)] : heads[tops.findLastIndex((top) => top < -10)];
+    const target = e.key === "j" ? heads[tops.findIndex((top) => top > READ_LINE)] : heads[tops.findLastIndex((top) => top < -10)];
     if (target) {
       e.preventDefault();
       target.scrollIntoView({ behavior: "smooth" });
