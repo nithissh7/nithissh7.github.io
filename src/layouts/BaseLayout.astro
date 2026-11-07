@@ -145,6 +145,7 @@ const ogImageURL = new URL(image, Astro.site);
 
     <script>
       import "../scripts/reader";
+      import "../scripts/diagrams";
     </script>
     <script>
       import { navigate } from "astro:transitions/client";
@@ -311,27 +312,31 @@ const ogImageURL = new URL(image, Astro.site);
       // Mermaid renders client-side (and re-renders on theme change), so size every
       // SVG it inserts: never below MIN_SCALE of natural size; scroll sideways instead.
       const MIN_SCALE = 0.72;
-      function sizeDiagram(pre: HTMLElement) {
-        const svg = pre.querySelector("svg");
-        if (!svg || svg.dataset.sized) return;
-        svg.dataset.sized = "true";
-
+      // The frame goes in before the diagram is drawn, so nothing shifts when it arrives.
+      function frameDiagram(pre: HTMLElement): HTMLElement {
         let wrap = pre.closest<HTMLElement>(".diagram");
         if (!wrap) {
           wrap = document.createElement("figure");
           wrap.className = "diagram";
           const bar = document.createElement("div");
           bar.className = "diagram-bar";
-          bar.innerHTML = `<span></span><button type="button" data-diagram-open>Zoom ⤢</button>`;
+          bar.innerHTML = `<span>diagram</span><button type="button" data-diagram-open>Zoom ⤢</button>`;
           pre.replaceWith(wrap);
           wrap.append(bar, pre);
         }
+        return wrap;
+      }
+      function sizeDiagram(pre: HTMLElement) {
+        const svg = pre.querySelector("svg");
+        if (!svg || svg.dataset.sized) return;
+        svg.dataset.sized = "true";
+        const wrap = frameDiagram(pre);
 
         const natural = svg.viewBox.baseVal?.width || svg.getBoundingClientRect().width;
         const pad = 32;
         const available = pre.clientWidth - pad;
         const width = Math.min(natural, Math.max(available, natural * MIN_SCALE));
-        // astro-mermaid forces width:100% !important; an inline !important wins.
+        // Mermaid sets its own max-width on the SVG; an inline !important wins.
         svg.style.setProperty("max-width", "none", "important");
         svg.style.setProperty("width", `${Math.round(width)}px`, "important");
         svg.style.setProperty("height", "auto", "important");
@@ -354,6 +359,7 @@ const ogImageURL = new URL(image, Astro.site);
         document.querySelectorAll<HTMLElement>(".prose .mermaid").forEach((pre) => {
           if (pre.dataset.watched) return;
           pre.dataset.watched = "true";
+          frameDiagram(pre);
           sizeDiagram(pre);
           new MutationObserver(() => sizeDiagram(pre)).observe(pre, { childList: true, subtree: true });
         });

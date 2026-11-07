@@ -2,7 +2,7 @@
 import { defineConfig } from "astro/config";
 
 import tailwindcss from "@tailwindcss/vite";
-import mermaid from "astro-mermaid";
+import { satteri } from "@astrojs/markdown-satteri";
 import sitemap from "@astrojs/sitemap";
 
 const el = (tagName, properties, children) => ({ type: "element", tagName, properties, children });
@@ -62,6 +62,17 @@ const readableTokens = {
   },
 };
 
+/** ```mermaid blocks become <pre class="mermaid"> source; src/scripts/diagrams.ts draws them as they near the viewport. */
+const escapeHtml = (text) =>
+  text.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+const mermaidBlocks = {
+  name: "mermaid-blocks",
+  code(node) {
+    if (node.lang !== "mermaid") return;
+    return { type: "html", value: `<pre class="mermaid">${escapeHtml(node.value)}</pre>` };
+  },
+};
+
 // https://astro.build/config
 export default defineConfig({
   site: "https://nithissh7.github.io",
@@ -71,6 +82,7 @@ export default defineConfig({
     defaultStrategy: "viewport",
   },
   markdown: {
+    processor: satteri({ mdastPlugins: [mermaidBlocks] }),
     shikiConfig: {
       themes: { light: "github-light", dark: "github-dark" },
       defaultColor: false,
@@ -79,19 +91,6 @@ export default defineConfig({
     },
   },
   integrations: [
-    mermaid({
-      theme: "neutral",
-      autoTheme: true,
-      enableLog: false,
-      // Diagrams live in a ~70ch reading column: wrap long messages and keep
-      // spacing tight so they fit instead of scrolling sideways.
-      mermaidConfig: {
-        fontFamily: "JetBrains Mono, ui-monospace, monospace",
-        fontSize: 13,
-        flowchart: { diagramPadding: 4, nodeSpacing: 22, rankSpacing: 32, padding: 8, wrappingWidth: 200, htmlLabels: true },
-        sequence: { wrap: false, width: 100, actorMargin: 16, diagramMarginX: 4, diagramMarginY: 8, actorFontSize: 13, messageFontSize: 13, noteFontSize: 13, messageMargin: 32, boxMargin: 6, noteMargin: 8, mirrorActors: false },
-      },
-    }),
     sitemap(),
   ],
   vite: {
