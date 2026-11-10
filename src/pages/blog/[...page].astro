@@ -1,89 +1,96 @@
 ---
 import type { GetStaticPaths } from "astro";
-import { getCollection } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import PostTable from "../../components/PostTable.astro";
+import PostList from "../../components/PostList.astro";
 import Pagination from "../../components/Pagination.astro";
+import { KINDS, getPosts, kindCounts } from "../../lib/posts";
 
 export const getStaticPaths = (async ({ paginate }) => {
-  const posts = (await getCollection("blog", ({ data }) => !data.draft)).sort(
-    (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
-  );
-  const counts = new Map<string, number>();
-  for (const post of posts) for (const tag of post.data.tags) counts.set(tag, (counts.get(tag) ?? 0) + 1);
-  const topics = [...counts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, 10);
-  return paginate(posts, { pageSize: 30, props: { total: posts.length, topics } });
+  const posts = await getPosts();
+  return paginate(posts, { pageSize: 30, props: { total: posts.length, kinds: kindCounts(posts) } });
 }) satisfies GetStaticPaths;
 
-const { page, total, topics } = Astro.props;
+const { page, total, kinds } = Astro.props;
 ---
 
 <BaseLayout
-  title={page.currentPage > 1 ? `Blog — page ${page.currentPage}` : "Blog"}
+  title={page.currentPage > 1 ? `Writing — page ${page.currentPage}` : "Writing"}
   description="Write-ups on vulnerability research, CVE teardowns, bug bounty findings, and security challenges."
 >
-  <section class="band !pt-14 lg:!pt-20 !pb-6">
-    <p class="eyebrow">Blog</p>
-    <h1 class="h-page mb-5">Writing<span class="accent">.</span></h1>
-    <p class="lede mb-9">
-      {total} write-ups on vulnerability research, CVE teardowns, bug bounty findings, and security challenges, newest first.
-    </p>
-    <label class="filter-box mb-5">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
-      <span class="sr-only">Filter posts</span>
-      <input type="search" placeholder="Filter posts, try “xss” or “kestra”" autocomplete="off" spellcheck="false" data-post-query />
-    </label>
-    <div class="flex flex-wrap items-center gap-2" role="group" aria-label="Filter by topic" data-post-filter>
-      <button type="button" class="tag cursor-pointer" aria-pressed="true" data-filter="all">All <span class="n">{total}</span></button>
-      {topics.map(([tag, n]) => (
-        <button type="button" class="tag cursor-pointer" aria-pressed="false" data-filter={tag}>
-          {tag} <span class="n">{n}</span>
-        </button>
-      ))}
-      <a href="/tags/" class="more-link ml-2">All topics ▸</a>
-    </div>
-  </section>
+  <div class="shell">
+    <header class="page-head">
+      <h1 class="h-page">Writing</h1>
+      <p class="lede mt-5">
+        {total} write-ups on vulnerability research, CVE teardowns, bug bounty findings, and security challenges, newest first.
+      </p>
+    </header>
 
-  <section class="band !pt-0">
-    <PostTable posts={page.data} />
-    <p class="text-[14px] text-dim py-10 hidden" data-filter-empty>No posts match that filter.</p>
+    <div class="filters mb-10">
+      <div class="filter-chips" role="group" aria-label="Filter by kind of post" data-post-filter>
+        <button type="button" class="tag cursor-pointer" aria-pressed="true" data-filter="all">All <span class="n">{total}</span></button>
+        {kinds.map(({ kind, n }) => (
+          <button type="button" class="tag cursor-pointer" aria-pressed="false" data-filter={kind} title={KINDS[kind].blurb}>
+            {KINDS[kind].plural} <span class="n">{n}</span>
+          </button>
+        ))}
+        <a href="/tags/" class="more-link ml-2">By topic →</a>
+      </div>
+      <label class="filter-box">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+        <span class="sr-only">Filter posts</span>
+        <input type="search" placeholder="Filter: “xss”, “kestra”…" autocomplete="off" spellcheck="false" data-post-query />
+      </label>
+    </div>
+
+    <PostList posts={page.data} />
+    <p class="text-dim py-10" data-filter-empty hidden>No posts match that filter.</p>
     <div class="mt-10">
       <Pagination current={page.currentPage} last={page.lastPage} prev={page.url.prev} next={page.url.next} base="/blog" />
     </div>
-  </section>
+  </div>
 </BaseLayout>
 
 <script>
+  // Kind buttons and the text box combine: a post must match both. The kind is kept in
+  // the URL (?kind=research) so a filtered archive can be linked to.
   document.addEventListener("astro:page-load", () => {
     const group = document.querySelector<HTMLElement>("[data-post-filter]");
     const input = document.querySelector<HTMLInputElement>("[data-post-query]");
     if (!group || !input || group.dataset.ready) return;
     group.dataset.ready = "true";
-    let topic = "all";
+    const buttons = [...group.querySelectorAll<HTMLButtonElement>("[data-filter]")];
+    let kind = "all";
 
-    // Topic buttons and the text box combine: a post must match both.
     const apply = () => {
       const words = input.value.toLowerCase().split(/\s+/).filter(Boolean);
       let shown = 0;
       document.querySelectorAll<HTMLElement>("[data-year-group]").forEach((section) => {
         let inYear = 0;
-        section.querySelectorAll<HTMLElement>("li[data-tags]").forEach((li) => {
-          const hit =
-            (topic === "all" || li.dataset.tags!.split(" ").includes(topic)) &&
-            words.every((w) => li.dataset.text!.includes(w));
+        section.querySelectorAll<HTMLElement>("li[data-kind]").forEach((li) => {
+          const hit = (kind === "all" || li.dataset.kind === kind) && words.every((w) => li.dataset.text!.includes(w));
           li.hidden = !hit;
           if (hit) inYear++;
         });
         section.hidden = inYear === 0;
+        const count = section.querySelector("[data-year-count]");
+        if (count) count.textContent = String(inYear);
         shown += inYear;
       });
-      document.querySelector("[data-filter-empty]")?.classList.toggle("hidden", shown > 0);
+      document.querySelector<HTMLElement>("[data-filter-empty]")!.hidden = shown > 0;
+      buttons.forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.filter === kind)));
     };
+
+    const fromUrl = new URL(location.href).searchParams.get("kind");
+    if (fromUrl && buttons.some((b) => b.dataset.filter === fromUrl)) kind = fromUrl;
+    if (kind !== "all") apply();
+
     group.addEventListener("click", (e) => {
       const btn = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-filter]");
       if (!btn) return;
-      topic = btn.dataset.filter!;
-      group.querySelectorAll("[data-filter]").forEach((b) => b.setAttribute("aria-pressed", String(b === btn)));
+      kind = btn.dataset.filter!;
+      const url = new URL(location.href);
+      kind === "all" ? url.searchParams.delete("kind") : url.searchParams.set("kind", kind);
+      history.replaceState(history.state, "", url);
       apply();
     });
     input.addEventListener("input", apply);

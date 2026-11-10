@@ -4,11 +4,10 @@ import Search from "../components/Search.astro";
 ---
 
 <BaseLayout title="Search" description="Search every post and CVE on realnits.">
-  <section class="band !pt-14 lg:!pt-20 min-h-[70vh]">
-    <div class="max-w-3xl">
-      <p class="eyebrow">Search</p>
-      <h1 class="h-page mb-8">Find a post or CVE</h1>
-      <Search mode="page" />
-    </div>
-  </section>
+  <div class="shell shell-reading min-h-[60vh]">
+    <header class="page-head !pb-8">
+      <h1 class="h-page">Search</h1>
+    </header>
+    <Search mode="page" />
+  </div>
 </BaseLayout>

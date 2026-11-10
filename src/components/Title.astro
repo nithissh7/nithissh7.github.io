@@ -1,0 +1,12 @@
+---
+// A post or CVE title as text, with any CVE ID kept on one line ("CVE-2026-49869" never breaks at a hyphen).
+import { titleParts } from "../consts";
+
+interface Props {
+  text: string;
+}
+
+const parts = titleParts(Astro.props.text);
+---
+
+{parts.map((part, i) => (i % 2 ? <span class="whitespace-nowrap">{part}</span> : part))}

@@ -8,18 +8,21 @@ import sitemap from "@astrojs/sitemap";
 const el = (tagName, properties, children) => ({ type: "element", tagName, properties, children });
 const text = (value) => ({ type: "text", value });
 
-/** Wraps every highlighted block in a header bar with the language (or title) and a copy button. */
+/**
+ * Wraps every highlighted block with its label and a copy button. A fence with
+ * title="…" (```text title="directory tree") gets a caption bar; otherwise the
+ * language sits in the corner and the actions appear on hover or focus.
+ */
 const codeChrome = {
   name: "code-chrome",
   root(root) {
     const lang = this.options.lang;
-    // ```text title="directory tree"``` overrides the label.
     const title = this.options.meta?.__raw?.match(/title="([^"]+)"/)?.[1];
     const label = title ?? (!lang || lang === "plaintext" || lang === "txt" ? "text" : lang);
     root.children = [
-      el("div", { className: ["code-block"] }, [
-        el("div", { className: ["code-block-bar"] }, [
-          el("span", {}, [text(label)]),
+      el("div", { className: ["code-block"], ...(title ? { "data-titled": "" } : {}) }, [
+        el("div", { className: ["code-head"] }, [
+          el("span", { className: ["code-label"] }, [text(label)]),
           el("div", { className: ["code-actions"] }, [
             el("button", { type: "button", "data-copy": "", "aria-label": "Copy code" }, [text("copy")]),
           ]),

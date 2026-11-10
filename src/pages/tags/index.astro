@@ -1,28 +1,33 @@
 ---
-import { getCollection } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import { tagLabel } from "../../consts";
+import { getPosts, tagCounts } from "../../lib/posts";
 
-const posts = await getCollection("blog", ({ data }) => !data.draft);
-const counts = new Map<string, number>();
-for (const post of posts) for (const tag of post.data.tags) counts.set(tag, (counts.get(tag) ?? 0) + 1);
-const tags = [...counts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+const posts = await getPosts();
+const tags = tagCounts(posts);
 ---
 
-<BaseLayout title="Tags" description="Every topic written about on realnits.">
-  <section class="band !pt-14 lg:!pt-20 !pb-24 min-h-[60vh]">
-    <div class="max-w-3xl">
-      <p class="eyebrow">Topics</p>
-      <h1 class="h-page mb-5">Topics<span class="accent">.</span></h1>
-      <p class="lede mb-10">{tags.length} topics across {posts.length} posts. Pick one to see its posts.</p>
-      <ul class="flex flex-wrap gap-2.5" aria-label="Topics">
-        {tags.map(([tag, n]) => (
-          <li>
-            <a href={`/tags/${tag}/`} class="tag !text-[12.5px] !leading-[34px] !px-4">
-              {tag} <span class="n">{n}</span>
-            </a>
-          </li>
-        ))}
-      </ul>
-    </div>
-  </section>
+<BaseLayout title="Topics" description="Every topic written about on realnits.">
+  <div class="shell">
+    <header class="page-head">
+      <nav aria-label="Breadcrumb" class="eyebrow">
+        <a href="/blog/">Writing</a>
+        <span class="sep">/</span>
+        <span>Topics</span>
+      </nav>
+      <h1 class="h-page">Topics</h1>
+      <p class="lede mt-5">{tags.length} topics across {posts.length} posts. Pick one to see its posts.</p>
+    </header>
+
+    <ul class="grid sm:grid-cols-2 lg:grid-cols-3 gap-x-12 border-t border-border-strong" aria-label="Topics">
+      {tags.map(([tag, n]) => (
+        <li>
+          <a href={`/tags/${tag}/`} class="topic-row">
+            <span>{tagLabel(tag)}</span>
+            <span class="n">{n} {n === 1 ? "post" : "posts"}</span>
+          </a>
+        </li>
+      ))}
+    </ul>
+  </div>
 </BaseLayout>

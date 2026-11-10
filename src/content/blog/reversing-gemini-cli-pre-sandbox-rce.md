@@ -4,6 +4,7 @@ pubDate: 2026-07-24T00:00:00.000Z
 title: "The Sandbox That Wasn't: Reversing CVE-2026-12537 in Gemini CLI"
 featured: true
 draft: false
+category: research
 tags:
   - vulnerability-research
   - cve

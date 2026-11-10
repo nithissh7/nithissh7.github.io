@@ -41,28 +41,16 @@ async function copy(text: string, message: string) {
 const prose = () => document.querySelector<HTMLElement>(".prose[data-reading-body]");
 const sections = () => [...(prose()?.querySelectorAll<HTMLElement>("h2[id]:not(.sr-only), h3[id]") ?? [])];
 
-/* ---------------- 1. Current-section bar ---------------- */
+/* ---------------- 1. Reading bar: current section ---------------- */
 
-// A heading counts as current once it reaches the spot anchor jumps land it (≤ 10.25rem from the top).
-const READ_LINE = 172;
+// A heading counts as current once it reaches the spot anchor jumps land it: just below the reading bar.
+const READ_LINE = 96;
 function currentHeading(): HTMLElement | undefined {
   let current: HTMLElement | undefined;
   for (const h of sections()) if (h.getBoundingClientRect().top < READ_LINE) current = h;
   return current;
 }
 
-function sectionNumber(h: HTMLElement): string {
-  // h2s are numbered by CSS counter; mirror that for the bar label.
-  const h2s = [...(prose()?.querySelectorAll("h2[id]:not(.sr-only)") ?? [])];
-  const parent = h.tagName === "H2" ? h : findPrevH2(h);
-  const n = parent ? h2s.indexOf(parent) + 1 : 0;
-  return n > 0 ? `${n}.` : "";
-}
-function findPrevH2(el: Element): Element | null {
-  let node: Element | null = el.previousElementSibling;
-  while (node && node.tagName !== "H2") node = node.previousElementSibling;
-  return node;
-}
 function headingText(h: HTMLElement): string {
   const clone = h.cloneNode(true) as HTMLElement;
   clone.querySelector(".anchor")?.remove();
@@ -70,21 +58,20 @@ function headingText(h: HTMLElement): string {
 }
 
 function updateSectionBar() {
-  const bar = document.querySelector<HTMLElement>("[data-section-bar]");
+  const bar = document.querySelector<HTMLElement>("[data-reading-bar]");
   const body = prose();
   if (!bar || !body) return;
-  const toc = document.querySelector(".toc-box");
-  const pastToc = (toc ?? body).getBoundingClientRect().bottom < 60;
+  // Shown from the moment the article's own header has scrolled away until the text ends.
+  const start = document.querySelector("[data-reading-start]") ?? body;
+  const pastStart = start.getBoundingClientRect().bottom < 0;
   const beforeEnd = body.getBoundingClientRect().bottom > window.innerHeight * 0.4;
-  const show = pastToc && beforeEnd;
+  const show = pastStart && beforeEnd;
   bar.toggleAttribute("data-show", show);
   if (!show) closeSectionMenu();
+  // Before the first heading the bar carries the post's title.
   const h = currentHeading();
   const label = bar.querySelector("[data-section-label]");
-  if (label) {
-    const num = h ? sectionNumber(h) : "";
-    label.innerHTML = h ? `${num ? `<span class="accent">${num}</span> ` : ""}${escapeHtml(headingText(h))}` : "Contents";
-  }
+  if (label) label.textContent = h ? headingText(h) : (bar.dataset.title ?? "Contents");
 }
 function closeSectionMenu() {
   const menu = document.querySelector<HTMLElement>("[data-section-menu]");
@@ -154,8 +141,7 @@ function offerResume() {
   if (!prompt || !state || location.hash || state.pct < 0.05 || state.pct > 0.95 || !state.id) return;
   const h = document.getElementById(state.id);
   if (!h) return;
-  const num = sectionNumber(h);
-  prompt.querySelector("[data-resume-label]")!.textContent = `${num ? num + " " : ""}${headingText(h)}`;
+  prompt.querySelector("[data-resume-label]")!.textContent = headingText(h);
   prompt.dataset.target = state.id;
   prompt.hidden = false;
 }
@@ -202,7 +188,8 @@ function applySetting(key: string, value: string) {
 
 /* ---------------- 5 & 6. Long code: collapse + wrap ---------------- */
 
-const COLLAPSE_AT = 28;
+// Only listings well past a screenful fold away; the code is the point of most posts.
+const COLLAPSE_AT = 40;
 function enhanceCode() {
   prose()
     ?.querySelectorAll<HTMLElement>(".code-block")
@@ -210,7 +197,7 @@ function enhanceCode() {
       if (block.dataset.enhanced) return;
       block.dataset.enhanced = "";
       const pre = block.querySelector("pre");
-      const copyBtn = block.querySelector(".code-block-bar [data-copy]");
+      const copyBtn = block.querySelector(".code-head [data-copy]");
       if (!pre || !copyBtn) return;
       let actions = block.querySelector(".code-actions");
       if (!actions) {

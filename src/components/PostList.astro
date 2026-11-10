@@ -1,0 +1,47 @@
+---
+// The archive: posts grouped under year headings, newest first.
+// Rows carry data-kind / data-text so the filter on /blog/ can hide them.
+import Title from "./Title.astro";
+import { formatDate, tagLabel, yearOf } from "../consts";
+import { KINDS, kindOf, minutes, type Post } from "../lib/posts";
+
+interface Props {
+  posts: Post[];
+}
+
+const { posts } = Astro.props;
+const years = [...new Set(posts.map((p) => yearOf(p.data.pubDate)))];
+const searchText = (post: Post) =>
+  [post.data.title, post.data.description, ...post.data.tags, ...post.data.tags.map(tagLabel), KINDS[kindOf(post)].label]
+    .join(" ")
+    .toLowerCase();
+---
+
+<div>
+  {years.map((year) => {
+    const inYear = posts.filter((p) => yearOf(p.data.pubDate) === year);
+    return (
+      <section class="year-group" data-year-group>
+        <h2 class="year-head">{year}<span class="n" data-year-count>{inYear.length}</span></h2>
+        <ul>
+          {inYear.map((post) => (
+            <li data-kind={kindOf(post)} data-text={searchText(post)}>
+              <a href={`/blog/${post.id}/`} data-post-link class="row">
+                <span class="row-when">
+                  <time datetime={post.data.pubDate.toISOString()}>{formatDate(post.data.pubDate, "day")}</time>
+                  <span class="kind">{KINDS[kindOf(post)].label}</span>
+                </span>
+                <span class="row-main">
+                  <span class="row-title"><Title text={post.data.title} /></span>
+                  <span class="row-desc">{post.data.description}</span>
+                  {post.data.tags.length > 0 && <span class="row-topics">{post.data.tags.map(tagLabel).join(" · ")}</span>}
+                </span>
+                <span class="row-aside" data-read-slot>{minutes(post)}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    );
+  })}
+</div>

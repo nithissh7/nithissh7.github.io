@@ -1,12 +1,18 @@
 ---
 import { getCollection } from "astro:content";
 import BaseLayout from "../layouts/BaseLayout.astro";
+import EntryList from "../components/EntryList.astro";
 import { SOCIAL_LINKS } from "../consts";
-const cveCount = (await getCollection("cves", ({ data }) => !data.draft)).length;
+import { getCves, getPosts } from "../lib/posts";
 
+const posts = await getPosts();
+const cveCount = (await getCves()).length;
 const certs = (await getCollection("certifications")).sort(
   (a, b) => b.data.dateEarned.valueOf() - a.data.dateEarned.valueOf()
 );
+const featured = posts.filter((p) => p.data.featured).slice(0, 3);
+const monthYear = (d: Date) => d.toLocaleDateString("en-US", { month: "short", year: "numeric", timeZone: "Asia/Kolkata" });
+const external = (href: string) => href.startsWith("http");
 
 const areas = [
   { k: "Offense", v: "Bug bounty, web and API pentesting, cloud security (AWS, Azure, GCP), vulnerability research." },
@@ -16,75 +22,95 @@ const areas = [
 ---
 
 <BaseLayout title="About" description="Security architect by day, bug bounty hunter by night.">
-  <section class="hero band !pt-14 lg:!pt-24">
-    <p class="eyebrow">About</p>
-    <h1 class="h-page max-w-[24ch] mb-6">I break things to understand <em>how to defend them.</em></h1>
-    <p class="lede">Security architect by day, bug bounty hunter by night.</p>
-  </section>
+  <div class="shell">
+    <header class="page-head">
+      <p class="eyebrow">About</p>
+      <h1 class="h-page max-w-[22ch]">I break things to understand <em>how to defend them.</em></h1>
+      <p class="lede mt-5">Security architect by day, bug bounty hunter by night.</p>
+    </header>
 
-  <section class="band !pt-4">
-    <div class="grid lg:grid-cols-12 gap-12 lg:gap-16 pt-10 border-t border-border">
-      <div class="lg:col-span-7 prose">
-        <p>
-          I'm Nithissh. I handle platform and AI security at one of the largest pharma companies. Outside work I
-          hunt vulnerabilities — <a href="/cves/">{cveCount} of them are now CVEs</a> — write security tools, and
-          document what I learn here.
-        </p>
-        <p>
-          The thing that keeps me going is curiosity — there's nothing quite like finding the flaw that nobody else
-          noticed.
-        </p>
-        <p>
-          I write to think. Bug bounty write-ups, cloud security research, CTF solutions, SOC notes — whatever I'm into
-          that week ends up here. Mostly for future me, so I don't relearn things twice. If it helps you too, that's a
-          bonus.
-        </p>
+    <div class="grid gap-y-12 lg:grid-cols-[minmax(0,1fr)_20.5rem] lg:gap-x-[4.5rem]">
+      <div>
+        <div class="prose max-w-[40rem]">
+          <p>
+            I'm Nithissh. I handle platform and AI security at one of the largest pharma companies. Outside work I
+            hunt vulnerabilities — <a href="/cves/">{cveCount} of them are now CVEs</a> — write security tools, and
+            document what I learn here.
+          </p>
+          <p>
+            The thing that keeps me going is curiosity — there's nothing quite like finding the flaw that nobody else
+            noticed.
+          </p>
+          <p>
+            I write to think. Bug bounty write-ups, cloud security research, CTF solutions, SOC notes — whatever I'm into
+            that week ends up here. Mostly for future me, so I don't relearn things twice. If it helps you too, that's a
+            bonus.
+          </p>
+        </div>
+
+        {featured.length > 0 && (
+          <section class="mt-12" aria-labelledby="start-here">
+            <div class="section-head">
+              <h2 id="start-here" class="h-section">Start here</h2>
+              <a href="/blog/" class="more-link">All {posts.length} posts →</a>
+            </div>
+            <EntryList posts={featured} compact />
+          </section>
+        )}
       </div>
-      <div class="lg:col-span-5 space-y-10">
-        <div>
-          <p class="eyebrow">What I do</p>
-          <dl class="space-y-5">
+
+      <aside class="grid gap-12 content-start">
+        <section aria-labelledby="what-i-do">
+          <div class="section-head">
+            <h2 id="what-i-do" class="h-section">What I do</h2>
+          </div>
+          <dl class="facts">
             {areas.map((a) => (
               <div>
-                <dt class="text-strong font-semibold mb-1">{a.k}</dt>
-                <dd class="text-[14px] text-dim leading-relaxed">{a.v}</dd>
+                <dt>{a.k}</dt>
+                <dd>{a.v}</dd>
               </div>
             ))}
           </dl>
-        </div>
-        <div>
-          <p class="eyebrow">Elsewhere</p>
-          <ul class="flex flex-wrap gap-x-5 gap-y-1 text-[14px]">
+        </section>
+        <section aria-labelledby="elsewhere">
+          <div class="section-head">
+            <h2 id="elsewhere" class="h-section">Elsewhere</h2>
+          </div>
+          <ul class="elsewhere !mt-4">
             {SOCIAL_LINKS.map((link) => (
               <li>
                 <a
                   href={link.href}
                   class="link"
-                  target={link.href.startsWith("http") ? "_blank" : undefined}
-                  rel={link.href.startsWith("http") ? "noopener noreferrer" : undefined}
+                  target={external(link.href) ? "_blank" : undefined}
+                  rel={external(link.href) ? "noopener noreferrer me" : undefined}
                 >
                   {link.label}
                 </a>
               </li>
             ))}
           </ul>
-        </div>
-      </div>
+        </section>
+      </aside>
     </div>
-  </section>
 
-  <section class="band">
-    <div class="band-head">
-      <h2 class="h-section"><span class="num">01</span>Certifications</h2>
-      <a href="/certifications/" class="more-link">Details ▸</a>
-    </div>
-    <ul class="grid md:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-5 text-[14px] pt-6 border-t border-border">
-      {certs.map((c) => (
-        <li>
-          <span class="block text-strong">{c.data.name}</span>
-          <span class="block text-[13px] text-dim">{c.data.issuer}</span>
-        </li>
-      ))}
-    </ul>
-  </section>
+    <section class="mt-16" aria-labelledby="certifications">
+      <div class="section-head">
+        <h2 id="certifications" class="h-section">Certifications<span class="n">{certs.length}</span></h2>
+        <a href="/certifications/" class="more-link">Details →</a>
+      </div>
+      <ul class="grid md:grid-cols-2 md:gap-x-16">
+        {certs.map((cert) => (
+          <li class="cert !grid-cols-[2.75rem_minmax(0,1fr)]">
+            {cert.data.badgeUrl ? <img src={cert.data.badgeUrl} alt="" width="44" height="44" loading="lazy" /> : <span />}
+            <div class="min-w-0">
+              <span class="cert-name">{cert.data.name}</span>
+              <span class="meta mt-1"><span>{cert.data.issuer}</span><span>{monthYear(cert.data.dateEarned)}</span></span>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </section>
+  </div>
 </BaseLayout>

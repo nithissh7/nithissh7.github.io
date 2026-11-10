@@ -4,8 +4,8 @@ import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
 import Search from "../components/Search.astro";
 import { ClientRouter } from "astro:transitions";
-import { SITE_DESCRIPTION, SITE_TITLE } from "../consts";
-// Body (400) and title (700) faces are on every first paint; preload them so the title isn't held back.
+import { SITE_AUTHOR, SITE_DESCRIPTION, SITE_TITLE } from "../consts";
+// Body (400) and title (700) faces are on every first paint; preload them so text isn't held back.
 import monoRegular from "@fontsource/jetbrains-mono/files/jetbrains-mono-latin-400-normal.woff2?url";
 import monoBold from "@fontsource/jetbrains-mono/files/jetbrains-mono-latin-700-normal.woff2?url";
 
@@ -15,11 +15,9 @@ interface Props {
   type?: "website" | "article";
   pubDate?: Date;
   image?: string;
-  /** Narrow the main column to ~848px (CVE pages). */
-  reading?: boolean;
 }
 
-const { title, description = SITE_DESCRIPTION, type = "website", pubDate, image = "/og.png", reading = false } = Astro.props;
+const { title, description = SITE_DESCRIPTION, type = "website", pubDate, image = "/og.png" } = Astro.props;
 const pageTitle = title ? `${title} · ${SITE_TITLE}` : `${SITE_TITLE} · security research, written down`;
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 const ogImageURL = new URL(image, Astro.site);
@@ -61,6 +59,7 @@ const ogImageURL = new URL(image, Astro.site);
     <meta name="theme-color" content="#14120f" media="(prefers-color-scheme: dark)" />
     <meta name="generator" content={Astro.generator} />
     <meta name="description" content={description} />
+    <meta name="author" content={SITE_AUTHOR} />
     <link rel="canonical" href={canonicalURL} />
     <link rel="alternate" type="application/rss+xml" title={SITE_TITLE} href={new URL("rss.xml", Astro.site)} />
     <title>{pageTitle}</title>
@@ -81,27 +80,15 @@ const ogImageURL = new URL(image, Astro.site);
     <ClientRouter />
   </head>
   <body>
-    <div class="read-progress" data-progress hidden></div>
-    <a
-      href="#main-content"
-      class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:bg-strong focus:text-bg focus:px-3 focus:py-1.5 focus:rounded"
-    >
-      Skip to content
-    </a>
-    <div class="wrap frame min-h-screen flex flex-col">
-      <Header />
-      <main id="main-content" class:list={["flex-1 w-full", { "wrap-reading mx-auto": reading }]}>
-        <slot />
-      </main>
-      <Footer />
-    </div>
+    <a href="#main-content" class="skip-link">Skip to content</a>
+    <Header />
+    <main id="main-content">
+      <slot />
+    </main>
+    <Footer />
 
     {!Astro.url.pathname.startsWith("/search") && (
-      <dialog
-        id="search-dialog"
-        aria-label="Search"
-        class="search-dialog m-0 p-0 w-[min(40rem,calc(100vw-2rem))] mx-auto mt-[10vh] bg-bg text-text border border-border-strong rounded-xl overflow-hidden"
-      >
+      <dialog id="search-dialog" aria-label="Search" class="search-dialog">
         <Search mode="dialog" />
         <div class="flex items-center justify-between gap-4 px-4 py-2.5 border-t border-border text-[12px] text-dim">
           <span><span class="kbd">esc</span> to close</span>
@@ -123,7 +110,7 @@ const ogImageURL = new URL(image, Astro.site);
           <button type="button" data-dv="out" aria-label="Zoom out">−</button>
           <button type="button" data-dv="fit">fit</button>
           <button type="button" data-dv="in" aria-label="Zoom in">+</button>
-          <button type="button" data-dv="close" aria-label="Close">esc</button>
+          <button type="button" data-dv="close" aria-label="Close (Esc)">esc</button>
         </div>
       </div>
       <div class="dv-stage" data-dv-stage></div>
@@ -133,266 +120,21 @@ const ogImageURL = new URL(image, Astro.site);
       <dl>
         <div><dt><span class="kbd">/</span> <span class="kbd">⌘K</span></dt><dd>search</dd></div>
         <div><dt><span class="kbd">j</span> <span class="kbd">k</span></dt><dd>next / previous section</dd></div>
-        <div><dt><span class="kbd">←</span> <span class="kbd">→</span></dt><dd>previous / next post</dd></div>
+        <div><dt><span class="kbd">←</span> <span class="kbd">→</span></dt><dd>older / newer post</dd></div>
         <div><dt><span class="kbd">t</span></dt><dd>toggle light / dark</dd></div>
         <div><dt><span class="kbd">g</span> <span class="kbd">g</span></dt><dd>back to top</dd></div>
         <div><dt><span class="kbd">?</span></dt><dd>this help</dd></div>
       </dl>
-      <form method="dialog" class="mt-5 text-right"><button class="nav-link cursor-pointer text-[13px]">close <span class="kbd">esc</span></button></form>
+      <p class="text-[13.5px] text-dim mt-4">On a post, select any passage to copy a link to it.</p>
+      <form method="dialog" class="mt-4 text-right"><button class="nav-link cursor-pointer text-[12.5px]">close <span class="kbd">esc</span></button></form>
     </dialog>
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
     <p id="announcer" class="sr-only" aria-live="polite"></p>
 
     <script>
+      import "../scripts/site";
       import "../scripts/reader";
       import "../scripts/diagrams";
-    </script>
-    <script>
-      import { navigate } from "astro:transitions/client";
-
-      // Delegated handlers survive ClientRouter page swaps.
-      document.addEventListener("click", async (event) => {
-        const target = event.target as HTMLElement;
-
-        const copyText = target.closest<HTMLButtonElement>("[data-copy-text]");
-        if (copyText) {
-          const label = copyText.dataset.label ?? (copyText.dataset.label = copyText.textContent ?? "copy");
-          try {
-            await navigator.clipboard.writeText(copyText.dataset.copyText ?? "");
-            copyText.textContent = "copied ✓";
-          } catch {
-            copyText.textContent = "failed";
-          }
-          setTimeout(() => (copyText.textContent = label), 1500);
-          return;
-        }
-
-        const copyBtn = target.closest<HTMLButtonElement>("[data-copy]");
-        if (copyBtn) {
-          const code = copyBtn.closest(".code-block")?.querySelector("pre")?.innerText ?? "";
-          try {
-            await navigator.clipboard.writeText(code.replace(/\n$/, ""));
-            copyBtn.textContent = "copied ✓";
-            const announcer = document.getElementById("announcer");
-            if (announcer) announcer.textContent = "Code copied to clipboard";
-          } catch {
-            copyBtn.textContent = "failed";
-          }
-          setTimeout(() => (copyBtn.textContent = "copy"), 1500);
-          return;
-        }
-
-        const zoomable = target.closest<HTMLImageElement>(".prose img");
-        if (zoomable && !target.closest("a")) {
-          const box = document.getElementById("lightbox") as HTMLDialogElement | null;
-          if (box) {
-            const img = box.querySelector("img")!;
-            img.src = zoomable.currentSrc || zoomable.src;
-            img.alt = zoomable.alt;
-            box.querySelector("p")!.textContent = zoomable.alt;
-            box.showModal();
-          }
-          return;
-        }
-        if (target.closest("#lightbox")) {
-          (document.getElementById("lightbox") as HTMLDialogElement).close();
-          return;
-        }
-
-        if (target.closest("[data-to-top]")) {
-          window.scrollTo({ top: 0 });
-          return;
-        }
-
-        if (target.closest("[data-search-open]")) {
-          if (!openSearch()) navigate("/search/");
-          return;
-        }
-
-        const dialog = target.closest("dialog");
-        if (dialog && target === dialog) {
-          (dialog as HTMLDialogElement).close(); // click on the backdrop
-          return;
-        }
-
-        if (target.closest("[data-theme-toggle]")) {
-          const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
-          document.documentElement.dataset.theme = next;
-          try {
-            localStorage.setItem("theme", next);
-          } catch {}
-        }
-      });
-
-      function openSearch(): boolean {
-        const pageInput = document.getElementById("search-input") as HTMLInputElement | null;
-        if (pageInput) {
-          pageInput.focus();
-          return true;
-        }
-        const dialog = document.getElementById("search-dialog") as HTMLDialogElement | null;
-        if (!dialog) return false;
-        if (!dialog.open) dialog.showModal();
-        dialog.querySelector<HTMLInputElement>("[data-search-input]")?.focus();
-        return true;
-      }
-      document.addEventListener("astro:before-swap", () => {
-        (document.getElementById("search-dialog") as HTMLDialogElement | null)?.close();
-        (document.getElementById("lightbox") as HTMLDialogElement | null)?.close();
-      });
-
-      // ⌘K / Ctrl+K / "/" open search from anywhere.
-      document.addEventListener("keydown", (event) => {
-        const el = event.target instanceof Element ? event.target : null;
-        const typing = el?.closest("input, textarea, [contenteditable]");
-        const combo = (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k";
-        if (combo || (event.key === "/" && !typing)) {
-          event.preventDefault();
-          if (!openSearch()) navigate("/search/");
-        }
-      });
-
-      function enhancePost() {
-        const prose = document.querySelector(".prose");
-        if (!prose) return;
-
-        prose.querySelectorAll<HTMLHeadingElement>("h2[id], h3[id]").forEach((heading) => {
-          if (heading.querySelector(".anchor")) return;
-          const anchor = document.createElement("a");
-          anchor.href = `#${heading.id}`;
-          anchor.className = "anchor";
-          anchor.setAttribute("aria-label", "Link to this section");
-          anchor.textContent = "#";
-          heading.append(anchor);
-        });
-
-        // A paragraph holding only an image becomes a figure captioned with its alt text.
-        prose.querySelectorAll<HTMLImageElement>("p > img").forEach((img) => {
-          const p = img.parentElement!;
-          if (p.childElementCount !== 1 || p.textContent!.trim()) return;
-          const figure = document.createElement("figure");
-          figure.append(img);
-          if (img.alt) {
-            const caption = document.createElement("figcaption");
-            caption.textContent = img.alt;
-            figure.append(caption);
-          }
-          p.replaceWith(figure);
-        });
-
-        const links = [...document.querySelectorAll<HTMLAnchorElement>(".toc a")];
-        tocTargets = links
-          .map((a) => ({ a, el: document.getElementById(decodeURIComponent(a.hash.slice(1))) }))
-          .filter((t): t is { a: HTMLAnchorElement; el: HTMLElement } => !!t.el);
-        updateToc();
-      }
-
-      // Highlight the section being read: the last heading scrolled past the header.
-      let tocTargets: { a: HTMLAnchorElement; el: HTMLElement }[] = [];
-      function updateToc() {
-        if (!tocTargets.length) return;
-        let current = tocTargets[0];
-        for (const t of tocTargets) if (t.el.getBoundingClientRect().top < 120) current = t;
-        tocTargets.forEach((t) => t.a.setAttribute("aria-current", String(t.el === current.el)));
-      }
-      let ticking = false;
-      window.addEventListener(
-        "scroll",
-        () => {
-          if (ticking) return;
-          ticking = true;
-          requestAnimationFrame(() => {
-            updateToc();
-            ticking = false;
-          });
-        },
-        { passive: true }
-      );
-
-      // Mermaid renders client-side (and re-renders on theme change), so size every
-      // SVG it inserts: never below MIN_SCALE of natural size; scroll sideways instead.
-      const MIN_SCALE = 0.72;
-      // The frame goes in before the diagram is drawn, so nothing shifts when it arrives.
-      function frameDiagram(pre: HTMLElement): HTMLElement {
-        let wrap = pre.closest<HTMLElement>(".diagram");
-        if (!wrap) {
-          wrap = document.createElement("figure");
-          wrap.className = "diagram";
-          const bar = document.createElement("div");
-          bar.className = "diagram-bar";
-          bar.innerHTML = `<span>diagram</span><button type="button" data-diagram-open>Zoom ⤢</button>`;
-          pre.replaceWith(wrap);
-          wrap.append(bar, pre);
-        }
-        return wrap;
-      }
-      function sizeDiagram(pre: HTMLElement) {
-        const svg = pre.querySelector("svg");
-        if (!svg || svg.dataset.sized) return;
-        svg.dataset.sized = "true";
-        const wrap = frameDiagram(pre);
-
-        const natural = svg.viewBox.baseVal?.width || svg.getBoundingClientRect().width;
-        const pad = 32;
-        const available = pre.clientWidth - pad;
-        const width = Math.min(natural, Math.max(available, natural * MIN_SCALE));
-        // Mermaid sets its own max-width on the SVG; an inline !important wins.
-        svg.style.setProperty("max-width", "none", "important");
-        svg.style.setProperty("width", `${Math.round(width)}px`, "important");
-        svg.style.setProperty("height", "auto", "important");
-
-        const overflows = pre.scrollWidth > pre.clientWidth + 1;
-        wrap.querySelector(".diagram-bar span")!.textContent = overflows ? "diagram · scroll →" : "diagram";
-        // A sideways-scrolling diagram must be reachable by keyboard.
-        if (overflows) {
-          pre.tabIndex = 0;
-          pre.setAttribute("role", "region");
-          const n = [...document.querySelectorAll(".prose .diagram")].indexOf(wrap) + 1;
-          pre.setAttribute("aria-label", `Diagram ${n} (scrolls sideways)`);
-        } else {
-          pre.removeAttribute("tabindex");
-          pre.removeAttribute("role");
-          pre.removeAttribute("aria-label");
-        }
-      }
-      function watchDiagrams() {
-        document.querySelectorAll<HTMLElement>(".prose .mermaid").forEach((pre) => {
-          if (pre.dataset.watched) return;
-          pre.dataset.watched = "true";
-          frameDiagram(pre);
-          sizeDiagram(pre);
-          new MutationObserver(() => sizeDiagram(pre)).observe(pre, { childList: true, subtree: true });
-        });
-      }
-
-      // The header gets its hairline only once the page scrolls under it; on articles a
-      // progress bar tracks how far through the text the reader is. "Back to top" shows
-      // only while scrolling up, so it never sits on top of text being read.
-      let lastY = window.scrollY;
-      const markHeader = () => {
-        const y = window.scrollY;
-        document.querySelector(".site-header")?.toggleAttribute("data-scrolled", y > 8);
-        const toTop = document.querySelector("[data-to-top]");
-        if (y < 900) toTop?.removeAttribute("data-visible");
-        else if (Math.abs(y - lastY) > 6) toTop?.toggleAttribute("data-visible", y < lastY);
-        lastY = y;
-        const bar = document.querySelector<HTMLElement>("[data-progress]");
-        const body = document.querySelector<HTMLElement>("[data-reading-body]");
-        if (!bar) return;
-        bar.hidden = !body;
-        if (!body) return;
-        const rect = body.getBoundingClientRect();
-        const total = rect.height - window.innerHeight * 0.6;
-        const done = Math.min(1, Math.max(0, -rect.top / Math.max(total, 1)));
-        bar.style.transform = `scaleX(${done})`;
-      };
-      window.addEventListener("scroll", markHeader, { passive: true });
-
-      document.addEventListener("astro:page-load", () => {
-        markHeader();
-        enhancePost();
-        watchDiagrams();
-      });
     </script>
   </body>
 </html>

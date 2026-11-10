@@ -4,6 +4,7 @@ pubDate: 2026-03-14T00:00:00.000Z
 title: "How I Fixed False Positives in Dalfox XSS Scanner (Issue #884)"
 featured: false
 draft: false
+category: tooling
 tags:
   - bugbounty
   - xss

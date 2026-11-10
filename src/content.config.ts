@@ -10,6 +10,11 @@ const blog = defineCollection({
     updatedDate: z.coerce.date().optional(),
     author: z.string().default("Nithissh"),
     tags: z.array(z.string()).default([]),
+    // What kind of post this is; shown as its label and used by the filter on /blog/.
+    // research: bugs found and CVEs taken apart · challenge: CTF and challenge solutions ·
+    // tooling: building or fixing tools · notes: anything else. Guessed from tags when omitted.
+    category: z.enum(["research", "challenge", "tooling", "notes"]).optional(),
+    // Featured posts are suggested on the 404 page and listed first under "Start here" on /about/.
     featured: z.boolean().default(false),
     // Posts sharing a series name get "Part n of m" navigation.
     series: z.string().optional(),

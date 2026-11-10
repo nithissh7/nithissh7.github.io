@@ -5,6 +5,7 @@ pubDate: 2024-06-15T15:22:00.000Z
 title: "Solving Intigriti's May 2024 XSS Challenge — PhpSpreadsheet Formula Injection to XSS"
 featured: false
 draft: false
+category: challenge
 tags:
   - bugbounty
   - xss

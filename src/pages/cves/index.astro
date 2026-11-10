@@ -1,20 +1,13 @@
 ---
-import { getCollection } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import SeverityBar from "../../components/SeverityBar.astro";
 import { formatDate, yearOf } from "../../consts";
+import { getCves } from "../../lib/posts";
 import { severityKey, splitCveTitle, vulnClass } from "../../lib/cve";
 
-const cves = (await getCollection("cves", ({ data }) => !data.draft)).sort(
-  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf() || (b.data.cvssScore ?? 0) - (a.data.cvssScore ?? 0)
-);
-const count = (sev: string) => cves.filter((c) => c.data.severity === sev).length;
-const years = [...new Set(cves.map((c) => yearOf(c.data.pubDate)))].sort();
-const stats = [
-  { n: cves.length, label: "published", desc: "Each linked to its NVD and CVE.org records." },
-  { n: count("Critical") + count("High"), label: "high or critical", desc: "CVSS 7.0 and above." },
-  { n: count("Medium"), label: "medium", desc: "CVSS 4.0 to 6.9." },
-  { n: years.length > 1 ? `${years[0]}–${years.at(-1)}` : years[0] ?? "—", label: "disclosure window", desc: "Oldest to newest publication." },
-];
+const cves = await getCves();
+const years = [...new Set(cves.map((c) => yearOf(c.data.pubDate)))]; // newest first
+const span = years.length > 1 ? `${years.at(-1)}–${years[0]}` : `${years[0] ?? ""}`;
 // Class filter: every class present, plus "Other" for unclassified entries.
 const classCounts = new Map<string, number>();
 for (const c of cves) {
@@ -22,72 +15,66 @@ for (const c of cves) {
   classCounts.set(k, (classCounts.get(k) ?? 0) + 1);
 }
 const classes = [...classCounts].sort((a, b) => (a[0] === "Other" ? 1 : b[0] === "Other" ? -1 : b[1] - a[1]));
-const cols = "md:grid md:grid-cols-[10.5rem_minmax(0,1fr)_6rem_4rem_7.5rem] md:gap-6";
 ---
 
 <BaseLayout title="CVEs" description="Security vulnerabilities discovered and responsibly disclosed by Nithissh.">
-  <section class="band !pt-14 lg:!pt-20">
-    <p class="eyebrow">Disclosures</p>
-    <h1 class="h-page mb-5">CVEs<span class="accent">.</span></h1>
-    <p class="lede mb-12">Vulnerabilities I've found and responsibly disclosed, newest first. Each entry links to its NVD and CVE.org records.</p>
-    <ul class="stats">
-      {stats.map((s) => (
-        <li>
-          <span class="stat-num">{s.n}</span>
-          <span class="stat-label">{s.label}</span>
-          <span class="stat-desc">{s.desc}</span>
-        </li>
-      ))}
-    </ul>
-  </section>
+  <div class="shell">
+    <header class="page-head">
+      <h1 class="h-page">CVEs</h1>
+      <p class="lede mt-5">Vulnerabilities I've found and responsibly disclosed, newest first. Each entry links to its NVD and CVE.org records.</p>
+    </header>
 
-  <section class="band !pt-2">
-    {cves.length > 0 && (
-      <div class="flex flex-wrap items-center gap-2 mb-8" role="group" aria-label="Filter by class" data-cve-filter>
-        <button type="button" class="tag cursor-pointer" aria-pressed="true" data-filter="all">All <span class="n">{cves.length}</span></button>
-        {classes.map(([k, n]) => (
-          <button type="button" class="tag cursor-pointer" aria-pressed="false" data-filter={k}>
-            {k} <span class="n">{n}</span>
-          </button>
-        ))}
-      </div>
-    )}
     {cves.length === 0 ? (
-      <p>No CVEs published yet.</p>
+      <p class="text-dim">No CVEs published yet.</p>
     ) : (
-      <div class="tlist">
-        <div class={`table-head hidden ${cols} py-2.5 px-3 -mx-3`} aria-hidden="true">
-          <span>ID</span><span>Vulnerability</span><span>Severity</span><span class="text-right">CVSS</span><span class="text-right">Published</span>
+      <>
+        <section class="grid gap-x-16 gap-y-5 md:grid-cols-[minmax(0,26rem)_minmax(0,1fr)] md:items-end mb-10" aria-label="Summary">
+          <SeverityBar cves={cves} />
+          <p class="meta md:justify-end"><span>{cves.length} published</span><span>{span}</span></p>
+        </section>
+
+        <div class="filter-chips mb-8" role="group" aria-label="Filter by vulnerability class" data-cve-filter>
+          <button type="button" class="tag cursor-pointer" aria-pressed="true" data-filter="all">All <span class="n">{cves.length}</span></button>
+          {classes.map(([k, n]) => (
+            <button type="button" class="tag cursor-pointer" aria-pressed="false" data-filter={k}>
+              {k} <span class="n">{n}</span>
+            </button>
+          ))}
         </div>
-        <ul>
-          {cves.map((cve) => {
-            const { vuln, product } = splitCveTitle(cve.data.title);
-            const klass = vulnClass(cve.data.title);
-            return (
-              <li data-class={klass ?? "Other"}>
-                <a href={`/cves/${cve.id}/`} class={`trow block ${cols} py-5 px-3 -mx-3`}>
-                  <span class="block text-[14px] text-strong tabular-nums md:pt-px">{cve.data.cveId}</span>
-                  <span class="block min-w-0 mt-1 md:mt-0">
-                    <span class="row-title block leading-snug">{vuln}</span>
-                    <span class="meta !text-[13px] mt-1.5">{klass && <span class="topics !text-[11.5px]">{klass}</span>}{product && <span>{product}</span>}</span>
-                  </span>
-                  <span class="inline-block md:block mt-2 md:mt-0 md:pt-0.5">
-                    <span class="sev" data-sev={severityKey(cve.data.severity)}>{cve.data.severity}</span>
-                  </span>
-                  <span class="inline md:block text-[14px] text-dim tabular-nums md:text-right md:pt-px">
-                    <span class="md:hidden">  · CVSS </span>{cve.data.cvssScore?.toFixed(1) ?? "—"}
-                  </span>
-                  <span class="block md:text-right text-[13px] md:text-[14px] text-dim tabular-nums mt-1 md:mt-0 md:pt-px">
-                    {formatDate(cve.data.pubDate, "medium")}
-                  </span>
-                </a>
-              </li>
-            );
-          })}
-        </ul>
-      </div>
+
+        <div class="table-head cve-cols hidden md:grid pb-2.5" aria-hidden="true">
+          <span>ID</span><span>Vulnerability</span><span>Severity</span><span class="right">CVSS</span><span class="right">Published</span>
+        </div>
+        {years.map((year) => {
+          const inYear = cves.filter((c) => yearOf(c.data.pubDate) === year);
+          return (
+            <section class="year-group" data-year-group>
+              <h2 class="year-head">{year}<span class="n" data-year-count>{inYear.length}</span></h2>
+              <ul>
+                {inYear.map((cve) => {
+                  const { vuln, product } = splitCveTitle(cve.data.title);
+                  return (
+                    <li data-class={vulnClass(cve.data.title) ?? "Other"}>
+                      <a href={`/cves/${cve.id}/`} class="cve-row cve-cols">
+                        <span class="cve-id">{cve.data.cveId}</span>
+                        <span class="cve-main">
+                          <span class="row-title">{vuln}</span>
+                          {product && <span class="cve-product">{product}</span>}
+                        </span>
+                        <span class="cve-sev"><span class="sev" data-sev={severityKey(cve.data.severity)}>{cve.data.severity}</span></span>
+                        <span class="cve-num cve-score">{cve.data.cvssScore?.toFixed(1) ?? "—"}</span>
+                        <span class="cve-num cve-date">{formatDate(cve.data.pubDate, "day")}</span>
+                      </a>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          );
+        })}
+      </>
     )}
-  </section>
+  </div>
 </BaseLayout>
 
 <script>
@@ -100,10 +87,16 @@ const cols = "md:grid md:grid-cols-[10.5rem_minmax(0,1fr)_6rem_4rem_7.5rem] md:g
       if (!btn) return;
       const f = btn.dataset.filter!;
       group.querySelectorAll("[data-filter]").forEach((b) => b.setAttribute("aria-pressed", String(b === btn)));
-      document.querySelectorAll<HTMLElement>("li[data-class]").forEach((li) => {
-        li.hidden = f !== "all" && li.dataset.class !== f;
+      document.querySelectorAll<HTMLElement>("[data-year-group]").forEach((section) => {
+        let inYear = 0;
+        section.querySelectorAll<HTMLElement>("li[data-class]").forEach((li) => {
+          li.hidden = f !== "all" && li.dataset.class !== f;
+          if (!li.hidden) inYear++;
+        });
+        section.hidden = inYear === 0;
+        const count = section.querySelector("[data-year-count]");
+        if (count) count.textContent = String(inYear);
       });
     });
   });
 </script>
-

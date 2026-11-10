@@ -4,6 +4,7 @@ pubDate: 2026-05-24T00:00:00.000Z
 title: "Crashing Node.js with 40 Lines of JavaScript — A Memory Corruption Story"
 featured: true
 draft: false
+category: research
 tags:
   - bugbounty
   - vulnerability-research

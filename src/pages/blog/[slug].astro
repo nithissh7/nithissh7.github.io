@@ -1,17 +1,18 @@
 ---
-import { getCollection, render } from "astro:content";
+import { render } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import ReaderSettings from "../../components/ReaderSettings.astro";
 import Comments from "../../components/Comments.astro";
+import EntryList from "../../components/EntryList.astro";
+import Title from "../../components/Title.astro";
 import { getReadingTime } from "../../lib/reading-time";
-import { SITE_AUTHOR, SITE_TAGLINE, formatDate, titleParts } from "../../consts";
+import { KINDS, getPosts, kindOf } from "../../lib/posts";
+import { SITE_AUTHOR, SITE_TAGLINE, SITE_TITLE, SOCIAL_LINKS, formatDate, tagLabel } from "../../consts";
 
 export async function getStaticPaths() {
-  const posts = (await getCollection("blog", ({ data }) => !data.draft)).sort(
-    (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
-  );
+  const posts = await getPosts();
   return posts.map((post, i) => {
-    // Related: most shared tags first, then newest; never the adjacent prev/next posts.
+    // Related: most shared tags first, then newest; never the adjacent older/newer posts.
     const adjacent = new Set([posts[i - 1]?.id, posts[i + 1]?.id, post.id]);
     const related = posts
       .filter((p) => !adjacent.has(p.id))
@@ -42,13 +43,14 @@ const readTime = getReadingTime(post.body ?? "");
 const words = (post.body ?? "").split(/\s+/).filter(Boolean).length;
 const toc = headings.filter((h) => (h.depth === 2 || h.depth === 3) && h.slug !== "footnote-label");
 const outline = toc.filter((h) => h.depth === 2);
+const kind = kindOf(post);
 const author = post.data.author ?? SITE_AUTHOR;
+const email = SOCIAL_LINKS.find((l) => l.label === "Email")?.href;
 const url = new URL(`/blog/${post.id}/`, Astro.site).toString();
 const share = [
   { label: "X", href: `https://x.com/intent/post?text=${encodeURIComponent(post.data.title)}&url=${encodeURIComponent(url)}` },
   { label: "LinkedIn", href: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}` },
 ];
-
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "BlogPosting",
@@ -56,11 +58,13 @@ const jsonLd = {
   description: post.data.description,
   datePublished: post.data.pubDate.toISOString(),
   ...(post.data.updatedDate && { dateModified: post.data.updatedDate.toISOString() }),
-  author: { "@type": "Person", name: author },
+  author: { "@type": "Person", name: author, url: new URL("/about/", Astro.site).toString() },
   publisher: { "@type": "Person", name: SITE_AUTHOR },
+  image: new URL(`/blog/${post.id}/og.png`, Astro.site).toString(),
   mainEntityOfPage: url,
   wordCount: words,
-  ...(post.data.tags.length > 0 && { keywords: post.data.tags.join(", ") }),
+  articleSection: KINDS[kind].label,
+  ...(post.data.tags.length > 0 && { keywords: post.data.tags.map(tagLabel).join(", ") }),
 };
 ---
 
@@ -72,12 +76,16 @@ const jsonLd = {
   image={`/blog/${post.id}/og.png`}
 >
   <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
-  <article data-post-nav data-prev={older ? `/blog/${older.id}/` : undefined} data-next={newer ? `/blog/${newer.id}/` : undefined}>
+  <article class="post" data-post-nav data-prev={older ? `/blog/${older.id}/` : undefined} data-next={newer ? `/blog/${newer.id}/` : undefined}>
     {toc.length > 2 && (
-      <div class="section-bar" data-section-bar data-pagefind-ignore>
-        <div class="section-bar-inner">
-          <button type="button" class="section-bar-toggle" data-section-toggle aria-expanded="false" aria-controls="section-menu">
-            <span class="truncate" data-section-label>Contents</span>
+      <div class="reading-bar" data-reading-bar data-title={post.data.title} data-pagefind-ignore>
+        <div class="reading-bar-inner">
+          <a href="/" class="logo-mark">
+            <span aria-hidden="true">rn</span>
+            <span class="sr-only">{SITE_TITLE}, home</span>
+          </a>
+          <button type="button" class="reading-bar-toggle" data-section-toggle aria-expanded="false" aria-controls="section-menu">
+            <span class="truncate" data-section-label>{post.data.title}</span>
             <span class="text-dim shrink-0" aria-hidden="true">▾</span>
           </button>
           <ReaderSettings />
@@ -85,146 +93,132 @@ const jsonLd = {
         <nav id="section-menu" class="toc section-menu" data-section-menu aria-label="Jump to section" hidden>
           {toc.map((h) => <a href={`#${h.slug}`} data-depth={h.depth}>{h.text}</a>)}
         </nav>
+        <div class="reading-progress" data-progress></div>
       </div>
     )}
-    <div class="band !pt-12 lg:!pt-20 post-grid">
-      <div class="min-w-0">
-        <header class="mb-10">
-          <nav aria-label="Breadcrumb" class="eyebrow" data-pagefind-ignore>
-            <a href="/blog/">Blog</a>
-            {post.data.series && <><span class="sep">/</span><span>{post.data.series}</span></>}
-          </nav>
-          <h1 class="text-[26px] sm:text-[34px] lg:text-[40px] font-bold leading-[1.2] tracking-[-0.03em] text-strong text-balance mb-5">
-            {titleParts(post.data.title).map((part, i) => (i % 2 ? <span class="whitespace-nowrap">{part}</span> : part))}
-          </h1>
-          <div class="flex items-start justify-between gap-4 mb-7" data-pagefind-ignore>
-            <p class="meta min-w-0 pt-1">
-              <time datetime={post.data.pubDate.toISOString()}>{formatDate(post.data.pubDate, "medium")}</time>
-              {post.data.updatedDate && <span>Updated {formatDate(post.data.updatedDate, "medium")}</span>}
-              <span>{readTime}</span>
-              <span class="hidden sm:inline">{words.toLocaleString("en-US")} words</span>
-              <span>{author}</span>
-            </p>
-            <ReaderSettings />
-          </div>
-          <p class="text-[16px] lg:text-[17px] leading-[1.8] text-text text-pretty">{post.data.description}</p>
-          {post.data.tags.length > 0 && (
-            <div class="flex flex-wrap gap-2 mt-6" data-pagefind-ignore>
-              {post.data.tags.map((tag) => <a href={`/tags/${tag}/`} class="tag">{tag}</a>)}
-            </div>
-          )}
-        </header>
 
-        {series.length > 1 && (
-          <nav aria-label="Series" class="card mb-10 p-5 sm:p-6 text-[14px]" data-pagefind-ignore>
-            <p class="eyebrow !mb-3">Series <span class="sep">·</span> Part {part} of {series.length}</p>
-            <p class="text-strong font-semibold mb-3">{post.data.series}</p>
-            <ol class="space-y-1.5">
-              {series.map((p, i) => (
-                <li class="flex gap-3">
-                  <span class="text-dim tabular-nums w-5 text-right">{i + 1}.</span>
-                  {p.id === post.id
-                    ? <span class="text-strong font-semibold">{p.data.title}</span>
-                    : <a href={`/blog/${p.id}/`} class="link">{p.data.title}</a>}
-                </li>
-              ))}
-            </ol>
-          </nav>
-        )}
-
-        {outline.length > 1 && (
-          <nav class="toc-box mb-12" aria-label="On this page" data-pagefind-ignore>
-            <p class="eyebrow">On this page</p>
-            <ol class="otp">
-              {outline.map((h) => <li><a href={`#${h.slug}`}>{h.text}</a></li>)}
-            </ol>
-          </nav>
-        )}
-
-        <div class="resume" data-resume hidden data-pagefind-ignore>
-          <span>Continue where you left off? <span class="text-strong" data-resume-label></span></span>
-          <span class="flex gap-3 shrink-0">
-            <button type="button" class="nav-link cursor-pointer text-strong" data-resume-go>resume ↓</button>
-            <button type="button" class="nav-link cursor-pointer" data-resume-dismiss aria-label="Dismiss">✕</button>
-          </span>
-        </div>
-
-        <div class="prose" data-reading-body data-pagefind-body data-pagefind-meta={`title:${post.data.title}`}>
-          <Content />
-        </div>
-
-        <footer class="mt-16" data-pagefind-ignore>
-          <div class="flex flex-wrap items-center gap-x-5 gap-y-3 py-4 border-y border-border text-[12px] tracking-[0.07em] uppercase">
-            <span class="text-dim">Share</span>
-            <button type="button" class="nav-link cursor-pointer uppercase tracking-[0.07em]" data-copy-text={url}>Copy link</button>
-            {share.map((s) => (
-              <a href={s.href} target="_blank" rel="noopener noreferrer" class="nav-link">{s.label} ↗</a>
-            ))}
-            <a href="#main-content" class="nav-link ml-auto">Top ↑</a>
-          </div>
-
-          <p class="hidden md:block text-[12px] text-dim mt-4">
-            Tip: <span class="kbd">j</span> <span class="kbd">k</span> jump between sections,
-            <span class="kbd">←</span> <span class="kbd">→</span> switch posts, <span class="kbd">?</span> for all shortcuts.
-            Select any passage to copy a link to it.
+    <div class="shell shell-reading">
+      <header data-reading-start>
+        <nav aria-label="Breadcrumb" class="eyebrow" data-pagefind-ignore>
+          <a href="/blog/">Writing</a>
+          <span class="sep">/</span>
+          <a href={`/blog/?kind=${kind}`}>{KINDS[kind].label}</a>
+        </nav>
+        <h1 class="post-title">
+          <Title text={post.data.title} />
+        </h1>
+        <p class="post-dek">{post.data.description}</p>
+        <div class="post-byline" data-pagefind-ignore>
+          <p class="meta">
+            <time datetime={post.data.pubDate.toISOString()}>{formatDate(post.data.pubDate, "medium")}</time>
+            {post.data.updatedDate && <span>Updated {formatDate(post.data.updatedDate, "medium")}</span>}
+            <span>{readTime}</span>
           </p>
-
-          <div class="card p-6 sm:p-8 mt-10">
-            <p class="eyebrow !mb-3">Written by</p>
-            <p class="text-strong font-bold text-[17px] mb-2">{author}</p>
-            <p class="text-[14px] leading-relaxed mb-6 max-w-[60ch]">{SITE_TAGLINE}</p>
-            <div class="flex flex-wrap gap-3">
-              <a href="/rss.xml" class="btn btn-sm">Subscribe via RSS <span aria-hidden="true">▸</span></a>
-              <a href="mailto:realnits@gmail.com" class="btn btn-sm btn-ghost">Email me</a>
-            </div>
-          </div>
-          <Comments />
-        </footer>
-      </div>
-    </div>
-
-    {(related.length > 0 || newer || older) && (
-      <section class="band !pt-0" aria-label="Keep reading" data-pagefind-ignore>
-        <div class="post-grid">
-          <div class="min-w-0">
-            {(newer || older) && (
-              <nav aria-label="More posts" class="grid sm:grid-cols-2 gap-4">
-                {older ? (
-                  <a href={`/blog/${older.id}/`} class="card p-5 sm:p-6 group">
-                    <span class="eyebrow !mb-2">← Previous</span>
-                    <span class="row-title block leading-snug">{older.data.title}</span>
-                  </a>
-                ) : <div class="hidden sm:block" />}
-                {newer ? (
-                  <a href={`/blog/${newer.id}/`} class="card p-5 sm:p-6 group sm:text-right">
-                    <span class="eyebrow !mb-2 sm:justify-end">Next →</span>
-                    <span class="row-title block leading-snug">{newer.data.title}</span>
-                  </a>
-                ) : <div class="hidden sm:block" />}
-              </nav>
-            )}
-            {related.length > 0 && (
-              <div class="mt-14">
-                <h2 class="h-section mb-4">Related reading</h2>
-                <ul class="border-t border-border">
-                  {related.map((p) => (
-                    <li>
-                      <a href={`/blog/${p.id}/`} class="trow block py-4 px-3 -mx-3">
-                        <span class="row-title block leading-snug">{p.data.title}</span>
-                        <span class="meta !text-[12.5px] mt-1.5">
-                          <span>{formatDate(p.data.pubDate, "medium")}</span>
-                          <span>{getReadingTime(p.body ?? "")}</span>
-                        </span>
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
+          <ReaderSettings />
         </div>
-      </section>
-    )}
+      </header>
+
+      {series.length > 1 && (
+        <nav aria-label="Series" class="card series" data-pagefind-ignore>
+          <p class="eyebrow !mb-2">Series <span class="sep">·</span> Part {part} of {series.length}</p>
+          <p class="text-strong font-semibold text-[15px] mb-2.5">{post.data.series}</p>
+          <ol class="space-y-1.5">
+            {series.map((p, i) => (
+              <li class="flex gap-3">
+                <span class="text-[13px] text-dim tabular-nums pt-0.5">{i + 1}.</span>
+                {p.id === post.id
+                  ? <span class="text-strong font-semibold">{p.data.title}</span>
+                  : <a href={`/blog/${p.id}/`} class="link">{p.data.title}</a>}
+              </li>
+            ))}
+          </ol>
+        </nav>
+      )}
+
+      {outline.length > 1 && (
+        <>
+          <details class="toc-box" open data-pagefind-ignore>
+            <summary>On this page</summary>
+            <nav aria-label="On this page">
+              <ol class="otp" data-cols={outline.length > 7 ? "2" : undefined}>
+                {outline.map((h) => <li><a href={`#${h.slug}`}>{h.text}</a></li>)}
+              </ol>
+            </nav>
+          </details>
+          <script is:inline data-astro-rerun>
+            // The outline starts closed on phones, where the reading bar offers the same list.
+            if (matchMedia("(max-width: 639px)").matches) document.querySelector("details.toc-box")?.removeAttribute("open");
+          </script>
+        </>
+      )}
+
+      <div class="resume" data-resume hidden data-pagefind-ignore>
+        <span>Continue where you left off? <span class="text-strong" data-resume-label></span></span>
+        <span class="flex gap-3 shrink-0">
+          <button type="button" class="nav-link text-strong" data-resume-go>resume ↓</button>
+          <button type="button" class="nav-link" data-resume-dismiss aria-label="Dismiss">✕</button>
+        </span>
+      </div>
+
+      <div class="prose" data-reading-body data-pagefind-body data-pagefind-meta={`title:${post.data.title}`}>
+        <Content />
+      </div>
+
+      <footer class="post-foot" data-pagefind-ignore>
+        {post.data.tags.length > 0 && (
+          <ul class="post-tags" aria-label="Topics">
+            {post.data.tags.map((tag) => <li><a href={`/tags/${tag}/`} class="tag">{tagLabel(tag)}</a></li>)}
+          </ul>
+        )}
+        <div class="share-row">
+          <span class="text-dim">Share</span>
+          <button type="button" class="nav-link" data-copy-text={url}>Copy link</button>
+          {share.map((s) => (
+            <a href={s.href} target="_blank" rel="noopener noreferrer" class="nav-link">{s.label} ↗</a>
+          ))}
+          <a href="#main-content" class="nav-link ml-auto">Top ↑</a>
+        </div>
+
+        <aside class="card author-note" aria-label="About the author">
+          <p class="eyebrow !mb-2">Written by</p>
+          <p class="text-strong font-bold text-[16px] mb-1.5">{author}</p>
+          <p class="mb-5">{SITE_TAGLINE}</p>
+          <div class="flex flex-wrap gap-2.5">
+            <a href="/rss.xml" class="btn btn-sm">Follow via RSS</a>
+            <a href="/about/" class="btn btn-sm btn-ghost">About me</a>
+            {email && <a href={email} class="btn btn-sm btn-ghost">Email</a>}
+          </div>
+        </aside>
+        <Comments />
+      </footer>
+
+      {(newer || older) && (
+        <nav aria-label="Older and newer posts" class="pager" data-pagefind-ignore>
+          {older && (
+            <a href={`/blog/${older.id}/`} class="prev">
+              <span class="eyebrow">← Older</span>
+              <span class="row-title"><Title text={older.data.title} /></span>
+            </a>
+          )}
+          {newer && (
+            <a href={`/blog/${newer.id}/`} class="next">
+              <span class="eyebrow">Newer →</span>
+              <span class="row-title"><Title text={newer.data.title} /></span>
+            </a>
+          )}
+        </nav>
+      )}
+
+      {related.length > 0 && (
+        <section class="mt-14" aria-label="Keep reading" data-pagefind-ignore>
+          <div class="section-head">
+            <h2 class="h-section">Related</h2>
+            <a href="/blog/" class="more-link">Archive →</a>
+          </div>
+          <EntryList posts={related} compact />
+        </section>
+      )}
+    </div>
     <button type="button" class="quote-btn" data-quote-btn hidden>copy link to quote</button>
   </article>
 </BaseLayout>

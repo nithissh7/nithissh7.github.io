@@ -12,7 +12,7 @@ const href = (n: number) => (n === 1 ? `${base}/` : `${base}/${n}/`);
 ---
 
 {last > 1 && (
-  <nav aria-label="Pagination" class="flex items-center justify-between gap-4 text-[14px]">
+  <nav aria-label="Pagination" class="flex items-center justify-between gap-4 text-[13px]">
     {prev ? <a href={prev} class="nav-link">← Newer</a> : <span />}
     <ol class="flex items-center gap-4">
       {Array.from({ length: last }, (_, i) => i + 1).map((n) => (

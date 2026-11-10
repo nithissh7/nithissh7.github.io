@@ -1,13 +1,12 @@
 ---
-import { getCollection, render } from "astro:content";
+import { render } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { formatDate } from "../../consts";
+import { getCves } from "../../lib/posts";
 import { explainVector, severityKey, splitCveTitle, vulnClass } from "../../lib/cve";
 
 export async function getStaticPaths() {
-  const cves = (await getCollection("cves", ({ data }) => !data.draft)).sort(
-    (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf() || a.data.cveId.localeCompare(b.data.cveId)
-  );
+  const cves = await getCves();
   return cves.map((cve, i) => ({ params: { slug: cve.id }, props: { cve, newer: cves[i - 1], older: cves[i + 1] } }));
 }
 
@@ -20,12 +19,15 @@ const host = (u: string) => u.replace(/^https?:\/\/(www\.)?/, "").split("/")[0];
 const refLabel = (u: string) =>
   u.includes("mozilla.org/en-US/security/advisories") ? "Mozilla advisory"
   : u.includes("bugzilla.mozilla.org") ? "Bugzilla"
+  : u.includes("github.com") && u.includes("/security/advisories/") ? "GitHub advisory"
   : u.includes("nvd.nist.gov") ? "NVD"
   : u.includes("cve.org") ? "CVE.org"
   : host(u);
 const shortTitle = (t: string) => splitCveTitle(t).vuln;
 const score = d.cvssScore ?? d.externalCvss?.score;
 const metrics = explainVector(d.cvssVector);
+// Search engines and link previews get the record's own summary when it says more than the title does.
+const informative = !d.title.toLowerCase().includes(d.description.toLowerCase());
 // CVSS 3.x bands: low 0.1–3.9, medium 4–6.9, high 7–8.9, critical 9–10.
 const bands = [
   { name: "low", from: 0, to: 4 },
@@ -37,123 +39,122 @@ const bands = [
 
 <BaseLayout
   title={`${d.cveId}: ${vuln}`}
-  description={`${d.cveId} — ${d.title}`}
+  description={informative ? `${d.cveId}: ${d.description}` : `${d.cveId} — ${d.title}`}
   type="article"
   pubDate={d.pubDate}
-  reading
   image={`/cves/${cve.id}/og.png`}
 >
-  <article>
-    <header class="band !pt-12 lg:!pt-20 !pb-6">
-      <nav aria-label="Breadcrumb" class="eyebrow" data-pagefind-ignore>
-        <a href="/cves/">CVEs</a>
-        <span class="sep">/</span>
-        <span>{d.cveId}</span>
-      </nav>
-      <h1 class="text-[26px] sm:text-[32px] lg:text-[38px] font-bold leading-[1.18] tracking-[-0.03em] text-strong text-balance mb-4">{vuln}</h1>
-      <p class="text-[16px] lg:text-[17px] text-dim mb-7">{product}{d.vendor && <> · {d.vendor}</>}</p>
-      <div class="flex flex-wrap items-center gap-2" data-pagefind-ignore>
-        <span class="sev sev-pill" data-sev={severityKey(d.severity)}>{d.severity}{score !== undefined && <span class="text-dim tabular-nums">{score.toFixed(1)}</span>}</span>
-        {klass && <span class="tag !h-7 !leading-7 !px-3">{klass}</span>}
-        {d.status !== "Published" && <span class="tag !h-7 !leading-7 !px-3">{d.status}</span>}
-      </div>
-    </header>
+  <article class="post">
+    <div class="shell shell-reading">
+      <header>
+        <nav aria-label="Breadcrumb" class="eyebrow" data-pagefind-ignore>
+          <a href="/cves/">CVEs</a>
+          <span class="sep">/</span>
+          <span>{d.cveId}</span>
+        </nav>
+        <h1 class="post-title">{vuln}</h1>
+        {product && <p class="post-dek !text-dim">{product}{d.vendor && d.vendor !== d.affectedProduct && <> · {d.vendor}</>}</p>}
+        <div class="flex flex-wrap items-center gap-2 mt-6" data-pagefind-ignore>
+          <span class="sev sev-pill" data-sev={severityKey(d.severity)}>{d.severity}{score !== undefined && <span class="text-dim tabular-nums">{score.toFixed(1)}</span>}</span>
+          {klass && <span class="tag !leading-[1.625rem]">{klass}</span>}
+          {d.status !== "Published" && <span class="tag !leading-[1.625rem]">{d.status}</span>}
+        </div>
+      </header>
 
-    <section class="band !pt-2" data-pagefind-ignore>
-      <dl class="props">
-        <div>
-          <dt>CVE ID</dt>
-          <dd class="flex items-center gap-3">
-            <span class="tabular-nums">{d.cveId}</span>
-            <button type="button" class="more-link cursor-pointer" data-copy-text={d.cveId}>Copy</button>
-          </dd>
-        </div>
-        <div>
-          <dt>CVSS</dt>
-          <dd>
-            {d.cvssScore !== undefined
-              ? <span><span class="font-bold tabular-nums">{d.cvssScore.toFixed(1)}</span>{d.cvssSource && <span class="text-dim text-[14px]"> ({d.cvssSource})</span>}</span>
-              : d.externalCvss
-                ? <span><span class="font-bold tabular-nums">{d.externalCvss.score.toFixed(1)}</span> <span class="text-dim text-[14px]">({d.externalCvss.source}){d.vendorRating && ` · ${d.vendorRating}`}</span></span>
-                : <span class="text-dim">—</span>}
-          </dd>
-        </div>
-        <div>
-          <dt>Published</dt>
-          <dd>{formatDate(d.pubDate, "long")}</dd>
-        </div>
-        {d.references && d.references.length > 0 && (
+      <section class="mt-9" data-pagefind-ignore>
+        <dl class="props">
           <div>
-            <dt>References</dt>
-            <dd class="flex flex-wrap gap-x-5 gap-y-1">
-              {d.references.map((ref) => (
-                <a href={ref} target="_blank" rel="noopener noreferrer" class="link">{refLabel(ref)} ↗</a>
-              ))}
+            <dt>CVE ID</dt>
+            <dd class="flex items-center gap-3">
+              <span class="text-[14.5px] tabular-nums">{d.cveId}</span>
+              <button type="button" class="more-link cursor-pointer" data-copy-text={d.cveId}>Copy</button>
             </dd>
           </div>
-        )}
-      </dl>
-
-      {(score !== undefined || metrics.length > 0) && (
-        <div class="cvss card p-5 sm:p-7 mt-10" data-pagefind-ignore>
-          {score !== undefined && (
-            <div class="cvss-gauge" role="img" aria-label={`CVSS ${score.toFixed(1)} out of 10, ${d.severity}`}>
-              <div class="flex items-baseline justify-between mb-3">
-                <span class="eyebrow !mb-0">CVSS base score</span>
-                <span><span class="text-strong font-extrabold text-[22px] tabular-nums">{score.toFixed(1)}</span><span class="text-dim text-[13px]"> / 10</span></span>
-              </div>
-              <div class="cvss-track">
-                {bands.map((b) => <span data-band={b.name} style={`flex:${b.to - b.from}`}></span>)}
-                <i style={`left:${score * 10}%`}></i>
-              </div>
-              <div class="cvss-scale" aria-hidden="true">
-                {bands.map((b) => <span style={`flex:${b.to - b.from}`}>{b.name}</span>)}
-              </div>
+          <div>
+            <dt>CVSS</dt>
+            <dd>
+              {d.cvssScore !== undefined
+                ? <span><span class="font-semibold tabular-nums">{d.cvssScore.toFixed(1)}</span>{d.cvssSource && <span class="text-dim text-[14.5px]"> ({d.cvssSource})</span>}</span>
+                : d.externalCvss
+                  ? <span><span class="font-semibold tabular-nums">{d.externalCvss.score.toFixed(1)}</span> <span class="text-dim text-[14.5px]">({d.externalCvss.source}){d.vendorRating && ` · ${d.vendorRating}`}</span></span>
+                  : <span class="text-dim">—</span>}
+            </dd>
+          </div>
+          <div>
+            <dt>Published</dt>
+            <dd>{formatDate(d.pubDate, "long")}</dd>
+          </div>
+          {d.references && d.references.length > 0 && (
+            <div>
+              <dt>References</dt>
+              <dd class="flex flex-wrap gap-x-5 gap-y-1">
+                {d.references.map((ref) => (
+                  <a href={ref} target="_blank" rel="noopener noreferrer" class="link">{refLabel(ref)} ↗</a>
+                ))}
+              </dd>
             </div>
           )}
-          {metrics.length > 0 && (
-            <>
-              <ul class="cvss-metrics" aria-label="CVSS metrics">
-                {metrics.map((m) => (
-                  <li data-risk={m.risk}>
-                    <span class="text-dim">{m.label}</span>
-                    <span class="text-strong">{m.value}</span>
-                  </li>
-                ))}
-              </ul>
-              <p class="flex flex-wrap items-center gap-3 mt-4 text-[12px] text-dim">
-                <code class="!text-[12px] break-all">{d.cvssVector}</code>
-                <button type="button" class="more-link cursor-pointer" data-copy-text={d.cvssVector}>Copy vector</button>
-                <span class="ml-auto flex items-center gap-3"><span class="risk-key" data-risk="high">attacker-friendly</span><span class="risk-key" data-risk="low">limiting</span></span>
-              </p>
-            </>
-          )}
-        </div>
-      )}
+        </dl>
 
-      <div class="prose mt-12" data-pagefind-body data-pagefind-meta={`title:${d.cveId} · ${vuln}${product ? ` — ${product}` : ""}`}>
+        {(score !== undefined || metrics.length > 0) && (
+          <div class="cvss card p-5 sm:p-6 mt-8">
+            {score !== undefined && (
+              <div role="img" aria-label={`CVSS ${score.toFixed(1)} out of 10, ${d.severity}`}>
+                <div class="flex items-baseline justify-between mb-3">
+                  <span class="eyebrow !mb-0">CVSS base score</span>
+                  <span class=""><span class="text-strong font-bold text-[21px] tabular-nums">{score.toFixed(1)}</span><span class="text-dim text-[13px]"> / 10</span></span>
+                </div>
+                <div class="cvss-track">
+                  {bands.map((b) => <span data-band={b.name} style={`flex:${b.to - b.from}`}></span>)}
+                  <i style={`left:${score * 10}%`}></i>
+                </div>
+                <div class="cvss-scale" aria-hidden="true">
+                  {bands.map((b) => <span style={`flex:${b.to - b.from}`}>{b.name}</span>)}
+                </div>
+              </div>
+            )}
+            {metrics.length > 0 && (
+              <>
+                <ul class="cvss-metrics" aria-label="CVSS metrics">
+                  {metrics.map((m) => (
+                    <li data-risk={m.risk}>
+                      <span class="text-dim">{m.label}</span>
+                      <span class="text-strong">{m.value}</span>
+                    </li>
+                  ))}
+                </ul>
+                <p class="flex flex-wrap items-center gap-x-3 gap-y-2 mt-4 text-[12px] text-dim">
+                  <code class="!text-[12px] break-all">{d.cvssVector}</code>
+                  <button type="button" class="more-link !text-[12px] cursor-pointer" data-copy-text={d.cvssVector}>Copy vector</button>
+                  <span class="ml-auto flex items-center gap-3"><span class="risk-key" data-risk="high">attacker-friendly</span><span class="risk-key" data-risk="low">limiting</span></span>
+                </p>
+              </>
+            )}
+          </div>
+        )}
+      </section>
+
+      <div class="prose mt-10" data-pagefind-body data-pagefind-meta={`title:${d.cveId} · ${vuln}${product ? ` — ${product}` : ""}`}>
         {klass && <span class="sr-only">{klass} vulnerability in {product}.</span>}
         <Content />
       </div>
-    </section>
 
-    {(newer || older) && (
-      <nav aria-label="More disclosures" class="band !pt-0" data-pagefind-ignore>
-        <div class="grid md:grid-cols-2 gap-8 pt-8 border-t border-border">
-          {older ? (
-            <a href={`/cves/${older.id}/`} class="group block">
-              <span class="eyebrow !mb-2">← Older · {older.data.cveId}</span>
-              <span class="row-title block leading-snug group-hover:decoration-border-strong">{shortTitle(older.data.title)}</span>
+      {(newer || older) && (
+        <nav aria-label="Older and newer disclosures" class="pager !mt-14" data-pagefind-ignore>
+          {older && (
+            <a href={`/cves/${older.id}/`} class="prev">
+              <span class="eyebrow">← Older · {older.data.cveId}</span>
+              <span class="row-title">{shortTitle(older.data.title)}</span>
             </a>
-          ) : <div class="hidden md:block" />}
-          {newer ? (
-            <a href={`/cves/${newer.id}/`} class="group block md:text-right">
-              <span class="eyebrow !mb-2 md:justify-end">Newer · {newer.data.cveId} →</span>
-              <span class="row-title block leading-snug group-hover:decoration-border-strong">{shortTitle(newer.data.title)}</span>
+          )}
+          {newer && (
+            <a href={`/cves/${newer.id}/`} class="next">
+              <span class="eyebrow">Newer · {newer.data.cveId} →</span>
+              <span class="row-title">{shortTitle(newer.data.title)}</span>
             </a>
-          ) : <div class="hidden md:block" />}
-        </div>
-      </nav>
-    )}
+          )}
+        </nav>
+      )}
+    </div>
   </article>
 </BaseLayout>

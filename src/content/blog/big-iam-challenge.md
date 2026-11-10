@@ -4,6 +4,7 @@ pubDate: 2023-06-08T15:22:00.000Z
 title: "Big IAM Challenge - Wiz CTF Challenge"
 featured: false
 draft: false
+category: challenge
 tags:
   - cloudsecurity
   - ctf

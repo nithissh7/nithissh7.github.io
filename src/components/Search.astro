@@ -1,23 +1,25 @@
 ---
 // One search UI, used on /search/ and inside the ⌘K dialog. Backed by Pagefind's JS API.
-import { getCollection } from "astro:content";
+import { tagLabel } from "../consts";
+import { getPosts, tagCounts } from "../lib/posts";
 
 interface Props {
   mode: "page" | "dialog";
 }
 
 const { mode } = Astro.props;
-const posts = await getCollection("blog", ({ data }) => !data.draft);
-const counts = new Map<string, number>();
-for (const post of posts) for (const tag of post.data.tags) counts.set(tag, (counts.get(tag) ?? 0) + 1);
-const suggestions = [...counts].sort((a, b) => b[1] - a[1]).slice(0, mode === "page" ? 8 : 6).map(([t]) => t);
+const posts = await getPosts();
+// Suggested searches: the most-written-about topics, as words that occur in the posts.
+const suggestions = tagCounts(posts)
+  .slice(0, mode === "page" ? 8 : 6)
+  .map(([tag]) => tagLabel(tag));
 const inputId = mode === "page" ? "search-input" : "search-dialog-input";
 ---
 
 <div data-search-root data-mode={mode}>
   <form role="search" class="relative" onsubmit="return false">
     <label for={inputId} class="sr-only">Search posts and CVEs</label>
-    <svg class="absolute left-3 top-1/2 -translate-y-1/2 text-dim pointer-events-none" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+    <svg class="absolute left-4 top-1/2 -translate-y-1/2 text-dim pointer-events-none" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
       <circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path>
     </svg>
     <input
@@ -26,27 +28,23 @@ const inputId = mode === "page" ? "search-input" : "search-dialog-input";
       type="search"
       autocomplete="off"
       spellcheck="false"
-      placeholder="Search posts and CVEs — xss, gemini, sql injection…"
-      class={`w-full pl-10 pr-4 bg-bg text-strong placeholder:text-dim outline-none transition-colors ${
-        mode === "page"
-          ? "h-14 border-b border-border-strong focus:border-strong text-[16px]"
-          : "h-14 border-b border-border text-[16px]"
-      }`}
+      placeholder="Search posts and CVEs: xss, gemini, sql injection…"
+      class:list={["search-input", { "search-input-page": mode === "page" }]}
     />
   </form>
   <div class={mode === "page" ? "mt-5" : "px-4 pt-4"}>
-    <div class="flex flex-wrap items-center gap-2 text-[13px]" data-search-suggestions>
+    <div class="flex flex-wrap items-center gap-2" data-search-suggestions>
       <span class="eyebrow !mb-0 mr-1">Try</span>
       {suggestions.map((s) => (
         <button type="button" class="tag cursor-pointer" data-suggest={s}>{s}</button>
       ))}
     </div>
   </div>
-  <div class={mode === "page" ? "mt-10" : "px-4 pb-2 pt-4 max-h-[60vh] overflow-y-auto"}>
-    <p data-search-status class="text-[13px] text-dim mb-2" aria-live="polite">
+  <div class={mode === "page" ? "mt-8" : "px-4 pb-2 pt-4 max-h-[60vh] overflow-y-auto"}>
+    <p data-search-status class="text-[12.5px] text-dim mb-2" aria-live="polite">
       Search {posts.length} posts and every CVE.
     </p>
-    <ul data-search-results class="tlist hidden"></ul>
+    <ul data-search-results class="border-t border-border hidden"></ul>
   </div>
 </div>
 
@@ -120,11 +118,11 @@ const inputId = mode === "page" ? "search-input" : "search-dialog-input";
         .slice(0, 20)
         .map((d) => {
           const kind = d.url.startsWith("/cves/") ? "CVE" : "Post";
-          return `<li><a href="${escape(d.url)}" class="trow block md:grid md:grid-cols-[3.5rem_minmax(0,1fr)] md:gap-5 py-4 px-3 -mx-3 rounded-sm">
-            <span class="block text-[11px] tracking-[0.08em] uppercase text-dim md:pt-1">${kind}</span>
+          return `<li><a href="${escape(d.url)}" class="search-result">
+            <span class="kind">${kind}</span>
             <span class="block min-w-0">
-              <span class="row-title block leading-snug">${escape(d.meta.title ?? d.url)}</span>
-              <span class="search-excerpt text-[14px] text-dim mt-1 leading-relaxed line-clamp-2">${d.excerpt}</span>
+              <span class="row-title">${escape(d.meta.title ?? d.url)}</span>
+              <span class="search-excerpt">${d.excerpt}</span>
             </span>
           </a></li>`;
         })
@@ -154,11 +152,3 @@ const inputId = mode === "page" ? "search-input" : "search-dialog-input";
     document.querySelectorAll<HTMLElement>("[data-search-root]").forEach(setup);
   });
 </script>
-
-<style is:global>
-  .search-excerpt mark {
-    background: transparent;
-    color: var(--strong);
-    font-weight: 500;
-  }
-</style>

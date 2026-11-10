@@ -1,0 +1,25 @@
+---
+// Severity mix of a set of CVEs: one stacked bar, most severe first, with a labelled key.
+import { severityCounts, type Cve } from "../lib/posts";
+import { severityKey } from "../lib/cve";
+
+interface Props {
+  cves: Cve[];
+}
+
+const counts = severityCounts(Astro.props.cves);
+const summary = counts.map((c) => `${c.n} ${c.severity.toLowerCase()}`).join(", ");
+---
+
+<div role="img" aria-label={`Severity: ${summary}`}>
+  <div class="sevbar" aria-hidden="true">
+    {counts.map((c) => <span data-sev={severityKey(c.severity)} style={`flex:${c.n}`}></span>)}
+  </div>
+  <ul class="sevbar-key" aria-hidden="true">
+    {counts.map((c) => (
+      <li class="sev" data-sev={severityKey(c.severity)}>
+        {c.severity} <span class="text-dim tabular-nums">{c.n}</span>
+      </li>
+    ))}
+  </ul>
+</div>

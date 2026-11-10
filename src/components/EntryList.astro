@@ -1,0 +1,32 @@
+---
+// Stacked post entries: kind, date and length on one line, then the title and description.
+import Title from "./Title.astro";
+import { formatDate } from "../consts";
+import { KINDS, kindOf, minutes, type Post } from "../lib/posts";
+
+interface Props {
+  posts: Post[];
+  /** Give the first entry more weight (the newest post on the home page). */
+  lead?: boolean;
+  /** Leave descriptions out for short "see also" lists. */
+  compact?: boolean;
+}
+
+const { posts, lead = false, compact = false } = Astro.props;
+---
+
+<ol class="entries">
+  {posts.map((post, i) => (
+    <li>
+      <a href={`/blog/${post.id}/`} data-post-link class:list={["entry", { "entry-lead": lead && i === 0 }]}>
+        <span class="entry-meta" data-read-slot>
+          <span class="kind">{KINDS[kindOf(post)].label}</span>
+          <time datetime={post.data.pubDate.toISOString()}>{formatDate(post.data.pubDate, "medium")}</time>
+          <span>{minutes(post)}</span>
+        </span>
+        <span class="row-title"><Title text={post.data.title} /></span>
+        {!compact && <span class="row-desc">{post.data.description}</span>}
+      </a>
+    </li>
+  ))}
+</ol>
